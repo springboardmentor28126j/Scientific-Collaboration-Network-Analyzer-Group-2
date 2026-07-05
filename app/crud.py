@@ -9,6 +9,8 @@ from app.schemas.researcher import ResearcherCreate
 from app.models.institution import Institution
 from app.schemas.institution import InstitutionCreate
 
+from app.models.collaboration import Collaboration
+from app.schemas.collaboration import CollaborationCreate
 
 # -----------------------------
 # Research Papers CRUD
@@ -52,6 +54,8 @@ def create_researcher(db: Session, researcher: ResearcherCreate):
     db.commit()
     db.refresh(new_researcher)
     return new_researcher
+
+
 # -----------------------------
 # Institutions CRUD
 # -----------------------------
@@ -72,3 +76,25 @@ def create_institution(db: Session, institution: InstitutionCreate):
     db.commit()
     db.refresh(new_institution)
     return new_institution
+
+
+# -----------------------------
+# Collaborations CRUD
+# -----------------------------
+
+def get_all_collaborations(db: Session):
+    return db.query(Collaboration).all()
+
+
+def get_collaboration_by_id(db: Session, collaboration_id: int):
+    return db.query(Collaboration).filter(
+        Collaboration.id == collaboration_id
+    ).first()
+
+
+def create_collaboration(db: Session, collaboration: CollaborationCreate):
+    new_collaboration = Collaboration(**collaboration.model_dump())
+    db.add(new_collaboration)
+    db.commit()
+    db.refresh(new_collaboration)
+    return new_collaboration

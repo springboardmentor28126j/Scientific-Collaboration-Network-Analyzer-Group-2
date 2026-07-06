@@ -26,6 +26,10 @@ def get_db():
 def get_researchers(db: Session = Depends(get_db)):
     return crud.get_all_researchers(db)
 
+@router.get("/search", response_model=list[ResearcherResponse])
+def search_researchers(name: str, db: Session = Depends(get_db)):
+    return crud.search_researchers_by_name(db, name)
+
 
 @router.post("/", response_model=ResearcherResponse)
 def add_researcher(
@@ -33,3 +37,13 @@ def add_researcher(
     db: Session = Depends(get_db)
 ):
     return crud.create_researcher(db, researcher)
+
+@router.get("/search/specialization", response_model=list[ResearcherResponse])
+def search_researchers_specialization(
+    specialization: str,
+    db: Session = Depends(get_db)
+):
+    return crud.search_researchers_by_specialization(
+        db,
+        specialization
+    )

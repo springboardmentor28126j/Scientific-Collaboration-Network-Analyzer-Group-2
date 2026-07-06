@@ -98,3 +98,35 @@ def create_collaboration(db: Session, collaboration: CollaborationCreate):
     db.commit()
     db.refresh(new_collaboration)
     return new_collaboration
+
+
+# -----------------------------
+# Search APIs
+# -----------------------------
+
+def search_papers_by_title(db: Session, title: str):
+    return (
+        db.query(ResearchPaper)
+        .filter(ResearchPaper.title.ilike(f"%{title}%"))
+        .all()
+    )
+def search_researchers_by_name(db: Session, name: str):
+    return (
+        db.query(Researcher)
+        .filter(Researcher.full_name.ilike(f"%{name}%"))
+        .all()
+    )
+def search_researchers_by_specialization(db: Session, specialization: str):
+    return (
+        db.query(Researcher)
+        .filter(
+            Researcher.specialization.ilike(f"%{specialization}%")
+        )
+        .all()
+    )
+def search_institutions_by_country(db: Session, country: str):
+    return (
+        db.query(Institution)
+        .filter(Institution.country.ilike(f"%{country}%"))
+        .all()
+    )

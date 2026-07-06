@@ -26,6 +26,13 @@ def get_db():
 def get_institutions(db: Session = Depends(get_db)):
     return crud.get_all_institutions(db)
 
+@router.get("/search", response_model=list[InstitutionResponse])
+def search_institutions(
+    country: str,
+    db: Session = Depends(get_db)
+):
+    return crud.search_institutions_by_country(db, country)
+
 
 @router.post("/", response_model=InstitutionResponse)
 def add_institution(

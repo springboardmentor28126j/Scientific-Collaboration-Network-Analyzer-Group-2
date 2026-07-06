@@ -20,6 +20,10 @@ def get_db():
 def get_papers(db: Session = Depends(get_db)):
     return crud.get_all_papers(db)
 
+@router.get("/search", response_model=list[ResearchPaperResponse])
+def search_papers(title: str, db: Session = Depends(get_db)):
+    return crud.search_papers_by_title(db, title)
+
 
 @router.post("/", response_model=ResearchPaperResponse)
 def add_paper(paper: ResearchPaperCreate, db: Session = Depends(get_db)):

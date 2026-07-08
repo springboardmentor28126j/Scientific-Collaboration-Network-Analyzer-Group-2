@@ -1,4 +1,13 @@
+from datetime import datetime
+
+from jose import JWTError, jwt
 from passlib.context import CryptContext
+
+from config.settings import (
+    ACCESS_TOKEN_EXPIRE_DELTA,
+    ALGORITHM,
+    SECRET_KEY,
+)
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -18,3 +27,34 @@ def verify_password(
         plain_password,
         hashed_password
     )
+
+
+def create_access_token(data: dict):
+
+    to_encode = data.copy()
+
+    expire = datetime.utcnow() + ACCESS_TOKEN_EXPIRE_DELTA
+
+    to_encode.update(
+        {
+            "exp": expire
+        }
+    )
+
+    return jwt.encode(
+        to_encode,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+        return payload
+    except JWTError:
+        return None

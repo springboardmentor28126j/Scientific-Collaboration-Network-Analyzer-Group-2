@@ -1,0 +1,29 @@
+.sidebar{
+    width:240px;
+    min-height:100vh;
+    background:#1e293b;
+    color:white;
+    padding:25px;
+}
+
+.sidebar h2{
+    margin-bottom:20px;
+}
+
+.sidebar hr{
+    margin-bottom:20px;
+}
+
+.sidebar a{
+    display:block;
+    color:white;
+    text-decoration:none;
+    padding:12px;
+    margin-bottom:10px;
+    border-radius:8px;
+    transition:.3s;
+}
+
+.sidebar a:hover{
+    background:#2563eb;
+}

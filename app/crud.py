@@ -12,6 +12,11 @@ from app.schemas.institution import InstitutionCreate
 from app.models.collaboration import Collaboration
 from app.schemas.collaboration import CollaborationCreate
 
+from app.models.user import User
+from app.schemas.user import UserCreate
+from app.core.security import hash_password
+
+
 # -----------------------------
 # Research Papers CRUD
 # -----------------------------
@@ -130,3 +135,50 @@ def search_institutions_by_country(db: Session, country: str):
         .filter(Institution.country.ilike(f"%{country}%"))
         .all()
     )
+# -----------------------------
+# User Authentication CRUD
+# -----------------------------
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()
+
+
+def create_user(db: Session, user: UserCreate):
+
+    new_user = User(
+
+        # Basic Details
+        full_name=user.full_name,
+        username=user.username,
+        email=user.email,
+        hashed_password=hash_password(user.password),
+
+        # Personal Details
+        phone_number=user.phone_number,
+        gender=user.gender,
+        date_of_birth=user.date_of_birth,
+
+        # Academic Details
+        institution=user.institution,
+        department=user.department,
+        designation=user.designation,
+
+        # Research Details
+        specialization=user.specialization,
+        research_interests=user.research_interests,
+
+        # Location
+        country=user.country,
+        state=user.state,
+        city=user.city,
+
+        # Role
+        role="Researcher"
+
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user

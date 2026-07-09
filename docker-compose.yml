@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/research_db
+      MAIL_SERVER: mailcatcher
+      MAIL_PORT: 1025
+    depends_on:
+      db:
+        condition: service_healthy
+      mailcatcher:
+        condition: service_started
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: research_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"  # web UI — view every email sent by the app here
+      - "1025:1025"  # SMTP port the app sends mail to
+
+volumes:
+  postgres_data:

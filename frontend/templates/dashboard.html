@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1>Welcome, {{ user.email }}</h1>
+  <p style="color: var(--muted)">Role: {{ user.role }}</p>
+
+  <div class="profile-field">
+    <span class="k">Publications</span>
+    <span class="v">Coming in Milestone 2</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Projects</span>
+    <span class="v">Coming in Milestone 3</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Conferences</span>
+    <span class="v">Coming in Milestone 2</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Collaborators</span>
+    <span class="v">Coming in Milestone 3</span>
+  </div>
+
+  <a class="muted-link" href="{{ url_for('profile') }}">Go to your researcher profile &rarr;</a>
+</div>
+{% endblock %}

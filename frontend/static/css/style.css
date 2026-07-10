@@ -1,0 +1,143 @@
+:root {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --accent: #2f6fed;
+  --accent-2: #1f9d6f;
+  --text: #1a2233;
+  --muted: #6b7688;
+  --danger: #d64545;
+  --border: #e1e6ef;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar a {
+  color: var(--text);
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 14px;
+}
+
+.navbar a:hover {
+  color: var(--accent);
+}
+
+.navbar .brand {
+  font-weight: 700;
+  color: var(--accent);
+  margin-left: 0;
+  font-size: 16px;
+}
+
+.container {
+  max-width: 480px;
+  margin: 60px auto;
+  padding: 32px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, 0.06);
+}
+
+.container.wide {
+  max-width: 720px;
+}
+
+h1, h2 {
+  margin-top: 0;
+  color: var(--text);
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: #fbfcfe;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+textarea { resize: vertical; min-height: 80px; }
+
+button {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover { opacity: 0.9; }
+
+.flash {
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.flash.error {
+  background: rgba(214, 69, 69, 0.08);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.flash.success {
+  background: rgba(31, 157, 111, 0.08);
+  border: 1px solid var(--accent-2);
+  color: var(--accent-2);
+}
+
+.muted-link {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.muted-link a { color: var(--accent); }
+
+.profile-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-field .k { color: var(--muted); font-size: 13px; }
+.profile-field .v { font-size: 14px; }

@@ -1,0 +1,52 @@
+# Scientific Collaboration Network Analyzer
+
+Research collaboration management platform to manage publications, researchers,
+institutions, projects, conferences, and collaborations.
+
+## Tech Stack
+- Backend: Python, FastAPI, SQLAlchemy, Alembic
+- Database: PostgreSQL, Redis
+- Frontend: React (Vite)
+- Auth: JWT
+- Deployment: Docker
+
+## Setup (VSCode)
+
+### Backend
+```
+cd backend
+python -m venv venv
+venv\Scripts\activate      # Windows
+source venv/bin/activate   # Mac/Linux
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload
+```
+API docs available at http://127.0.0.1:8000/docs
+
+### Frontend
+```
+cd frontend
+npm install
+npm run dev
+```
+
+### Docker (all services together)
+```
+docker-compose up --build
+```
+
+## Project Structure
+See folder layout: backend/app/{models,schemas,routers,services,core,utils},
+frontend/src/{pages,components,api}.
+
+## Modules
+1. User Management
+2. Researcher Management
+3. Publication Management
+4. Collaboration Management
+5. Conference Management
+6. Citation & Reference
+7. Dashboard
+8. Reports & Export
+9. Audit Module

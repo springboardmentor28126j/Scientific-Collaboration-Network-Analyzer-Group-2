@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from app.routers import auth, users, researchers, publications, collaborations, conferences, citations, reports, audit
+from app.database import Base, engine
+from app.models import user, researcher, publication, collaboration, conference, citation, audit_log
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Scientific Collaboration Network Analyzer")
 

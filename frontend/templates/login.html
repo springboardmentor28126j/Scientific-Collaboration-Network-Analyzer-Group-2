@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="logo">🔬 SciCollab</div>
+    </div>
+
+    <div class="center-wrapper">
+        <div class="card">
+            <div class="subtitle">Please enter your details</div>
+            <div class="title">Welcome back</div>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Email address" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+
+                <div class="form-row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember">
+                        Remember for 30 days
+                    </label>
+                    <a href="#" class="link">Forgot password</a>
+                </div>
+
+                <button type="submit" class="btn-primary">Sign in</button>
+            </form>
+
+            
+            <div class="bottom-text">
+                Don't have an account? <a href="{{ url_for('register') }}" class="link">Sign up</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="logo">🔬 SciCollab</div>
+    </div>
+
+    <div class="center-wrapper">
+        <div class="card">
+            <div class="subtitle">Get started</div>
+            <div class="title">Create your account</div>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Email address" required>
+                </div>
+
+                <div class="form-group">
+                    <select name="role" required>
+                        <option value="researcher">Researcher</option>
+                        <option value="institution_admin">Institution Admin</option>
+                        <option value="reviewer">Reviewer</option>
+                        <option value="system_admin">System Admin</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+
+                <div class="form-group">
+                    <input type="password" name="confirm_password" placeholder="Confirm password" required>
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 8px;">Create account</button>
+            </form>
+
+            <div class="bottom-text">
+                Already have an account? <a href="{{ url_for('login') }}" class="link">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

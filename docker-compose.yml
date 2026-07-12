@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: scn_user
+      POSTGRES_PASSWORD: scn_password
+      POSTGRES_DB: scn_analyzer
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scn_user -d scn_analyzer"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://scn_user:scn_password@db:5432/scn_analyzer
+      SECRET_KEY: change-this-to-a-long-random-string
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:

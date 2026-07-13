@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - Scientific Collaboration Network Analyzer</title>
+    <title>Institution Dashboard - Scientific Collaboration Network Analyzer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
     <div class="app-layout">
 
-        <!-- ---- Sidebar ---- -->
         <aside class="sidebar">
             <a href="{{ url_for('home') }}" class="logo" style="text-decoration: none; color: inherit;">🔬 SciCollab</a>
 
@@ -18,19 +17,16 @@
                     <span class="sidebar-icon">🏠</span> Dashboard
                 </a>
                 <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🏢</span> Departments
+                </a>
+                <a href="#" class="sidebar-link">
                     <span class="sidebar-icon">📄</span> Publications
                 </a>
                 <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">📁</span> Projects
+                    <span class="sidebar-icon">📁</span> Active Projects
                 </a>
                 <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">🎓</span> Conferences
-                </a>
-                <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">🤝</span> Collaborations
-                </a>
-                <a href="{{ url_for('profile') }}" class="sidebar-link">
-                    <span class="sidebar-icon">👤</span> Profile
+                    <span class="sidebar-icon">📊</span> Collaboration Stats
                 </a>
             </nav>
 
@@ -40,17 +36,21 @@
             </div>
         </aside>
 
-        <!-- ---- Main content ---- -->
         <main class="main-content">
 
             <div class="dashboard-header">
                 <div>
-                    <h1 class="dashboard-title">Researcher Dashboard</h1>
-                    <p class="dashboard-subtitle">Track your publications, projects, and collaborations</p>
+                    <h1 class="dashboard-title">Institution Dashboard</h1>
+                    <p class="dashboard-subtitle">Overview of departments, publications, and collaboration activity</p>
                 </div>
             </div>
 
             <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Departments</div>
+                </div>
                 <div class="stat-card">
                     <div class="stat-icon">📄</div>
                     <div class="stat-number">0</div>
@@ -59,52 +59,35 @@
                 <div class="stat-card">
                     <div class="stat-icon">📁</div>
                     <div class="stat-number">0</div>
-                    <div class="stat-label">Projects</div>
+                    <div class="stat-label">Active Projects</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">🎓</div>
+                    <div class="stat-icon">📊</div>
                     <div class="stat-number">0</div>
-                    <div class="stat-label">Conferences</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Collaborators</div>
+                    <div class="stat-label">Collaborations</div>
                 </div>
             </div>
 
             <div class="dashboard-sections">
                 <div class="dashboard-section">
                     <div class="section-header">
-                        <h2>Recent Publications</h2>
-                        <a href="#" class="link">View all</a>
+                        <h2>Departments Overview</h2>
+                        <a href="#" class="link">Manage</a>
                     </div>
                     <div class="empty-state">
-                        <div class="empty-icon">📄</div>
-                        <p>No publications yet</p>
-                        <a href="#" class="link">Add your first publication</a>
+                        <div class="empty-icon">🏢</div>
+                        <p>No departments added yet</p>
                     </div>
                 </div>
 
                 <div class="dashboard-section">
                     <div class="section-header">
-                        <h2>Active Projects</h2>
-                        <a href="#" class="link">View all</a>
+                        <h2>Collaboration Statistics</h2>
+                        <a href="#" class="link">View report</a>
                     </div>
                     <div class="empty-state">
-                        <div class="empty-icon">📁</div>
-                        <p>No active projects</p>
-                    </div>
-                </div>
-
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <h2>Upcoming Conferences</h2>
-                        <a href="#" class="link">View all</a>
-                    </div>
-                    <div class="empty-state">
-                        <div class="empty-icon">🎓</div>
-                        <p>No upcoming conferences</p>
+                        <div class="empty-icon">📊</div>
+                        <p>No collaboration data yet</p>
                     </div>
                 </div>
             </div>

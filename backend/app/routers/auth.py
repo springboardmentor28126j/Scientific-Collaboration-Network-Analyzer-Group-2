@@ -44,4 +44,4 @@ def login(email: str, password: str, db: Session = Depends(get_db)):
     # JWT token banao
     access_token = create_access_token(data={"sub": user.email, "role": user.role.value})
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}

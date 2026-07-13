@@ -9,7 +9,7 @@
 
     <!-- ---- Navbar ---- -->
     <nav class="navbar">
-        <div class="logo">🔬 SciCollab</div>
+        <a href="{{ url_for('home') }}" class="logo" style="text-decoration: none; color: inherit;">🔬 SciCollab</a>
         <div class="nav-links">
             <a href="{{ url_for('login') }}" class="nav-link">Login</a>
             <a href="{{ url_for('register') }}" class="btn-nav">Sign Up</a>

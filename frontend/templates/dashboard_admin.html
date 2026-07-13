@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - Scientific Collaboration Network Analyzer</title>
+    <title>Admin Dashboard - Scientific Collaboration Network Analyzer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
     <div class="app-layout">
 
-        <!-- ---- Sidebar ---- -->
         <aside class="sidebar">
             <a href="{{ url_for('home') }}" class="logo" style="text-decoration: none; color: inherit;">🔬 SciCollab</a>
 
@@ -18,19 +17,16 @@
                     <span class="sidebar-icon">🏠</span> Dashboard
                 </a>
                 <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">📄</span> Publications
+                    <span class="sidebar-icon">📊</span> Overall Reports
                 </a>
                 <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">📁</span> Projects
+                    <span class="sidebar-icon">🏢</span> Institution Analytics
                 </a>
                 <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">🎓</span> Conferences
+                    <span class="sidebar-icon">👥</span> User Statistics
                 </a>
                 <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">🤝</span> Collaborations
-                </a>
-                <a href="{{ url_for('profile') }}" class="sidebar-link">
-                    <span class="sidebar-icon">👤</span> Profile
+                    <span class="sidebar-icon">📋</span> Audit Logs
                 </a>
             </nav>
 
@@ -40,71 +36,58 @@
             </div>
         </aside>
 
-        <!-- ---- Main content ---- -->
         <main class="main-content">
 
             <div class="dashboard-header">
                 <div>
-                    <h1 class="dashboard-title">Researcher Dashboard</h1>
-                    <p class="dashboard-subtitle">Track your publications, projects, and collaborations</p>
+                    <h1 class="dashboard-title">Admin Dashboard</h1>
+                    <p class="dashboard-subtitle">System-wide reports, analytics, and user management</p>
                 </div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">📄</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Publications</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📁</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Projects</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🎓</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Conferences</div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-icon">👥</div>
                     <div class="stat-number">0</div>
-                    <div class="stat-label">Collaborators</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Institutions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Total Publications</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Audit Logs</div>
                 </div>
             </div>
 
             <div class="dashboard-sections">
                 <div class="dashboard-section">
                     <div class="section-header">
-                        <h2>Recent Publications</h2>
-                        <a href="#" class="link">View all</a>
+                        <h2>Institution Analytics</h2>
+                        <a href="#" class="link">View report</a>
                     </div>
                     <div class="empty-state">
-                        <div class="empty-icon">📄</div>
-                        <p>No publications yet</p>
-                        <a href="#" class="link">Add your first publication</a>
+                        <div class="empty-icon">🏢</div>
+                        <p>No institution data yet</p>
                     </div>
                 </div>
 
                 <div class="dashboard-section">
                     <div class="section-header">
-                        <h2>Active Projects</h2>
-                        <a href="#" class="link">View all</a>
+                        <h2>User Statistics</h2>
+                        <a href="#" class="link">View all users</a>
                     </div>
                     <div class="empty-state">
-                        <div class="empty-icon">📁</div>
-                        <p>No active projects</p>
-                    </div>
-                </div>
-
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <h2>Upcoming Conferences</h2>
-                        <a href="#" class="link">View all</a>
-                    </div>
-                    <div class="empty-state">
-                        <div class="empty-icon">🎓</div>
-                        <p>No upcoming conferences</p>
+                        <div class="empty-icon">👥</div>
+                        <p>No user data yet</p>
                     </div>
                 </div>
             </div>

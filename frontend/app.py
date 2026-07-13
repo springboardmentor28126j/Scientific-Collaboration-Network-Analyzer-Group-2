@@ -28,6 +28,7 @@ def login():
                 data = response.json()
                 session["token"] = data["access_token"]
                 session["email"] = email
+                session["role"] = data.get("role", "researcher")
                 return redirect(url_for("dashboard"))
             else:
                 return render_template("login.html", error="Invalid email or password")
@@ -108,8 +109,14 @@ def dashboard():
     if "token" not in session:
         return redirect(url_for("login"))
 
-    return render_template("dashboard.html", email=session.get("email"))
+    role = session.get("role", "researcher")
 
+    if role == "institution_admin":
+        return render_template("dashboard_institution.html", email=session.get("email"))
+    elif role == "system_admin":
+        return render_template("dashboard_admin.html", email=session.get("email"))
+    else:
+        return render_template("dashboard.html", email=session.get("email"))
 
 @app.route("/logout")
 def logout():

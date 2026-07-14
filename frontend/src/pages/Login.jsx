@@ -34,14 +34,27 @@ function Login() {
   "user",
   response.data.full_name
 );
+localStorage.setItem(
+  "role",
+  response.data.role
+);
 
       setMessage("✅ Login Successful");
 
       // 1 second tarvatha Dashboard ki redirect
       setTimeout(() => {
-        navigate("/");
-      }, 1000);
 
+  if (response.data.role === "Researcher") {
+
+    navigate("/researcher-dashboard");
+
+  } else {
+
+    navigate("/institution-dashboard");
+
+  }
+
+}, 1000);
     } catch (err) {
 
       setMessage("❌ Invalid Email or Password");

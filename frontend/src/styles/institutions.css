@@ -1,46 +1,177 @@
 .institutions-content{
     flex:1;
-    padding:30px;
-    background:#f8fafc;
+    padding:35px;
+    background:#f4f7fc;
     min-height:100vh;
 }
 
 .institutions-content h2{
-    margin-bottom:20px;
-    color:#1e293b;
-}
-
-.institutions-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-    border-radius:10px;
-    overflow:hidden;
-    box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
-
-.institutions-table th{
-    background:#2563eb;
-    color:white;
-    padding:15px;
-    text-align:left;
-}
-
-.institutions-table td{
-    padding:14px;
-    border-bottom:1px solid #e5e7eb;
-}
-
-.institutions-table tr:hover{
-    background:#f1f5f9;
-}
-
-.institutions-table a{
-    color:#2563eb;
-    text-decoration:none;
+    margin-bottom:25px;
+    color:#1e3a8a;
+    font-size:30px;
     font-weight:bold;
 }
 
+/* Search */
+
+.search-box{
+
+    width:100%;
+    padding:14px 20px;
+
+    margin-bottom:25px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:12px;
+
+    background:white;
+
+    font-size:16px;
+
+    outline:none;
+
+    transition:.3s;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+
+}
+
+.search-box:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 12px rgba(37,99,235,.25);
+
+}
+
+/* Table */
+
+.institutions-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    background:white;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+    display:block;
+
+    max-height:500px;
+
+    overflow-y:auto;
+
+}
+
+.institutions-table th{
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:18px;
+
+    text-align:left;
+
+    font-size:15px;
+
+    position:sticky;
+
+    top:0;
+
+    z-index:10;
+
+}
+
+.institutions-table td{
+
+    padding:16px;
+
+    border-bottom:1px solid #e5e7eb;
+
+    color:#374151;
+
+}
+
+.institutions-table tbody tr:nth-child(even){
+
+    background:#f8fafc;
+
+}
+
+.institutions-table tbody tr:hover{
+
+    background:#dbeafe;
+
+}
+
+.institutions-table a{
+
+    color:#2563eb;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+}
+
 .institutions-table a:hover{
+
+    color:#1d4ed8;
+
     text-decoration:underline;
+
+}
+
+@media(max-width:900px){
+
+.institutions-content{
+
+padding:20px;
+
+}
+
+.institutions-table{
+
+display:block;
+
+overflow-x:auto;
+
+}
+
+}
+.loading-container{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    height:60vh;
+}
+
+.spinner{
+    width:60px;
+    height:60px;
+    border:6px solid #dbeafe;
+    border-top:6px solid #2563eb;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+    margin-bottom:20px;
+}
+
+@keyframes spin{
+    100%{
+        transform:rotate(360deg);
+    }
+}
+
+.loading-text{
+    color:#2563eb;
+    font-size:20px;
+    font-weight:bold;
 }

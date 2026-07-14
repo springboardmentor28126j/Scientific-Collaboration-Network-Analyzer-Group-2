@@ -17,12 +17,6 @@ function Sidebar() {
 
       <Link to="/institutions">🏫 Institutions</Link>
 
-      <Link to="/login">🔐 Authentication</Link>
-       
-      <Link to="/login">🔐 Login</Link>
-
-      <Link to="/register">📝 Register</Link>
-
     </div>
   );
 }

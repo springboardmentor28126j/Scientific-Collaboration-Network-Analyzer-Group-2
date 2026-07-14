@@ -1,61 +1,116 @@
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/navbar.css";
-import { useNavigate } from "react-router-dom";
 
 function Navbar() {
 
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const today = new Date();
+    const user = localStorage.getItem("user");
+    const role = localStorage.getItem("role");
 
-  const user = localStorage.getItem("user");
+    const logout = () => {
+        localStorage.clear();
+        navigate("/login");
+    };
 
-  const handleLogout = () => {
+    return (
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+        <header className="navbar">
 
-    navigate("/login");
+            <div className="navbar-left">
 
-  };
+                <div className="logo">
+                    🔬
+                </div>
 
-  return (
+                <div>
 
-    <nav className="navbar">
+                    <h2>
+                        Scientific Collaboration
+                    </h2>
 
-      <div className="logo">
-        🔬 Scientific Collaboration Network Analyzer
-      </div>
+                    <span>
+                        Network Analyzer
+                    </span>
 
-      <div className="status">
+                </div>
 
-        <div className="online">
-          🟢 System Online
-        </div>
-
-        <div className="date">
-          {today.toLocaleDateString()}
-        </div>
-
-        {user && (
-          <>
-            <div className="welcome">
-              👋 Welcome, {user}
             </div>
 
-            <button
-              className="logout-btn"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
-          </>
-        )}
+            <div className="navbar-right">
 
-      </div>
+                <div className="status">
 
-    </nav>
+                    <span className="dot"></span>
 
-  );
+                    System Online
+
+                </div>
+
+                {user && (
+
+                    <div className="user-box">
+
+                        <div className="avatar">
+                            {user.charAt(0).toUpperCase()}
+                        </div>
+
+                        <div>
+
+                            <p>
+                                Welcome
+                            </p>
+
+                            <h4>
+                                {user}
+                            </h4>
+
+                        </div>
+
+                    </div>
+
+                )}
+
+                {user && (
+
+                    <button
+                        className="logout"
+                        onClick={logout}
+                    >
+                        Logout
+                    </button>
+
+                )}
+
+                {!user && (
+
+                    <>
+                       <div className="auth-buttons">
+
+    <Link
+        to="/login"
+        className="login-btn"
+    >
+        Login
+    </Link>
+
+    <Link
+        to="/register"
+        className="register-btn"
+    >
+        Register
+    </Link>
+
+</div>
+                    </>
+
+                )}
+
+            </div>
+
+        </header>
+
+    );
 
 }
 

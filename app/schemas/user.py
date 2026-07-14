@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 
@@ -9,20 +10,27 @@ class UserBase(BaseModel):
     full_name: str
     username: str
     email: EmailStr
-    phone_number: str
-    gender: str
-    date_of_birth: date
 
-    institution: str
-    department: str
-    designation: str
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
 
-    specialization: str
-    research_interests: str
+    institution: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
 
-    country: str
-    state: str
-    city: str
+    specialization: Optional[str] = None
+    research_interests: Optional[str] = None
+
+    country: Optional[str] = None
+    state: Optional[str] = None
+    city: Optional[str] = None
+
+    website: Optional[str] = None
+    established_year: Optional[str] = None
+    institution_type: Optional[str] = None
+
+    role: str = "Researcher"
 
 
 # ----------------------------
@@ -41,11 +49,33 @@ class UserLogin(BaseModel):
 
 
 # ----------------------------
+# Update Profile Schema
+# ----------------------------
+class UserUpdate(BaseModel):
+
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+
+    institution: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
+
+    specialization: Optional[str] = None
+    research_interests: Optional[str] = None
+
+    country: Optional[str] = None
+    state: Optional[str] = None
+    city: Optional[str] = None
+
+    website: Optional[str] = None
+
+
+# ----------------------------
 # Response Schema
 # ----------------------------
 class UserResponse(UserBase):
+
     id: int
-    role: str
 
     class Config:
         from_attributes = True

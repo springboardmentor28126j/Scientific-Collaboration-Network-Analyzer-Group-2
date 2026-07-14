@@ -10,25 +10,77 @@ function ResearchPapers() {
 
   const [papers, setPapers] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/papers/")
+
+    api
+      .get("/papers/")
       .then((res) => {
         setPapers(res.data);
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
+      })
+      .finally(() => {
+        setLoading(false);
       });
+
   }, []);
 
-  const filteredPapers = papers.filter((paper) =>
-    paper.title.toLowerCase().includes(search.toLowerCase()) ||
-    paper.authors.toLowerCase().includes(search.toLowerCase()) ||
-    paper.source.toLowerCase().includes(search.toLowerCase()) ||
-    paper.doi.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPapers = papers.filter((paper) => {
+
+    const title = (paper.title || "").toLowerCase();
+    const authors = (paper.authors || "").toLowerCase();
+    const source = (paper.source || "").toLowerCase();
+    const doi = (paper.doi || "").toLowerCase();
+
+    return (
+      title.includes(search.toLowerCase()) ||
+      authors.includes(search.toLowerCase()) ||
+      source.includes(search.toLowerCase()) ||
+      doi.includes(search.toLowerCase())
+    );
+
+  });
+
+  if (loading) {
+
+    return (
+
+      <>
+        <Navbar />
+
+        <div className="dashboard-container">
+
+          <Sidebar />
+
+          <div className="papers-content">
+
+            <div className="loading-container">
+
+              <div className="spinner"></div>
+
+              <div className="loading-text">
+                Loading Research Papers...
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <Footer />
+
+      </>
+
+    );
+
+  }
 
   return (
+
     <>
       <Navbar />
 
@@ -38,7 +90,9 @@ function ResearchPapers() {
 
         <div className="papers-content">
 
-          <h2>📄 Research Papers</h2>
+          <h2>
+            📄 Research Papers ({filteredPapers.length})
+          </h2>
 
           <input
             type="text"
@@ -53,12 +107,14 @@ function ResearchPapers() {
             <thead>
 
               <tr>
+
                 <th>ID</th>
                 <th>Title</th>
                 <th>Authors</th>
                 <th>Year</th>
                 <th>Source</th>
                 <th>DOI</th>
+
               </tr>
 
             </thead>
@@ -72,11 +128,11 @@ function ResearchPapers() {
                   <tr key={paper.id}>
 
                     <td>{paper.id}</td>
-                    <td>{paper.title}</td>
-                    <td>{paper.authors}</td>
-                    <td>{paper.publication_year}</td>
-                    <td>{paper.source}</td>
-                    <td>{paper.doi}</td>
+                    <td>{paper.title || "-"}</td>
+                    <td>{paper.authors || "-"}</td>
+                    <td>{paper.publication_year || "-"}</td>
+                    <td>{paper.source || "-"}</td>
+                    <td>{paper.doi || "-"}</td>
 
                   </tr>
 
@@ -85,9 +141,19 @@ function ResearchPapers() {
               ) : (
 
                 <tr>
-                  <td colSpan="6" style={{ textAlign: "center" }}>
-                    No Research Papers Found
+
+                  <td
+                    colSpan="6"
+                    style={{
+                      textAlign: "center",
+                      padding: "20px",
+                      color: "#ef4444",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    ❌ No Research Papers Found
                   </td>
+
                 </tr>
 
               )}
@@ -103,7 +169,9 @@ function ResearchPapers() {
       <Footer />
 
     </>
+
   );
+
 }
 
 export default ResearchPapers;

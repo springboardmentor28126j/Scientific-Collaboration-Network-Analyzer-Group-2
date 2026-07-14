@@ -1,0 +1,64 @@
+.sidebar{
+    width:260px;
+    height:calc(100vh - 75px);   /* min-height badulu height */
+    background:#0f172a;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    padding:25px 18px;
+    box-shadow:3px 0 15px rgba(0,0,0,.15);
+    box-sizing:border-box;
+}
+
+.sidebar-top{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.sidebar-top h2{
+    font-size:48px;
+    margin-bottom:5px;
+    line-height:1;
+}
+
+.sidebar-top h3{
+    font-size:20px;
+    margin-top:0;
+}
+
+.sidebar nav{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:1;
+}
+
+.sidebar nav a{
+    color:white;
+    text-decoration:none;
+    padding:14px 18px;
+    border-radius:12px;
+    transition:.3s;
+    font-size:17px;
+}
+
+.sidebar nav a:hover{
+    background:#2563eb;
+    transform:translateX(5px);
+}
+
+.sidebar nav a.active{
+    background:#2563eb;
+    font-weight:bold;
+}
+
+.logout-btn{
+    margin-top:auto;
+    border:none;
+    background:#dc2626;
+    color:white;
+    padding:14px;
+    border-radius:12px;
+    cursor:pointer;
+    font-size:17px;
+}

@@ -13,7 +13,7 @@ from app.models.collaboration import Collaboration
 from app.schemas.collaboration import CollaborationCreate
 
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import hash_password
 
 
@@ -168,12 +168,18 @@ def create_user(db: Session, user: UserCreate):
         research_interests=user.research_interests,
 
         # Location
+        # Location
         country=user.country,
         state=user.state,
         city=user.city,
 
+        # Institution Details
+        website=user.website,
+        established_year=user.established_year,
+        institution_type=user.institution_type,
+
         # Role
-        role="Researcher"
+            role=user.role
 
     )
 
@@ -182,3 +188,26 @@ def create_user(db: Session, user: UserCreate):
     db.refresh(new_user)
 
     return new_user
+# -----------------------------
+# Update User Profile
+# -----------------------------
+
+from app.schemas.user import UserUpdate
+
+
+def update_user(
+    db: Session,
+    db_user: User,
+    user: UserUpdate
+):
+
+    update_data = user.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+
+    return db_user

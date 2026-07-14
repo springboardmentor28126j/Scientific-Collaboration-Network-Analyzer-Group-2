@@ -32,5 +32,9 @@ class User(Base):
     state = Column(String(100))
     city = Column(String(100))
 
+    website = Column(String(255))
+    established_year = Column(String(10))
+    institution_type = Column(String(100))
+
     # Role
     role = Column(String(50), default="Researcher")

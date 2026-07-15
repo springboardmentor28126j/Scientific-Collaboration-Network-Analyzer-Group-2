@@ -1,0 +1,16 @@
+from fastapi import FastAPI
+from app.database import engine, Base
+import app.models
+from app.routes import users, researchers
+import traceback
+
+app = FastAPI(title="Scientific Collaboration Network Analyzer")
+
+Base.metadata.create_all(bind=engine)
+
+app.include_router(users.router)
+app.include_router(researchers.router)
+
+@app.get("/")
+def root():
+    return {"status": "Project started successfully"}

@@ -11,6 +11,8 @@ from app.db.session import get_session
 from app.services.auth_service import AuthService
 from app.services.institution_service import InstitutionService
 from app.services.user_service import UserService
+from app.services.publication_service import PublicationService
+from app.services.publication_author_service import PublicationAuthorService
 
 
 def get_auth_service(session: AsyncSession = Depends(get_session)) -> AuthService:
@@ -23,3 +25,13 @@ def get_institution_service(session: AsyncSession = Depends(get_session)) -> Ins
 
 def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
     return UserService(session)
+
+
+def get_publication_service(session: AsyncSession = Depends(get_session)) -> PublicationService:
+    return PublicationService(session)
+
+
+def get_publication_author_service(
+    session: AsyncSession = Depends(get_session),
+) -> PublicationAuthorService:
+    return PublicationAuthorService(session)

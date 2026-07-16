@@ -42,8 +42,8 @@ services:
   mailcatcher:
     image: schickling/mailcatcher
     ports:
-      - "1080:1080"  # web UI — view every email sent by the app here
-      - "1025:1025"  # SMTP port the app sends mail to
+      - "1080:1080" # web UI — view every email sent by the app here
+      - "1025:1025" # SMTP port the app sends mail to
 
 volumes:
   postgres_data:

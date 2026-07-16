@@ -10,6 +10,8 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models.institution import Institution
+    from app.models.publication import Publication
+    from app.models.publication_author import PublicationAuthor
 
 
 class UserRole(StrEnum):
@@ -48,3 +50,10 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     institution: Mapped["Institution | None"] = relationship("Institution", back_populates="users")
+    publications: Mapped[list["Publication"]] = relationship(
+        "Publication",
+        back_populates="creator",
+    )
+    authored_publications: Mapped[list["PublicationAuthor"]] = relationship(
+        "PublicationAuthor",
+    )

@@ -15,9 +15,11 @@ class InstitutionRepository:
         self.session.add(institution)
         await self.session.flush()
         return institution
-    
+
     async def list_all(self) -> list[Institution]:
-        result = await self.session.execute(select(Institution).order_by(Institution.created_at.desc()))
+        result = await self.session.execute(
+            select(Institution).order_by(Institution.created_at.desc())
+        )
         return list(result.scalars().all())
 
     async def get_by_id(self, institution_id: uuid.UUID) -> Institution | None:

@@ -15,6 +15,7 @@ from app.services.user_service import UserService
 from app.services.publication_service import PublicationService
 from app.services.publication_author_service import PublicationAuthorService
 from app.services.review_service import ReviewService
+from app.services.publication_history_service import PublicationHistoryService
 
 
 def get_auth_service(session: AsyncSession = Depends(get_session)) -> AuthService:
@@ -49,3 +50,9 @@ def get_review_service(
     session: AsyncSession = Depends(get_session),
 ) -> ReviewService:
     return ReviewService(session)
+
+
+def get_publication_history_service(
+    session: AsyncSession = Depends(get_session),
+) -> PublicationHistoryService:
+    return PublicationHistoryService(session)

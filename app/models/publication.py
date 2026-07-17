@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.publication_author import PublicationAuthor
     from app.models.review_assignment import ReviewAssignment
+    from app.models.publication_history import PublicationHistory
 
 
 class PublicationStatus(StrEnum):
@@ -136,4 +137,11 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         "User",
         foreign_keys=[decided_by],
         back_populates="editor_decisions",
+    )
+
+    history: Mapped[list["PublicationHistory"]] = relationship(
+        "PublicationHistory",
+        back_populates="publication",
+        cascade="all, delete-orphan",
+        order_by="PublicationHistory.created_at.desc()",
     )

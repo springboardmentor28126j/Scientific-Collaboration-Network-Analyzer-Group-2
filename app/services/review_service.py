@@ -8,6 +8,7 @@ from app.core.exceptions import (
     ForbiddenError,
     NotFoundError,
 )
+from app.models.publication_history import PublicationHistoryAction
 from app.models.review import Review
 from app.models.review_assignment import ReviewAssignmentStatus
 from app.models.user import User, UserRole
@@ -16,6 +17,7 @@ from app.repositories.review_assignment_repository import (
 )
 from app.repositories.review_repository import ReviewRepository
 from app.schemas.review import ReviewCreate, ReviewRead
+from app.services.publication_history_service import PublicationHistoryService
 
 
 class ReviewService:
@@ -23,6 +25,7 @@ class ReviewService:
         self.session = session
         self.reviews = ReviewRepository(session)
         self.assignments = ReviewAssignmentRepository(session)
+        self.history = PublicationHistoryService(session)
 
     def _to_read_schema(
         self,
@@ -77,6 +80,13 @@ class ReviewService:
         )
 
         await self.assignments.mark_completed(assignment)
+
+        await self.history.log(
+            publication_id=assignment.publication_id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.REVIEW_SUBMITTED,
+            description="Review submitted.",
+        )
 
         await self.session.commit()
 

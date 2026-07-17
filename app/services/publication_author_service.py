@@ -10,6 +10,8 @@ from app.repositories.publication_author_repository import PublicationAuthorRepo
 from app.repositories.publication_repository import PublicationRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.publication_author import PublicationAuthorCreate, PublicationAuthorRead
+from app.models.publication_history import PublicationHistoryAction
+from app.services.publication_history_service import PublicationHistoryService
 
 
 class PublicationAuthorService:
@@ -18,6 +20,7 @@ class PublicationAuthorService:
         self.publications = PublicationRepository(session)
         self.authors = PublicationAuthorRepository(session)
         self.users = UserRepository(session)
+        self.history = PublicationHistoryService(session)
 
     def _to_read_schema(self, author: PublicationAuthor) -> PublicationAuthorRead:
         return PublicationAuthorRead(
@@ -79,6 +82,13 @@ class PublicationAuthorService:
             is_corresponding_author=payload.is_corresponding_author,
         )
 
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.AUTHOR_ADDED,
+            description=f"Added author '{researcher.full_name}'.",
+        )
+
         await self.session.commit()
 
         author = await self.authors.get_author(
@@ -124,6 +134,13 @@ class PublicationAuthorService:
 
         if author is None:
             raise NotFoundError("Author not found.")
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.AUTHOR_REMOVED,
+            description=f"Removed author '{author.researcher.full_name}'.",
+        )
 
         await self.authors.delete(author)
 

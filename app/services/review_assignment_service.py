@@ -24,6 +24,9 @@ from app.schemas.review_assignment import (
     ReviewAssignmentRead,
 )
 
+from app.models.publication_history import PublicationHistoryAction
+from app.services.publication_history_service import PublicationHistoryService
+
 
 class ReviewAssignmentService:
     def __init__(self, session: AsyncSession) -> None:
@@ -31,6 +34,7 @@ class ReviewAssignmentService:
         self.assignments = ReviewAssignmentRepository(session)
         self.publications = PublicationRepository(session)
         self.users = UserRepository(session)
+        self.history = PublicationHistoryService(session)
 
     def _to_read_schema(
         self,
@@ -98,6 +102,13 @@ class ReviewAssignmentService:
             created_assignments.append(self._to_read_schema(assignment))
 
         publication.status = PublicationStatus.UNDER_REVIEW
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.REVIEWER_ASSIGNED,
+            description=f"Reviewer '{reviewer.full_name}' assigned.",
+        )
 
         await self.session.commit()
 

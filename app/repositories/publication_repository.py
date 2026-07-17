@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timezone
 import uuid
 
 from sqlalchemy import select
@@ -64,6 +64,28 @@ class PublicationRepository:
         publication.editor_note = editor_note
         publication.decided_by = decided_by
         publication.decision_at = datetime.now(UTC)
+
+        await self.session.flush()
+
+        return publication
+    
+    async def publish(
+        self,
+        publication: Publication,
+    ) -> Publication:
+        publication.status = PublicationStatus.PUBLISHED
+        publication.published_at = datetime.now(timezone.utc)
+
+        await self.session.flush()
+
+        return publication
+    
+    async def archive(
+        self,
+        publication: Publication,
+    ) -> Publication:
+        publication.status = PublicationStatus.ARCHIVED
+        publication.archived_at = datetime.now(timezone.utc)
 
         await self.session.flush()
 

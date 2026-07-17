@@ -236,3 +236,33 @@ async def make_editor_decision(
         payload=payload,
         current_user=current_user,
     )
+
+@router.patch(
+    "/{publication_id}/publish",
+    response_model=PublicationRead,
+    summary="Publish publication",
+)
+async def publish_publication(
+    publication_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service),
+):
+    return await service.publish(
+        publication_id=publication_id,
+        current_user=current_user,
+    )
+
+@router.patch(
+    "/{publication_id}/archive",
+    response_model=PublicationRead,
+    summary="Archive publication",
+)
+async def archive_publication(
+    publication_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service),
+):
+    return await service.archive(
+        publication_id=publication_id,
+        current_user=current_user,
+    )

@@ -7,7 +7,9 @@ from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.schemas.publication import PublicationCreate, PublicationUpdate
 from app.schemas.publication_decision import PublicationDecisionCreate, EditorialDecision
 from app.services.cloudinary_service import CloudinaryService
+from app.services.publication_history_service import PublicationHistoryService
 from app.models.publication import Publication, PublicationStatus
+from app.models.publication_history import PublicationHistoryAction
 from app.models.user import User, UserRole
 from app.repositories.publication_repository import PublicationRepository
 from app.repositories.publication_author_repository import PublicationAuthorRepository
@@ -20,6 +22,7 @@ class PublicationService:
         self.publications = PublicationRepository(session)
         self.author_repository = PublicationAuthorRepository(session)
         self.review_assignments = ReviewAssignmentRepository(session)
+        self.history = PublicationHistoryService(session)
 
     async def create_publication(
         self,
@@ -54,6 +57,13 @@ class PublicationService:
             pdf_public_id=pdf_public_id,
             status=PublicationStatus.DRAFT,
             created_by=current_user.id,
+        )
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.CREATED,
+            description="Publication created.",
         )
 
         await self.session.commit()
@@ -97,6 +107,13 @@ class PublicationService:
         publication = await self.publications.update(
             publication,
             **update_data,
+        )
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.UPDATED,
+            description="Publication details updated.",
         )
 
         await self.session.commit()
@@ -145,6 +162,13 @@ class PublicationService:
             raise ConflictError("At least one author is required.")
 
         publication = await self.publications.submit(publication)
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.SUBMITTED,
+            description="Publication submitted for review.",
+        )
 
         await self.session.commit()
 
@@ -206,8 +230,100 @@ class PublicationService:
             decided_by=current_user.id,
         )
 
+        if payload.decision == EditorialDecision.ACCEPTED:
+            action = PublicationHistoryAction.ACCEPTED
+
+        elif payload.decision == EditorialDecision.REJECTED:
+            action = PublicationHistoryAction.REJECTED
+
+        else:
+            action = PublicationHistoryAction.REVISION_REQUESTED
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=action,
+            description=payload.editor_note,
+        )
+
         await self.session.commit()
 
+        await self.session.refresh(publication)
+
+        return publication
+    
+    async def publish(
+        self,
+        publication_id: uuid.UUID,
+        current_user: User,
+    ) -> Publication:
+
+        if current_user.role != UserRole.SUPER_ADMIN:
+            raise ForbiddenError(
+                "Only the super administrator can publish publications."
+            )
+
+        publication = await self.publications.get_by_id(publication_id)
+
+        if publication is None:
+            raise NotFoundError("Publication not found.")
+
+        if publication.status == PublicationStatus.PUBLISHED:
+            raise ConflictError("Publication is already published.")
+
+        if publication.status != PublicationStatus.ACCEPTED:
+            raise ConflictError(
+                "Only accepted publications can be published."
+            )
+
+        publication = await self.publications.publish(publication)
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.PUBLISHED,
+            description="Publication published.",
+        )
+
+        await self.session.commit()
+        await self.session.refresh(publication)
+
+        return publication
+
+    async def archive(
+        self,
+        publication_id: uuid.UUID,
+        current_user: User,
+    ) -> Publication:
+
+        if current_user.role != UserRole.SUPER_ADMIN:
+            raise ForbiddenError(
+                "Only the super administrator can archive publications."
+            )
+
+        publication = await self.publications.get_by_id(publication_id)
+
+        if publication is None:
+            raise NotFoundError("Publication not found.")
+
+        if publication.status == PublicationStatus.ARCHIVED:
+            raise ConflictError("Publication is already archived.")
+
+        if publication.status != PublicationStatus.PUBLISHED:
+            raise ConflictError(
+                "Only published publications can be archived."
+            )
+
+        publication = await self.publications.archive(publication)
+
+        await self.history.log(
+            publication_id=publication.id,
+            performed_by=current_user.id,
+            action=PublicationHistoryAction.ARCHIVED,
+            description="Publication archived.",
+        )
+
+        await self.session.commit()
         await self.session.refresh(publication)
 
         return publication

@@ -8,7 +8,7 @@ from app.core.security import hash_password
 from app.models.token import VerificationPurpose
 from app.models.user import User, UserRole
 from app.repositories.user_repository import UserRepository
-from app.schemas.user import UserCreateByInstitution
+from app.schemas.user import ResearcherRead, UserCreateByInstitution
 from app.services.auth_service import AuthService
 from app.services.email_service import EmailService
 
@@ -92,3 +92,24 @@ class UserService:
         user = await self.users.set_active(user, is_active)
         await self.session.commit()
         return user
+
+    async def list_researchers(
+        self,
+        search: str | None = None,
+    ) -> list[ResearcherRead]:
+        """
+        Lists all researchers across institutions, for the public-facing
+        researcher directory. Only verified and active researchers are
+        returned.
+        """
+        researchers = await self.users.list_researchers(search)
+        return [
+            ResearcherRead(
+                id=r.id,
+                full_name=r.full_name,
+                email=r.email,
+                description=r.description,
+                institution_name=(r.institution.name if r.institution else ""),
+            )
+            for r in researchers
+        ]

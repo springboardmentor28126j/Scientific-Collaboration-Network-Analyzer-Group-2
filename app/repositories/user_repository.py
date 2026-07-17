@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -60,3 +60,29 @@ class UserRepository:
         await self.session.commit()
         await self.session.refresh(user)
         return user
+
+    async def list_researchers(
+        self,
+        search: str | None = None,
+    ) -> list[User]:
+        stmt = (
+            select(User)
+            .options(selectinload(User.institution))
+            .where(
+                User.role == UserRole.RESEARCHER,
+                User.is_active.is_(True),
+                User.is_verified.is_(True),
+            )
+            .order_by(User.full_name.asc())
+        )
+
+        if search:
+            stmt = stmt.where(
+                or_(
+                    User.full_name.ilike(f"%{search}%"),
+                    User.email.ilike(f"%{search}%"),
+                )
+            )
+        result = await self.session.execute(stmt)
+        print(result)
+        return list(result.scalars().all())

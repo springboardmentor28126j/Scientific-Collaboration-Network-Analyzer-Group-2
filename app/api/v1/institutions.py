@@ -42,6 +42,7 @@ async def register_institution(
     institution, _admin = await institution_service.register(payload, logo)
     return institution
 
+
 @router.get(
     "",
     response_model=list[InstitutionRead],
@@ -52,6 +53,7 @@ async def list_institutions(
     institution_service: InstitutionService = Depends(get_institution_service),
 ):
     return await institution_service.list_institutions()
+
 
 @router.patch(
     "/{institution_id}/activate",

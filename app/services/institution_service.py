@@ -61,7 +61,7 @@ class InstitutionService:
 
         await self.session.commit()
         return institution, admin
-    
+
     async def list_institutions(self) -> list[Institution]:
         return await self.institutions.list_all()
 

@@ -10,9 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session
 from app.services.auth_service import AuthService
 from app.services.institution_service import InstitutionService
+from app.services.review_assignment_service import ReviewAssignmentService
 from app.services.user_service import UserService
 from app.services.publication_service import PublicationService
 from app.services.publication_author_service import PublicationAuthorService
+from app.services.review_service import ReviewService
 
 
 def get_auth_service(session: AsyncSession = Depends(get_session)) -> AuthService:
@@ -35,3 +37,15 @@ def get_publication_author_service(
     session: AsyncSession = Depends(get_session),
 ) -> PublicationAuthorService:
     return PublicationAuthorService(session)
+
+
+def get_review_assignment_service(
+    session: AsyncSession = Depends(get_session),
+) -> ReviewAssignmentService:
+    return ReviewAssignmentService(session)
+
+
+def get_review_service(
+    session: AsyncSession = Depends(get_session),
+) -> ReviewService:
+    return ReviewService(session)

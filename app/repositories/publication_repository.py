@@ -51,3 +51,20 @@ class PublicationRepository:
 
         await self.session.flush()
         return publication
+
+    async def update_editor_decision(
+        self,
+        publication: Publication,
+        status: PublicationStatus,
+        editor_note: str,
+        decided_by: uuid.UUID,
+    ) -> Publication:
+
+        publication.status = status
+        publication.editor_note = editor_note
+        publication.decided_by = decided_by
+        publication.decision_at = datetime.now(UTC)
+
+        await self.session.flush()
+
+        return publication

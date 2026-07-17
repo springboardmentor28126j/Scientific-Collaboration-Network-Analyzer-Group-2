@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.institution import Institution
     from app.models.publication import Publication
     from app.models.publication_author import PublicationAuthor
+    from app.models.review_assignment import ReviewAssignment
 
 
 class UserRole(StrEnum):
@@ -52,8 +53,19 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     institution: Mapped["Institution | None"] = relationship("Institution", back_populates="users")
     publications: Mapped[list["Publication"]] = relationship(
         "Publication",
+        foreign_keys="Publication.created_by",
         back_populates="creator",
+    )
+    editor_decisions: Mapped[list["Publication"]] = relationship(
+        "Publication",
+        foreign_keys="Publication.decided_by",
+        back_populates="editor",
     )
     authored_publications: Mapped[list["PublicationAuthor"]] = relationship(
         "PublicationAuthor",
+    )
+    review_assignments: Mapped[list["ReviewAssignment"]] = relationship(
+        "ReviewAssignment",
+        foreign_keys="ReviewAssignment.reviewer_id",
+        back_populates="reviewer",
     )

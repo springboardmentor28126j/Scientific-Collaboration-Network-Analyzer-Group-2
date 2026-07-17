@@ -17,6 +17,9 @@ from app.schemas.publication_author import (
     PublicationAuthorCreate,
     PublicationAuthorRead,
 )
+from app.schemas.publication_decision import (
+    PublicationDecisionCreate,
+)
 from app.services.publication_service import PublicationService
 from app.services.publication_author_service import PublicationAuthorService
 
@@ -211,4 +214,25 @@ async def submit_publication(
     return await publication_service.submit_publication(
         publication_id,
         current_user,
+    )
+
+
+@router.post(
+    "/{publication_id}/decision",
+    response_model=PublicationRead,
+    summary="Make editorial decision",
+    description=("Super admin only. Accept, reject or request revision for a publication."),
+)
+async def make_editor_decision(
+    publication_id: uuid.UUID,
+    payload: PublicationDecisionCreate,
+    current_user: User = Depends(get_current_user),
+    publication_service: PublicationService = Depends(
+        get_publication_service,
+    ),
+):
+    return await publication_service.make_editor_decision(
+        publication_id=publication_id,
+        payload=payload,
+        current_user=current_user,
     )

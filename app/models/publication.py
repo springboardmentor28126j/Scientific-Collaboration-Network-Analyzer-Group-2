@@ -12,6 +12,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from app.models.user import User
     from app.models.publication_author import PublicationAuthor
+    from app.models.review_assignment import ReviewAssignment
 
 
 class PublicationStatus(StrEnum):
@@ -97,8 +98,25 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         nullable=True,
     )
 
+    editor_note: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    decision_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     creator: Mapped["User"] = relationship(
         "User",
+        foreign_keys=[created_by],
         back_populates="publications",
     )
 
@@ -106,4 +124,16 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         "PublicationAuthor",
         back_populates="publication",
         cascade="all, delete-orphan",
+    )
+
+    review_assignments: Mapped[list["ReviewAssignment"]] = relationship(
+        "ReviewAssignment",
+        back_populates="publication",
+        cascade="all, delete-orphan",
+    )
+
+    editor: Mapped["User | None"] = relationship(
+        "User",
+        foreign_keys=[decided_by],
+        back_populates="editor_decisions",
     )

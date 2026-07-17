@@ -4,12 +4,14 @@ from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
-from app.repositories.publication_author_repository import PublicationAuthorRepository
+from app.schemas.publication import PublicationCreate, PublicationUpdate
+from app.schemas.publication_decision import PublicationDecisionCreate, EditorialDecision
 from app.services.cloudinary_service import CloudinaryService
 from app.models.publication import Publication, PublicationStatus
 from app.models.user import User, UserRole
 from app.repositories.publication_repository import PublicationRepository
-from app.schemas.publication import PublicationCreate, PublicationUpdate
+from app.repositories.publication_author_repository import PublicationAuthorRepository
+from app.repositories.review_assignment_repository import ReviewAssignmentRepository
 
 
 class PublicationService:
@@ -17,6 +19,7 @@ class PublicationService:
         self.session = session
         self.publications = PublicationRepository(session)
         self.author_repository = PublicationAuthorRepository(session)
+        self.review_assignments = ReviewAssignmentRepository(session)
 
     async def create_publication(
         self,
@@ -142,6 +145,66 @@ class PublicationService:
             raise ConflictError("At least one author is required.")
 
         publication = await self.publications.submit(publication)
+
+        await self.session.commit()
+
+        await self.session.refresh(publication)
+
+        return publication
+
+    async def make_editor_decision(
+        self,
+        publication_id: uuid.UUID,
+        payload: PublicationDecisionCreate,
+        current_user: User,
+    ) -> Publication:
+        """
+        Make the final editorial decision for a publication.
+
+        Only the SUPER_ADMIN can perform this action.
+        """
+
+        # ---------- Permission ----------
+
+        if current_user.role != UserRole.SUPER_ADMIN:
+            raise ForbiddenError("Only the super administrator can make editorial decisions.")
+
+        # ---------- Publication ----------
+
+        publication = await self.publications.get_by_id(publication_id)
+
+        if publication is None:
+            raise NotFoundError("Publication not found.")
+
+        # ---------- Status ----------
+
+        if publication.status != PublicationStatus.UNDER_REVIEW:
+            raise ConflictError("Only publications under review can receive an editorial decision.")
+
+        # ---------- Reviews ----------
+
+        completed = await self.review_assignments.all_completed(publication.id)
+
+        if not completed:
+            raise ConflictError("All reviewers must submit their reviews before making a decision.")
+
+        # ---------- Decision ----------
+
+        if payload.decision == EditorialDecision.ACCEPTED:
+            new_status = PublicationStatus.ACCEPTED
+
+        elif payload.decision == EditorialDecision.REJECTED:
+            new_status = PublicationStatus.REJECTED
+
+        else:
+            new_status = PublicationStatus.REVISION_REQUIRED
+
+        publication = await self.publications.update_editor_decision(
+            publication=publication,
+            status=new_status,
+            editor_note=payload.editor_note,
+            decided_by=current_user.id,
+        )
 
         await self.session.commit()
 

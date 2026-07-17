@@ -145,3 +145,10 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
         order_by="PublicationHistory.created_at.desc()",
     )
+
+    conference = relationship(
+        "PublicationConference",
+        back_populates="publication",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

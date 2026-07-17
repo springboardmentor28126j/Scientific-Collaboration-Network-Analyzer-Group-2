@@ -40,6 +40,9 @@ class PublicationHistoryAction(StrEnum):
     PUBLISHED = "PUBLISHED"
     ARCHIVED = "ARCHIVED"
 
+    CONFERENCE_CREATED = "CONFERENCE_CREATED"
+    CONFERENCE_UPDATED = "CONFERENCE_UPDATED"
+
 
 class PublicationHistory(Base, TimestampMixin):
     __tablename__ = "publication_histories"

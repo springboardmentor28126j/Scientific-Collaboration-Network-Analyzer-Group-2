@@ -1,8 +1,6 @@
 # Scientific Research Management System — Backend
 
-Production-grade FastAPI backend. This phase covers **auth + institution/user
-management only** — see `docs/architecture.md` for the full plan and design
-decisions.
+Production-grade FastAPI backend
 
 ## Stack
 
@@ -80,6 +78,7 @@ tests — nothing hits real external services.
 ## API docs
 
 Once running, interactive docs are at:
+
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
@@ -94,8 +93,3 @@ Once running, interactive docs are at:
    `SECRET_KEY`, etc).
 4. Add `alembic upgrade head` as a **Pre-Deploy Command** so migrations run
    before the new instance takes traffic.
-
-## Project layout
-
-See `docs/architecture.md` for the full folder structure and the reasoning
-behind it.

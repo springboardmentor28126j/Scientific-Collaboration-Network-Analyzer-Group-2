@@ -11,6 +11,7 @@ from app.models.publication_author import PublicationAuthor
 from app.models.review_assignment import ReviewAssignment, ReviewAssignmentStatus
 from app.models.review import Review, ReviewDecision
 from app.models.publication_history import PublicationHistory, PublicationHistoryAction
+from app.models.publication_conference import PublicationConference, ConferenceOutcome
 
 __all__ = [
     "Institution",
@@ -20,6 +21,8 @@ __all__ = [
     "PublicationAuthor",
     "PublicationStatus",
     "PublicationHistory",
+    "PublicationConference",
+    "ConferenceOutcome",
     "PublicationHistoryAction",
     "ReviewAssignment",
     "ReviewAssignmentStatus",
@@ -28,4 +31,5 @@ __all__ = [
     "EmailVerificationToken",
     "PasswordResetToken",
     "VerificationPurpose",
+
 ]

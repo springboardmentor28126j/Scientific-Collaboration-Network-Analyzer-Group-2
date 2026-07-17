@@ -28,5 +28,4 @@ __all__ = [
     "EmailVerificationToken",
     "PasswordResetToken",
     "VerificationPurpose",
-
 ]

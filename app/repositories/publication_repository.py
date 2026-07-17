@@ -68,7 +68,7 @@ class PublicationRepository:
         await self.session.flush()
 
         return publication
-    
+
     async def publish(
         self,
         publication: Publication,
@@ -79,7 +79,7 @@ class PublicationRepository:
         await self.session.flush()
 
         return publication
-    
+
     async def archive(
         self,
         publication: Publication,

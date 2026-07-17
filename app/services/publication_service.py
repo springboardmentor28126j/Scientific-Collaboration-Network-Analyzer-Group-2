@@ -251,7 +251,7 @@ class PublicationService:
         await self.session.refresh(publication)
 
         return publication
-    
+
     async def publish(
         self,
         publication_id: uuid.UUID,
@@ -259,9 +259,7 @@ class PublicationService:
     ) -> Publication:
 
         if current_user.role != UserRole.SUPER_ADMIN:
-            raise ForbiddenError(
-                "Only the super administrator can publish publications."
-            )
+            raise ForbiddenError("Only the super administrator can publish publications.")
 
         publication = await self.publications.get_by_id(publication_id)
 
@@ -272,9 +270,7 @@ class PublicationService:
             raise ConflictError("Publication is already published.")
 
         if publication.status != PublicationStatus.ACCEPTED:
-            raise ConflictError(
-                "Only accepted publications can be published."
-            )
+            raise ConflictError("Only accepted publications can be published.")
 
         publication = await self.publications.publish(publication)
 
@@ -297,9 +293,7 @@ class PublicationService:
     ) -> Publication:
 
         if current_user.role != UserRole.SUPER_ADMIN:
-            raise ForbiddenError(
-                "Only the super administrator can archive publications."
-            )
+            raise ForbiddenError("Only the super administrator can archive publications.")
 
         publication = await self.publications.get_by_id(publication_id)
 
@@ -310,9 +304,7 @@ class PublicationService:
             raise ConflictError("Publication is already archived.")
 
         if publication.status != PublicationStatus.PUBLISHED:
-            raise ConflictError(
-                "Only published publications can be archived."
-            )
+            raise ConflictError("Only published publications can be archived.")
 
         publication = await self.publications.archive(publication)
 

@@ -24,9 +24,7 @@ class PublicationHistoryRepository:
     ) -> list[PublicationHistory]:
         result = await self.session.execute(
             select(PublicationHistory)
-            .options(
-                selectinload(PublicationHistory.user)
-            )
+            .options(selectinload(PublicationHistory.user))
             .where(
                 PublicationHistory.publication_id == publication_id,
             )

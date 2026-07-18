@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { useAuthStore, useIsSuperAdmin, useIsInstitutionAdmin } from "@/stores/authStore";
+import { useAuthStore, useIsSuperAdmin } from "@/stores/authStore";
 import { useLogout } from "@/hooks/useAuthQuery";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,6 @@ function SidebarContent() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = useIsSuperAdmin();
-  const isInstitutionAdmin = useIsInstitutionAdmin();
   const logoutMutation = useLogout();
 
   const navItems = getNavItems().filter((item) =>

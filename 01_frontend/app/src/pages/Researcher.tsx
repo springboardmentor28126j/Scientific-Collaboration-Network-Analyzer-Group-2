@@ -1,6 +1,5 @@
 import { useAuthStore } from "@/stores/authStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { BookOpen, FileText, Upload, Clock, CheckCircle2 } from "lucide-react";
 
 export default function Researcher() {

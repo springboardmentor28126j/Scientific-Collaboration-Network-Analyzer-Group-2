@@ -11,8 +11,8 @@ export default function Dashboard() {
   const isResearcher = useIsResearcher();
   const isReviewer = useIsReviewer();
 
-  const { data: institutions } = useInstitutions({ enabled: isSuperAdmin });
-  const { data: users } = useInstitutionUsers(undefined, { enabled: isInstitutionAdmin });
+  const { data: institutions } = useInstitutions();
+  const { data: users } = useInstitutionUsers();
 
   const activeInstitutions = institutions?.filter((i) => i.is_active).length || 0;
   const totalInstitutions = institutions?.length || 0;

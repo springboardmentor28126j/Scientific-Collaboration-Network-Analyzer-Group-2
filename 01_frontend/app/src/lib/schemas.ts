@@ -58,8 +58,8 @@ export type InstitutionRegisterFormData = z.infer<typeof institutionRegisterSche
 export const createUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   full_name: z.string().min(1, "Full name is required").max(255),
-  role: z.enum(["RESEARCHER", "REVIEWER"], {
-    required_error: "Please select a role",
+  role: z.enum(["RESEARCHER", "REVIEWER"] as const, {
+    error: "Please select a role",
   }),
   description: z.string().optional(),
 });

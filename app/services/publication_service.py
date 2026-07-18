@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import UploadFile
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
@@ -338,3 +339,23 @@ class PublicationService:
         await self.session.refresh(publication)
 
         return publication
+    
+    async def download_publication(
+        self,
+        publication_id: uuid.UUID,
+        current_user: User,
+    ) -> str:
+        publication = await self.publications.get_by_id(publication_id)
+
+        if publication is None:
+            raise NotFoundError("Publication not found.")
+
+        if not publication.pdf_url:
+            raise NotFoundError("Publication PDF not found.")
+
+        if not current_user.is_verified:
+            raise ForbiddenError(
+                "Only verified users can download publications."
+            )
+
+        return publication.pdf_url

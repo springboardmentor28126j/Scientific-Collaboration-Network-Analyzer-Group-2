@@ -1,8 +1,9 @@
 import { useAuthStore, useIsSuperAdmin, useIsInstitutionAdmin, useIsResearcher, useIsReviewer } from "@/stores/authStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, BookOpen, ClipboardCheck, Shield, Activity } from "lucide-react";
+import { Building2, Users, BookOpen, ClipboardCheck, Shield, Activity, PieChart as PieChartIcon } from "lucide-react";
 import { useInstitutions } from "@/hooks/useAuthQuery";
-import { useInstitutionUsers } from "@/hooks/useAuthQuery";
+import { useDashboard } from "@/hooks/useDashboardQuery";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 export default function Dashboard() {
   const user = useAuthStore((state) => state.user);
@@ -12,12 +13,35 @@ export default function Dashboard() {
   const isReviewer = useIsReviewer();
 
   const { data: institutions } = useInstitutions();
-  const { data: users } = useInstitutionUsers();
+  const { data: dashboard, isLoading } = useDashboard();
 
   const activeInstitutions = institutions?.filter((i) => i.is_active).length || 0;
-  const totalInstitutions = institutions?.length || 0;
-  const totalUsers = users?.length || 0;
-  const activeUsers = users?.filter((u) => u.is_active).length || 0;
+
+  const STATUS_COLORS = {
+    "Draft": "#94a3b8", // slate-400
+    "Submitted": "#60a5fa", // blue-400
+    "Under Review": "#f59e0b", // amber-500
+    "Revision Required": "#f97316", // orange-500
+    "Accepted": "#10b981", // emerald-500
+    "Rejected": "#ef4444", // red-500
+    "Published": "#a855f7", // purple-500
+    "Archived": "#64748b" // slate-500
+  };
+
+  const chartData = dashboard?.publication_status ? [
+    { name: "Draft", value: dashboard.publication_status.draft },
+    { name: "Submitted", value: dashboard.publication_status.submitted },
+    { name: "Under Review", value: dashboard.publication_status.under_review },
+    { name: "Revision Required", value: dashboard.publication_status.revision_required },
+    { name: "Accepted", value: dashboard.publication_status.accepted },
+    { name: "Rejected", value: dashboard.publication_status.rejected },
+    { name: "Published", value: dashboard.publication_status.published },
+    { name: "Archived", value: dashboard.publication_status.archived },
+  ].filter(item => item.value > 0) : [];
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-slate-500">Loading dashboard...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -32,12 +56,24 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {isSuperAdmin && (
+        {isSuperAdmin && dashboard && (
           <>
             <Card>
               <CardHeader className="pb-2">
+                <CardDescription>Total Publications</CardDescription>
+                <CardTitle className="text-3xl font-bold">{dashboard.total_publications || 0}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <BookOpen className="h-4 w-4" />
+                  <span>Across platform</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
                 <CardDescription>Total Institutions</CardDescription>
-                <CardTitle className="text-3xl font-bold">{totalInstitutions}</CardTitle>
+                <CardTitle className="text-3xl font-bold">{dashboard.total_institutions || 0}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-emerald-600">
@@ -48,85 +84,218 @@ export default function Dashboard() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Platform Status</CardDescription>
-                <CardTitle className="text-3xl font-bold flex items-center gap-2">
-                  <Shield className="h-6 w-6 text-amber-500" />
-                  Active
-                </CardTitle>
+                <CardDescription>Total Researchers</CardDescription>
+                <CardTitle className="text-3xl font-bold flex items-center gap-2">{dashboard.total_researchers || 0}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Activity className="h-4 w-4" />
-                  <span>Super Admin Access</span>
+                  <Users className="h-4 w-4" />
+                  <span>Registered researchers</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Reviewers</CardDescription>
+                <CardTitle className="text-3xl font-bold flex items-center gap-2">{dashboard.total_reviewers || 0}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <ClipboardCheck className="h-4 w-4" />
+                  <span>Registered reviewers</span>
                 </div>
               </CardContent>
             </Card>
           </>
         )}
 
-        {isInstitutionAdmin && (
+        {isInstitutionAdmin && dashboard && (
           <>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Total Users</CardDescription>
-                <CardTitle className="text-3xl font-bold">{totalUsers}</CardTitle>
+                <CardDescription>Total Publications</CardDescription>
+                <CardTitle className="text-3xl font-bold">{dashboard.total_publications || 0}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-emerald-600">
-                  <Users className="h-4 w-4" />
-                  <span>{activeUsers} active</span>
+                  <BookOpen className="h-4 w-4" />
+                  <span>By institution</span>
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Institution</CardDescription>
-                <CardTitle className="text-lg font-bold truncate">{user?.institution_id?.slice(0, 8) || "N/A"}</CardTitle>
+                <CardDescription>Researchers</CardDescription>
+                <CardTitle className="text-3xl font-bold">{dashboard.total_researchers || 0}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Building2 className="h-4 w-4" />
-                  <span>Admin Access</span>
+                  <Users className="h-4 w-4" />
+                  <span>Institution members</span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Reviewers</CardDescription>
+                <CardTitle className="text-3xl font-bold">{dashboard.total_reviewers || 0}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <ClipboardCheck className="h-4 w-4" />
+                  <span>Institution reviewers</span>
                 </div>
               </CardContent>
             </Card>
           </>
         )}
 
-        {isResearcher && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>My Research</CardDescription>
-              <CardTitle className="text-3xl font-bold flex items-center gap-2">
-                <BookOpen className="h-6 w-6 text-emerald-600" />
-                Active
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-slate-500">
-                You can submit and manage your research papers here
-              </p>
-            </CardContent>
-          </Card>
+        {isResearcher && dashboard && (
+          <>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>My Publications</CardDescription>
+                <CardTitle className="text-3xl font-bold flex items-center gap-2">
+                  <BookOpen className="h-6 w-6 text-emerald-600" />
+                  {dashboard.my_publications || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-500">Primary author</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Co-authored</CardDescription>
+                <CardTitle className="text-3xl font-bold flex items-center gap-2">
+                  <Users className="h-6 w-6 text-blue-600" />
+                  {dashboard.coauthored_publications || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-500">Collaborator</p>
+              </CardContent>
+            </Card>
+          </>
         )}
 
-        {isReviewer && (
+        {isReviewer && dashboard && (
+          <>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Pending Reviews</CardDescription>
+                <CardTitle className="text-3xl font-bold flex items-center gap-2">
+                  <ClipboardCheck className="h-6 w-6 text-amber-500" />
+                  {dashboard.pending_reviews || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-500">Action required</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Completed Reviews</CardDescription>
+                <CardTitle className="text-3xl font-bold flex items-center gap-2">
+                  <Shield className="h-6 w-6 text-emerald-500" />
+                  {dashboard.completed_reviews || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-500">Past work</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Assigned</CardDescription>
+                <CardTitle className="text-3xl font-bold flex items-center gap-2">
+                  <Activity className="h-6 w-6 text-blue-500" />
+                  {dashboard.assigned_reviews || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-slate-500">All assignments</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+
+      {/* Publication Status Charts */}
+      {(isSuperAdmin || isInstitutionAdmin || isResearcher) && chartData.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Pending Reviews</CardDescription>
-              <CardTitle className="text-3xl font-bold flex items-center gap-2">
-                <ClipboardCheck className="h-6 w-6 text-blue-600" />
-                Active
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChartIcon className="h-5 w-5 text-slate-500" />
+                Publication Status Distribution
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-500">
-                Review assigned research papers
-              </p>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value: number) => [`${value} Publications`, 'Count']}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Status Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 12 }} 
+                      tickLine={false}
+                      axisLine={{ stroke: '#e2e8f0' }}
+                    />
+                    <YAxis 
+                      allowDecimals={false} 
+                      tick={{ fontSize: 12 }} 
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <RechartsTooltip 
+                      formatter={(value: number) => [`${value} Publications`, 'Count']}
+                      cursor={{ fill: '#f1f5f9' }}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Role-specific info */}
       <Card>

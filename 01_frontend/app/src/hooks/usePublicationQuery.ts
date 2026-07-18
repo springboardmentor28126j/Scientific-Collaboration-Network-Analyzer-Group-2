@@ -1,29 +1,52 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/api/client";
+import {
+  listPublications,
+  createPublication,
+  getPublication,
+  updatePublication,
+  deletePublication,
+  submitPublication,
+  addPublicationAuthor,
+  listPublicationAuthors,
+  removePublicationAuthor,
+  getPublicationHistory,
+  publishPublication,
+  createConference,
+  updateConference,
+  getConference,
+  submitEditorialDecision,
+  archivePublication,
+  downloadPublicationPdf,
+} from "@/api/publication";
+import type { ListPublicationsParams } from "@/api/publication";
+import { listResearchers } from "@/api/user";
 import { toast } from "sonner";
 import type {
-  PublicationListItem,
   PublicationRead,
   PublicationUpdate,
   PublicationAuthorCreate,
   PublicationAuthorRead,
   PublicationHistoryRead,
+  PaginatedResponse,
   Researcher,
+  ConferenceCreate,
+  ConferenceRead,
+  EditorialDecisionCreate,
 } from "@/types";
 
 // --- Publications ---
 
-export function usePublications() {
-  return useQuery<PublicationListItem[]>({
-    queryKey: ["publications"],
-    queryFn: () => apiClient.listPublications(),
+export function usePublications(params?: ListPublicationsParams) {
+  return useQuery<PaginatedResponse<PublicationRead>>({
+    queryKey: ["publications", params],
+    queryFn: () => listPublications(params),
   });
 }
 
 export function usePublication(id: string) {
   return useQuery<PublicationRead>({
     queryKey: ["publications", id],
-    queryFn: () => apiClient.getPublication(id),
+    queryFn: () => getPublication(id),
     enabled: !!id,
   });
 }
@@ -32,7 +55,7 @@ export function useCreatePublication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: FormData) => apiClient.createPublication(data),
+    mutationFn: (data: FormData) => createPublication(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["publications"] });
       toast.success("Publication created successfully");
@@ -48,7 +71,7 @@ export function useUpdatePublication() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: PublicationUpdate }) =>
-      apiClient.updatePublication(id, data),
+      updatePublication(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["publications"] });
       queryClient.invalidateQueries({ queryKey: ["publications", variables.id] });
@@ -64,7 +87,7 @@ export function useDeletePublication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => apiClient.deletePublication(id),
+    mutationFn: (id: string) => deletePublication(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["publications"] });
       toast.success("Publication deleted successfully");
@@ -79,7 +102,7 @@ export function useSubmitPublication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => apiClient.submitPublication(id),
+    mutationFn: (id: string) => submitPublication(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["publications"] });
       queryClient.invalidateQueries({ queryKey: ["publications", id] });
@@ -97,7 +120,7 @@ export function useSubmitPublication() {
 export function usePublicationAuthors(id: string) {
   return useQuery<PublicationAuthorRead[]>({
     queryKey: ["publication-authors", id],
-    queryFn: () => apiClient.listPublicationAuthors(id),
+    queryFn: () => listPublicationAuthors(id),
     enabled: !!id,
   });
 }
@@ -107,7 +130,7 @@ export function useAddPublicationAuthor() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: PublicationAuthorCreate }) =>
-      apiClient.addPublicationAuthor(id, data),
+      addPublicationAuthor(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["publication-authors", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["publication-history", variables.id] });
@@ -124,7 +147,7 @@ export function useRemovePublicationAuthor() {
 
   return useMutation({
     mutationFn: ({ id, researcher_id }: { id: string; researcher_id: string }) =>
-      apiClient.removePublicationAuthor(id, researcher_id),
+      removePublicationAuthor(id, researcher_id),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["publication-authors", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["publication-history", variables.id] });
@@ -141,8 +164,107 @@ export function useRemovePublicationAuthor() {
 export function usePublicationHistory(id: string) {
   return useQuery<PublicationHistoryRead[]>({
     queryKey: ["publication-history", id],
-    queryFn: () => apiClient.getPublicationHistory(id),
+    queryFn: () => getPublicationHistory(id),
     enabled: !!id,
+  });
+}
+
+export function usePublishPublication() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => publishPublication(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["publications"] });
+      queryClient.invalidateQueries({ queryKey: ["publications", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["publication-history", data.id] });
+      toast.success("Publication published successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to publish publication");
+    },
+  });
+}
+
+export function useArchivePublication() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => archivePublication(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["publications"] });
+      queryClient.invalidateQueries({ queryKey: ["publications", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["publication-history", data.id] });
+      toast.success("Publication archived successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to archive publication");
+    },
+  });
+}
+
+export function useDownloadPdf() {
+  return useMutation({
+    mutationFn: (id: string) => downloadPublicationPdf(id),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to download PDF");
+    },
+  });
+}
+
+export function useConference(publicationId: string) {
+  return useQuery<ConferenceRead>({
+    queryKey: ["conference", publicationId],
+    queryFn: () => getConference(publicationId),
+    enabled: !!publicationId,
+    retry: false, // Prevent retrying if conference is 404 (doesn't exist yet)
+  });
+}
+
+export function useCreateConference() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ConferenceCreate }) => createConference(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["conference", variables.id] });
+      toast.success("Conference details added successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add conference details");
+    },
+  });
+}
+
+export function useUpdateConference() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ConferenceCreate }) => updateConference(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["conference", variables.id] });
+      toast.success("Conference details updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update conference details");
+    },
+  });
+}
+
+export function useSubmitEditorialDecision() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: EditorialDecisionCreate }) => submitEditorialDecision(id, data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["publications"] });
+      queryClient.invalidateQueries({ queryKey: ["publications", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["publication-history", data.id] });
+      toast.success("Editorial decision submitted successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to submit editorial decision");
+    },
   });
 }
 
@@ -151,6 +273,6 @@ export function usePublicationHistory(id: string) {
 export function useResearchers(search?: string) {
   return useQuery<Researcher[]>({
     queryKey: ["researchers", search],
-    queryFn: () => apiClient.listResearchers(search),
+    queryFn: () => listResearchers(search),
   });
 }

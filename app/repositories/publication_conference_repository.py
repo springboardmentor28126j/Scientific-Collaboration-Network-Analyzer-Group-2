@@ -19,11 +19,8 @@ class PublicationConferenceRepository:
         self,
         publication_id,
     ) -> PublicationConference | None:
-        stmt = (
-            select(PublicationConference)
-            .where(
-                PublicationConference.publication_id == publication_id
-            )
+        stmt = select(PublicationConference).where(
+            PublicationConference.publication_id == publication_id
         )
 
         result = await self.session.execute(stmt)

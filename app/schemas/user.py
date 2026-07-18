@@ -47,3 +47,11 @@ class ResearcherRead(ORMBase):
     email: EmailStr
     description: str | None
     institution_name: str
+
+
+class ReviewerRead(ORMBase):
+    id: uuid.UUID
+    full_name: str
+    email: EmailStr
+    description: str | None
+    institution_name: str

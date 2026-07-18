@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.schemas.publication import PublicationCreate, PublicationUpdate
 from app.schemas.publication_decision import PublicationDecisionCreate, EditorialDecision
+from app.schemas.publication import PublicationRead
+from app.schemas.publication_filter import PublicationFilter
+from app.schemas.pagination import PaginatedResponse
 from app.services.cloudinary_service import CloudinaryService
 from app.services.publication_history_service import PublicationHistoryService
 from app.models.publication import Publication, PublicationStatus
@@ -57,6 +60,7 @@ class PublicationService:
             pdf_public_id=pdf_public_id,
             status=PublicationStatus.DRAFT,
             created_by=current_user.id,
+            institution_id=current_user.institution_id,
         )
 
         await self.history.log(
@@ -79,8 +83,23 @@ class PublicationService:
 
         return publication
 
-    async def list_publications(self) -> list[Publication]:
-        return await self.publications.list_all()
+    async def list_publications(
+        self,
+        current_user: User,
+        filters: PublicationFilter,
+    ) -> PaginatedResponse[PublicationRead]:
+
+        items, total = await self.publications.list(
+            current_user=current_user,
+            filters=filters,
+        )
+
+        return PaginatedResponse.create(
+            items=items,
+            total=total,
+            page=filters.page,
+            size=filters.size,
+        )
 
     async def update_publication(
         self,

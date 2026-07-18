@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.publication_author import PublicationAuthor
     from app.models.review_assignment import ReviewAssignment
     from app.models.publication_history import PublicationHistory
+    from app.models.institution import Institution
 
 
 class PublicationStatus(StrEnum):
@@ -55,6 +56,11 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Enum(PublicationType, name="publication_type"),
         nullable=False,
     )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
 
     status: Mapped[PublicationStatus] = mapped_column(
         Enum(PublicationStatus, name="publication_status"),
@@ -81,6 +87,18 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
         nullable=False,
     )
 
@@ -118,6 +136,11 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     creator: Mapped["User"] = relationship(
         "User",
         foreign_keys=[created_by],
+        back_populates="publications",
+    )
+
+    institution: Mapped["Institution"] = relationship(
+        "Institution",
         back_populates="publications",
     )
 

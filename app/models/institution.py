@@ -7,6 +7,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.publication import Publication
 
 
 class Institution(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -29,4 +30,8 @@ class Institution(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     users: Mapped[list["User"]] = relationship(
         "User", back_populates="institution", cascade="all, delete-orphan"
+    )
+    publications: Mapped[list["Publication"]] = relationship(
+        "Publication",
+        back_populates="institution",
     )

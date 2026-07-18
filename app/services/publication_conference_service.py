@@ -23,7 +23,7 @@ class PublicationConferenceService:
         self.publications = PublicationRepository(session)
         self.conferences = PublicationConferenceRepository(session)
         self.history = PublicationHistoryService(session)
-    
+
     async def create_conference(
         self,
         publication_id: uuid.UUID,
@@ -31,24 +31,18 @@ class PublicationConferenceService:
         current_user: User,
     ):
         if current_user.role != UserRole.SUPER_ADMIN:
-            raise ForbiddenError(
-                "Only the super administrator can create conference details."
-            )
+            raise ForbiddenError("Only the super administrator can create conference details.")
         publication = await self.publications.get_by_id(publication_id)
 
         if publication is None:
             raise NotFoundError("Publication not found.")
-        
+
         if publication.status != PublicationStatus.PUBLISHED:
-            raise ConflictError(
-                "Conference details can only be added to published publications."
-            )
+            raise ConflictError("Conference details can only be added to published publications.")
         existing = await self.conferences.get_by_publication(publication_id)
 
         if existing:
-            raise ConflictError(
-                "Conference details already exist for this publication."
-            )
+            raise ConflictError("Conference details already exist for this publication.")
         conference = await self.conferences.create(
             publication_id=publication.id,
             created_by=current_user.id,
@@ -65,7 +59,7 @@ class PublicationConferenceService:
         await self.session.refresh(conference)
 
         return conference
-    
+
     async def get_conference(
         self,
         publication_id: uuid.UUID,
@@ -73,12 +67,10 @@ class PublicationConferenceService:
         conference = await self.conferences.get_by_publication(publication_id)
 
         if conference is None:
-            raise NotFoundError(
-                "Conference details not found."
-            )
+            raise NotFoundError("Conference details not found.")
 
         return conference
-    
+
     async def update_conference(
         self,
         publication_id: uuid.UUID,
@@ -86,9 +78,7 @@ class PublicationConferenceService:
         current_user: User,
     ):
         if current_user.role != UserRole.SUPER_ADMIN:
-            raise ForbiddenError(
-                "Only the super administrator can update conference details."
-            )
+            raise ForbiddenError("Only the super administrator can update conference details.")
 
         conference = await self.get_conference(publication_id)
 

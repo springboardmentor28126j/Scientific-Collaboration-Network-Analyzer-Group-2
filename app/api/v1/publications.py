@@ -20,6 +20,8 @@ from app.schemas.publication_author import (
 from app.schemas.publication_decision import (
     PublicationDecisionCreate,
 )
+from app.schemas.pagination import PaginatedResponse
+from app.schemas.publication_filter import PublicationFilter
 from app.services.publication_service import PublicationService
 from app.services.publication_author_service import PublicationAuthorService
 
@@ -65,13 +67,17 @@ async def create_publication(
 
 @router.get(
     "",
-    response_model=list[PublicationListItem],
-    summary="List publications",
+    response_model=PaginatedResponse[PublicationRead],
 )
 async def list_publications(
-    publication_service: PublicationService = Depends(get_publication_service),
+    filters: PublicationFilter = Depends(),
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service),
 ):
-    return await publication_service.list_publications()
+    return await service.list_publications(
+        current_user=current_user,
+        filters=filters,
+    )
 
 
 @router.get(

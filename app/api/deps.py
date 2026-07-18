@@ -18,6 +18,7 @@ from app.services.publication_service import PublicationService
 from app.services.publication_author_service import PublicationAuthorService
 from app.services.review_service import ReviewService
 from app.services.publication_history_service import PublicationHistoryService
+from app.services.dashboard_service import DashboardService
 
 
 def get_auth_service(session: AsyncSession = Depends(get_session)) -> AuthService:
@@ -30,6 +31,12 @@ def get_institution_service(session: AsyncSession = Depends(get_session)) -> Ins
 
 def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
     return UserService(session)
+
+
+def get_dashboard_service(
+    session: AsyncSession = Depends(get_session),
+) -> DashboardService:
+    return DashboardService(session)
 
 
 def get_publication_service(session: AsyncSession = Depends(get_session)) -> PublicationService:
@@ -58,6 +65,7 @@ def get_publication_history_service(
     session: AsyncSession = Depends(get_session),
 ) -> PublicationHistoryService:
     return PublicationHistoryService(session)
+
 
 def get_publication_conference_service(
     session: AsyncSession = Depends(get_session),

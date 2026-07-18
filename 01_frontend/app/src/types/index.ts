@@ -57,3 +57,109 @@ export interface ApiError {
 export interface MessageResponse {
   detail: string;
 }
+
+// Publications
+
+export type PublicationType =
+  | "JOURNAL"
+  | "CONFERENCE"
+  | "BOOK"
+  | "PATENT"
+  | "TECHNICAL_REPORT";
+
+export type PublicationStatus =
+  | "DRAFT"
+  | "SUBMITTED"
+  | "UNDER_REVIEW"
+  | "REVISION_REQUIRED"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "PUBLISHED"
+  | "ARCHIVED";
+
+export interface PublicationListItem {
+  id: string;
+  title: string;
+  publication_type: PublicationType;
+  status: PublicationStatus;
+  created_at: string;
+}
+
+export interface PublicationRead {
+  id: string;
+  title: string;
+  abstract: string;
+  publication_type: PublicationType;
+  status: PublicationStatus;
+  doi: string | null;
+  pdf_url: string | null;
+  created_by: string;
+  submitted_at: string | null;
+  published_at: string | null;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicationUpdate {
+  title?: string | null;
+  abstract?: string | null;
+  publication_type?: PublicationType | null;
+  doi?: string | null;
+  pdf_url?: string | null;
+}
+
+export interface PublicationAuthorCreate {
+  researcher_id: string;
+  author_order: number;
+  is_corresponding_author?: boolean;
+}
+
+export interface PublicationAuthorRead {
+  researcher_id: string;
+  full_name: string;
+  institution: string | null;
+  author_order: number;
+  is_corresponding_author: boolean;
+}
+
+export interface HistoryUserRead {
+  id: string;
+  full_name: string;
+}
+
+export type PublicationHistoryAction =
+  | "CREATED"
+  | "UPDATED"
+  | "PDF_UPDATED"
+  | "AUTHOR_ADDED"
+  | "AUTHOR_REMOVED"
+  | "SUBMITTED"
+  | "RESUBMITTED"
+  | "REVIEWER_ASSIGNED"
+  | "REVIEWER_UNASSIGNED"
+  | "REVIEW_SUBMITTED"
+  | "REVISION_REQUESTED"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "PUBLISHED"
+  | "ARCHIVED"
+  | "CONFERENCE_CREATED"
+  | "CONFERENCE_UPDATED";
+
+export interface PublicationHistoryRead {
+  id: string;
+  publication_id: string;
+  action: PublicationHistoryAction;
+  description: string;
+  created_at: string;
+  user: HistoryUserRead | null;
+}
+
+export interface Researcher {
+  id: string;
+  full_name: string;
+  email: string;
+  description: string | null;
+  institution_name: string | null;
+}

@@ -1,4 +1,18 @@
-import type { TokenPair, UserMe, Institution, InstitutionUser, MessageResponse, ApiError } from "@/types";
+import type { 
+  TokenPair, 
+  UserMe, 
+  Institution, 
+  InstitutionUser, 
+  MessageResponse, 
+  ApiError,
+  PublicationListItem,
+  PublicationRead,
+  PublicationUpdate,
+  PublicationAuthorCreate,
+  PublicationAuthorRead,
+  PublicationHistoryRead,
+  Researcher
+} from "@/types";
 
 // Configure API base URL - uses environment variable or defaults to localhost
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -200,6 +214,107 @@ class ApiClient {
       }
     );
     return this.handleResponse<InstitutionUser>(response);
+  }
+
+  // Publications
+  async listPublications(): Promise<PublicationListItem[]> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<PublicationListItem[]>(response);
+  }
+
+  async createPublication(data: FormData): Promise<PublicationRead> {
+    // Note: FormData does not need Content-Type set manually; the browser will set it with the correct boundary
+    const token = localStorage.getItem("access_token");
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/v1/publications`, {
+      method: "POST",
+      headers,
+      body: data,
+    });
+    return this.handleResponse<PublicationRead>(response);
+  }
+
+  async getPublication(id: string): Promise<PublicationRead> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<PublicationRead>(response);
+  }
+
+  async updatePublication(id: string, data: PublicationUpdate): Promise<PublicationRead> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}`, {
+      method: "PUT",
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse<PublicationRead>(response);
+  }
+
+  async deletePublication(id: string): Promise<MessageResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}`, {
+      method: "DELETE",
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<MessageResponse>(response);
+  }
+
+  // Publication Authors
+  async addPublicationAuthor(id: string, data: PublicationAuthorCreate): Promise<PublicationAuthorRead> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}/authors`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return this.handleResponse<PublicationAuthorRead>(response);
+  }
+
+  async listPublicationAuthors(id: string): Promise<PublicationAuthorRead[]> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}/authors`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<PublicationAuthorRead[]>(response);
+  }
+
+  async removePublicationAuthor(id: string, researcher_id: string): Promise<MessageResponse> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}/authors/${researcher_id}`, {
+      method: "DELETE",
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<MessageResponse>(response);
+  }
+
+  // Publication Actions
+  async submitPublication(id: string): Promise<PublicationRead> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}/submit`, {
+      method: "POST",
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<PublicationRead>(response);
+  }
+
+  async getPublicationHistory(id: string): Promise<PublicationHistoryRead[]> {
+    const response = await fetch(`${this.baseUrl}/api/v1/publications/${id}/history`, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<PublicationHistoryRead[]>(response);
+  }
+
+  // Users / Researchers
+  async listResearchers(search?: string): Promise<Researcher[]> {
+    const url = new URL(`${this.baseUrl}/api/v1/users/researchers`);
+    if (search) {
+      url.searchParams.append("search", search);
+    }
+    const response = await fetch(url, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<Researcher[]>(response);
   }
 }
 

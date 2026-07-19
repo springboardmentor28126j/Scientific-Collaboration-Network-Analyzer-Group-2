@@ -2,7 +2,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from app.database import engine, Base
 import app.models
-from app.routes import users, researchers, institutions
+from app.routes import users, researchers, institutions, publications
 import traceback
 
 app = FastAPI(title="Scientific Collaboration Network Analyzer")
@@ -19,6 +19,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(users.router)
 app.include_router(researchers.router)
 app.include_router(institutions.router)
+app.include_router(publications.router)
 
 @app.get("/")
 def root():

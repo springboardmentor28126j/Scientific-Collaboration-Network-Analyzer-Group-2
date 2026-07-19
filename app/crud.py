@@ -125,3 +125,67 @@ def delete_institution(db: Session, institution_id: int):
     db.commit()
 
     return institution
+
+def create_publication(db: Session, publication: schemas.PublicationCreate):
+    db_publication = models.Publication(
+        title=publication.title,
+        abstract=publication.abstract,
+        publication_type=publication.publication_type,
+        status=publication.status,
+        doi=publication.doi,
+        publication_date=publication.publication_date,
+        journal_or_venue=publication.journal_or_venue,
+        institution_id=publication.institution_id
+    )
+
+    db.add(db_publication)
+    db.commit()
+    db.refresh(db_publication)
+
+    return db_publication
+
+
+def get_publications(db: Session):
+    return db.query(models.Publication).all()
+
+def get_publication_by_id(db: Session, publication_id: int):
+    return (
+        db.query(models.Publication)
+        .filter(models.Publication.id == publication_id)
+        .first()
+    )
+
+def update_publication(
+    db: Session,
+    publication_id: int,
+    updated_publication: schemas.PublicationCreate
+):
+    publication = get_publication_by_id(db, publication_id)
+
+    if not publication:
+        return None
+
+    publication.title = updated_publication.title
+    publication.abstract = updated_publication.abstract
+    publication.publication_type = updated_publication.publication_type
+    publication.status = updated_publication.status
+    publication.doi = updated_publication.doi
+    publication.publication_date = updated_publication.publication_date
+    publication.journal_or_venue = updated_publication.journal_or_venue
+    publication.institution_id = updated_publication.institution_id
+
+    db.commit()
+    db.refresh(publication)
+
+    return publication
+
+def delete_publication(db: Session, publication_id: int):
+    publication = get_publication_by_id(db, publication_id)
+
+    if not publication:
+        return None
+
+    db.delete(publication)
+    db.commit()
+
+    return publication

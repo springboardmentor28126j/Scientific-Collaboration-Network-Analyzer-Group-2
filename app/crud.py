@@ -30,6 +30,7 @@ def create_researcher(db: Session, researcher: schemas.ResearcherCreate):
         full_name=researcher.full_name,
         department=researcher.department,
         institution=researcher.institution,
+        institution_id=researcher.institution_id,
         skills=researcher.skills,
         research_interest=researcher.research_interest,
         designation=researcher.designation
@@ -56,6 +57,7 @@ def update_researcher(db: Session, id: int, updated):
     researcher.full_name = updated.full_name
     researcher.department = updated.department
     researcher.institution = updated.institution
+    researcher.institution_id = updated.institution_id
     researcher.skills = updated.skills
     researcher.research_interest = updated.research_interest
     researcher.designation = updated.designation
@@ -64,3 +66,62 @@ def update_researcher(db: Session, id: int, updated):
     db.refresh(researcher)
 
     return researcher
+
+def create_institution(db: Session, institution: schemas.InstitutionCreate):
+    db_institution = models.Institution(
+        name=institution.name,
+        address=institution.address,
+        website=institution.website,
+        contact_email=institution.contact_email
+    )
+
+    db.add(db_institution)
+    db.commit()
+    db.refresh(db_institution)
+
+    return db_institution
+
+
+def get_institutions(db: Session):
+    return db.query(models.Institution).all()
+
+
+def get_institution_by_id(db: Session, institution_id: int):
+    return (
+        db.query(models.Institution)
+        .filter(models.Institution.id == institution_id)
+        .first()
+    )
+
+
+def update_institution(
+    db: Session,
+    institution_id: int,
+    updated_institution: schemas.InstitutionCreate
+):
+    institution = get_institution_by_id(db, institution_id)
+
+    if not institution:
+        return None
+
+    institution.name = updated_institution.name
+    institution.address = updated_institution.address
+    institution.website = updated_institution.website
+    institution.contact_email = updated_institution.contact_email
+
+    db.commit()
+    db.refresh(institution)
+
+    return institution
+
+
+def delete_institution(db: Session, institution_id: int):
+    institution = get_institution_by_id(db, institution_id)
+
+    if not institution:
+        return None
+
+    db.delete(institution)
+    db.commit()
+
+    return institution

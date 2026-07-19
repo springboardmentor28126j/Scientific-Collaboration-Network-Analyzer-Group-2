@@ -18,3 +18,10 @@ class ResearcherCreate(BaseModel):
     skills: str
     research_interest: str
     designation: str
+    institution_id: int | None = None
+
+class InstitutionCreate(BaseModel):
+    name: str
+    address: str | None = None
+    website: str | None = None
+    contact_email: str | None = None

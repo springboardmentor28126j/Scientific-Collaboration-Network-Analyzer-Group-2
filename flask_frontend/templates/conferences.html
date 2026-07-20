@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Conferences | Scientific Collaboration Network Analyzer</title>
+
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/common.css') }}">
+
+</head>
+
+
+<body>
+
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+
+
+<div class="navbar-left">
+
+
+<button class="menu-btn" onclick="toggleSidebar()">
+☰
+</button>
+
+
+<div class="project-title">
+Scientific Collaboration Network Analyzer
+</div>
+
+
+</div>
+
+
+
+<div class="navbar-right">
+
+Welcome, {{ session["full_name"] }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================= SIDEBAR ================= -->
+
+
+<div class="sidebar" id="sidebar">
+
+
+<a href="{{ url_for('dashboard') }}">
+Dashboard
+</a>
+
+
+<a href="{{ url_for('researchers') }}">
+Researchers
+</a>
+
+
+<a href="{{ url_for('publications') }}">
+Publications
+</a>
+
+
+<a href="{{ url_for('conferences') }}" class="active">
+Conferences
+</a>
+
+
+<a href="#">
+Collaborations
+</a>
+
+
+<a href="{{ url_for('researcher_profile') }}">
+Profile
+</a>
+
+
+<a href="{{ url_for('logout') }}">
+Logout
+</a>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= MAIN ================= -->
+
+
+<div class="main" id="main">
+
+
+
+<div class="top-section">
+
+
+<h1>
+Conferences
+</h1>
+
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+
+<button class="add-btn" onclick="openModal()">
+
++ Add Conference
+
+</button>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= SEARCH ================= -->
+
+
+<div class="search-box">
+
+
+<input
+
+type="text"
+
+id="conferenceSearch"
+
+placeholder="Search by Conference Name or Location"
+
+onkeyup="searchConference()"
+
+>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ================= TABLE ================= -->
+
+
+<table>
+
+
+<thead>
+
+
+<tr>
+
+
+<th>
+ID
+</th>
+
+
+<th>
+Conference Title
+</th>
+
+
+<th>
+Organizer
+</th>
+
+
+<th>
+Location
+</th>
+
+
+<th>
+Conference Date
+</th>
+
+
+<th>
+Website
+</th>
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<th>
+Action
+</th>
+
+{% endif %}
+
+</tr>
+
+
+</thead>
+
+
+
+
+
+<tbody>
+
+
+
+{% if conferences %}
+
+
+
+{% for conference in conferences %}
+
+
+
+<tr>
+
+
+
+<td>
+{{ loop.index }}
+</td>
+
+
+
+<td>
+{{ conference.title }}
+</td>
+
+
+
+<td>
+{{ conference.organizer }}
+</td>
+
+
+
+<td>
+{{ conference.location }}
+</td>
+
+
+
+<td>
+{{ conference.conference_date }}
+</td>
+
+
+
+<td>
+
+{% if conference.website %}
+
+<a href="{{ conference.website }}" target="_blank">
+Visit
+</a>
+
+{% else %}
+
+-
+
+{% endif %}
+
+</td>
+
+
+
+
+
+<td>
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<a href="{{ url_for('edit_conference', id=conference.id) }}">
+<button class="edit-btn">
+Edit
+</button>
+</a>
+
+
+<a href="{{ url_for('delete_conference', id=conference.id) }}"
+onclick="return confirm('Are you sure you want to delete this conference?');">
+
+<button class="delete-btn">
+Delete
+</button>
+
+</a>
+
+{% endif %}
+
+</td>
+
+
+
+</tr>
+
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+
+<tr>
+
+<td colspan="7" class="empty">
+
+No Conferences Found
+
+</td>
+
+</tr>
+
+
+
+{% endif %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ================= ADD CONFERENCE MODAL ================= -->
+
+
+<div class="modal" id="conferenceModal">
+
+
+<div class="modal-content">
+
+
+<h2>
+Add Conference
+</h2>
+
+
+
+
+<form method="POST"
+action="{{ url_for('add_conference') }}">
+
+
+
+
+
+<label>
+Conference Title
+</label>
+
+
+<input
+
+type="text"
+
+name="title"
+
+required
+
+>
+
+
+
+
+
+<label>
+Organizer
+</label>
+
+
+<input
+
+type="text"
+
+name="organizer"
+
+required
+
+>
+
+
+
+
+
+
+<label>
+Location
+</label>
+
+
+<input
+
+type="text"
+
+name="location"
+
+required
+
+>
+
+
+
+
+
+
+
+<label>
+Conference Date
+</label>
+
+
+<input
+type="date"
+name="conference_date"
+required>
+
+
+
+<label>
+Website
+</label>
+
+
+<input
+
+type="text"
+
+name="website"
+
+>
+
+
+
+
+
+
+<div class="modal-buttons">
+
+
+
+<button type="submit"
+class="save-btn">
+
+Save
+
+</button>
+
+
+
+
+<button type="button"
+
+class="cancel-btn"
+
+onclick="closeModal()">
+
+Cancel
+
+</button>
+
+
+
+</div>
+
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ================= SCRIPT ================= -->
+
+
+<script>
+
+
+function toggleSidebar(){
+
+document.getElementById("sidebar").classList.toggle("active");
+
+document.getElementById("main").classList.toggle("shift");
+
+}
+
+
+
+
+
+function openModal(){
+
+document.getElementById("conferenceModal").style.display="flex";
+
+}
+
+
+
+
+
+function closeModal(){
+
+document.getElementById("conferenceModal").style.display="none";
+
+}
+
+
+
+
+
+function searchConference(){
+
+
+let input=document.getElementById("conferenceSearch");
+
+let filter=input.value.toLowerCase();
+
+
+let rows=document.querySelector("table")
+.getElementsByTagName("tr");
+
+
+
+for(let i=1;i<rows.length;i++){
+
+
+let title=rows[i]
+.getElementsByTagName("td")[1];
+
+
+let location=rows[i]
+.getElementsByTagName("td")[3];
+
+
+
+if(title && location){
+
+
+let titleText=title.textContent.toLowerCase();
+
+let locationText=location.textContent.toLowerCase();
+
+
+
+if(
+titleText.includes(filter) ||
+locationText.includes(filter)
+){
+
+rows[i].style.display="";
+
+}
+
+else{
+
+rows[i].style.display="none";
+
+}
+
+
+}
+
+
+}
+
+
+
+}
+
+
+</script>
+
+
+
+</body>
+
+</html>

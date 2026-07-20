@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Profile</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/profile.css') }}">
+
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+
+    <div class="navbar-left">
+
+        <button class="menu-btn" onclick="toggleSidebar()">
+            ☰
+        </button>
+
+        <div class="project-title">
+            Scientific Collaboration Network Analyzer
+        </div>
+
+    </div>
+
+    <div class="navbar-right">
+
+        Welcome, {{ session["full_name"] }}
+
+    </div>
+
+</div>
+
+
+<!-- ================= SIDEBAR ================= -->
+
+<div class="sidebar" id="sidebar">
+
+<a href="{{ url_for('dashboard') }}">
+Dashboard
+</a>
+
+<a href="{{ url_for('researchers') }}">
+Researchers
+</a>
+
+<a href="{{ url_for('publications') }}">
+    Publications
+</a>
+
+<a href="#">
+Collaborations
+</a>
+
+<a href="#">
+Conferences
+</a>
+
+<a href="{{ url_for('researcher_profile') }}" class="active">
+Profile
+</a>
+
+<a href="{{ url_for('logout') }}">
+Logout
+</a>
+
+</div>
+
+
+<!-- ================= MAIN ================= -->
+
+<div class="main" id="main">
+
+<div class="profile-container">
+
+<h2>
+Complete Your Profile
+</h2>
+
+<form method="POST" action="{{ url_for('researcher_profile') }}">
+
+{% if session["role"] == "researcher" %}
+
+<label>
+Institution
+</label>
+
+<input
+type="text"
+name="institution"
+placeholder="Enter Institution"
+required>
+
+
+<label>
+Department
+</label>
+
+<input
+type="text"
+name="department"
+placeholder="Enter Department"
+required>
+
+
+<label>
+Designation
+</label>
+
+<input
+type="text"
+name="designation"
+placeholder="Enter Designation"
+required>
+
+
+<label>
+Research Interests
+</label>
+
+<input
+type="text"
+name="research_interests"
+placeholder="Enter Research Interests">
+
+
+<label>
+Skills
+</label>
+
+<input
+type="text"
+name="skills"
+placeholder="Enter Skills">
+
+
+<label>
+Phone
+</label>
+
+<input
+type="text"
+name="phone"
+placeholder="Enter Phone Number">
+
+
+{% elif session["role"] == "institution_admin" %}
+
+<label>
+Institution Name
+</label>
+
+<input
+type="text"
+name="institution_name"
+placeholder="Enter Institution Name"
+required>
+
+
+<label>
+Institution Type
+</label>
+
+<input
+type="text"
+name="institution_type"
+placeholder="University / College / Organization">
+
+
+<label>
+Website
+</label>
+
+<input
+type="url"
+name="website"
+placeholder="Enter Website">
+
+
+<label>
+Address
+</label>
+
+<input
+type="text"
+name="address"
+placeholder="Enter Address">
+
+
+<label>
+Phone
+</label>
+
+<input
+type="text"
+name="phone"
+placeholder="Enter Phone Number">
+
+
+{% elif session["role"] == "reviewer" %}
+
+<label>
+Organization
+</label>
+
+<input
+type="text"
+name="organization"
+placeholder="Enter Organization">
+
+
+<label>
+Designation
+</label>
+
+<input
+type="text"
+name="designation"
+placeholder="Enter Designation">
+
+
+<label>
+Research Area
+</label>
+
+<input
+type="text"
+name="research_area"
+placeholder="Enter Research Area">
+
+
+<label>
+Phone
+</label>
+
+<input
+type="text"
+name="phone"
+placeholder="Enter Phone Number">
+
+{% endif %}
+
+
+<button type="submit">
+Save Profile
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+function toggleSidebar(){
+
+    document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("main").classList.toggle("shift");
+
+}
+
+</script>
+
+</body>
+</html>

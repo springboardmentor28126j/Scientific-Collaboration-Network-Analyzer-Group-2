@@ -1,0 +1,169 @@
+from pydantic import BaseModel, EmailStr
+
+class UserRegister(BaseModel):
+    full_name: str
+    email: EmailStr
+    password: str
+    role: str
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    full_name: str
+    email: EmailStr
+    role: str
+
+    class Config:
+        from_attributes = True
+
+class ResearcherCreate(BaseModel):
+    full_name: str
+    email: EmailStr
+    department: str
+    institution: str
+    designation: str
+    research_interests: str | None = None
+    skills: str | None = None
+    phone: str | None = None
+
+class ResearcherProfileCreate(BaseModel):
+
+    institution: str
+    department: str
+    designation: str
+    research_interests: str | None = None
+    skills: str | None = None
+    phone: str | None = None
+
+
+class ResearcherUpdate(BaseModel):
+    full_name: str
+    email: EmailStr
+    department: str
+    institution: str
+    designation: str
+    research_interests: str | None = None
+    skills: str | None = None
+    phone: str | None = None
+
+
+
+class ResearcherResponse(BaseModel):
+    id: int
+    user_id: int | None = None
+    full_name: str
+    email: EmailStr
+    department: str
+    institution: str
+    designation: str
+    research_interests: str | None = None
+    skills: str | None = None
+    phone: str | None = None
+
+    
+    class Config:
+        from_attributes = True
+
+class PublicationCreate(BaseModel):
+    researcher_id: int
+    title: str
+    publication_type: str
+    journal_name: str | None = None
+    conference_name: str | None = None
+    publication_year: int
+    doi: str | None = None
+    status: str
+    publication_file: str | None = None
+
+
+class PublicationUpdate(BaseModel):
+    researcher_id: int
+    title: str
+    publication_type: str
+    journal_name: str | None = None
+    conference_name: str | None = None
+    publication_year: int
+    doi: str | None = None
+    status: str
+    publication_file: str | None = None
+
+
+class PublicationResponse(BaseModel):
+    id: int
+    researcher_id: int
+
+    researcher_name: str | None = None
+
+    title: str
+    publication_type: str
+
+    journal_name: str | None = None
+    conference_name: str | None = None
+
+    publication_year: int
+
+    doi: str | None = None
+    status: str
+
+    publication_file: str | None = None
+
+    class Config:
+        from_attributes = True
+        
+class InstitutionCreate(BaseModel):
+    name: str
+    location: str
+    website: str | None = None
+    email: EmailStr
+    phone: str
+
+
+class InstitutionUpdate(BaseModel):
+    name: str
+    location: str
+    website: str | None = None
+    email: EmailStr
+    phone: str
+
+
+class InstitutionResponse(BaseModel):
+    id: int
+    name: str
+    location: str
+    website: str | None = None
+    email: EmailStr
+    phone: str
+
+    class Config:
+        from_attributes = True
+class ConferenceCreate(BaseModel):
+    title: str
+    organizer: str
+    location: str
+    conference_date: str
+    website: str | None = None
+
+
+class ConferenceUpdate(BaseModel):
+    title: str
+    organizer: str
+    location: str
+    conference_date: str
+    website: str | None = None
+
+
+class ConferenceResponse(BaseModel):
+    id: int
+    title: str
+    organizer: str
+    location: str
+    conference_date: str
+    website: str | None = None
+
+    class Config:
+        from_attributes = True

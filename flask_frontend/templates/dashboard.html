@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard | Scientific Collaboration Network Analyzer</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+</head>
+
+
+<body>
+
+
+<!-- =================== TOP NAVBAR =================== -->
+
+<div class="navbar">
+
+    <div class="navbar-left">
+
+        <button class="menu-btn" onclick="toggleSidebar()">
+            ☰
+        </button>
+
+        <div class="project-title">
+            Scientific Collaboration Network Analyzer
+        </div>
+
+    </div>
+
+
+    <div class="navbar-right">
+
+        Welcome, {{ session["full_name"] }}
+
+    </div>
+
+</div>
+
+
+
+<!-- =================== SIDEBAR =================== -->
+
+
+<div class="sidebar" id="sidebar">
+
+
+<a href="{{ url_for('dashboard') }}">
+    Dashboard
+</a>
+
+
+<!-- Researcher Menu -->
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="{{ url_for('researchers') }}">
+    Researchers
+</a>
+
+{% endif %}
+
+
+
+<!-- Publications -->
+{% if session["role"] in ["researcher", "institution_admin", "reviewer", "system_admin"] %}
+
+<a href="{{ url_for('publications') }}">
+    Publications
+</a>
+
+{% endif %}
+
+
+
+<!-- Institutions -->
+{% if session["role"] in ["institution_admin", "system_admin"] %}
+
+<a href="#">
+    Institutions
+</a>
+
+{% endif %}
+
+
+
+<!-- Collaborations -->
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="#">
+    Collaborations
+</a>
+
+{% endif %}
+
+
+
+<!-- Conferences -->
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="{{ url_for('conferences') }}">
+    Conferences
+</a>
+
+{% endif %}
+
+
+
+
+<!-- System Admin Only -->
+
+{% if session["role"] == "system_admin" %}
+
+<a href="#">
+    Users
+</a>
+
+<a href="#">
+    Reports
+</a>
+
+{% endif %}
+
+
+
+<!-- Profile -->
+
+<!-- Profile -->
+
+{% if session["role"] in ["researcher", "institution_admin", "reviewer", "system_admin"] %}
+
+<a href="{{ url_for('researcher_profile') }}">
+    Profile
+</a>
+
+{% endif %}
+
+<a href="{{ url_for('logout') }}">
+    Logout
+</a>
+
+
+</div>
+
+
+
+
+
+<!-- =================== MAIN CONTENT =================== -->
+
+
+<div class="main" id="main">
+
+
+<h1>
+Dashboard
+</h1>
+
+
+
+
+<!-- ================= RESEARCHER DASHBOARD ================= -->
+
+
+{% if session["role"] == "researcher" %}
+
+
+<div class="cards">
+
+
+<div class="card">
+
+<h3>
+My Publications
+</h3>
+
+<h1>
+{{ publication_count|default(0) }}
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+My Collaborations
+</h3>
+
+<h1>
+{{ collaboration_count|default(0) }}
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+My Conferences
+</h3>
+
+<h1>
+{{ conference_count|default(0) }}
+</h1>
+
+</div>
+
+
+</div>
+
+
+
+<!-- ================= INSTITUTION ADMIN ================= -->
+
+
+{% elif session["role"] == "institution_admin" %}
+
+
+
+<div class="cards">
+
+
+<div class="card">
+
+<h3>
+Researchers
+</h3>
+
+<h1>
+{{ researcher_count|default(0) }}
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Institution Publications
+</h3>
+
+<h1>
+{{ publication_count|default(0) }}
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Departments
+</h3>
+
+<h1>
+0
+</h1>
+
+</div>
+
+
+</div>
+
+
+
+
+<!-- ================= REVIEWER ================= -->
+
+
+{% elif session["role"] == "reviewer" %}
+
+
+
+<div class="cards">
+
+
+<div class="card">
+
+<h3>
+Pending Reviews
+</h3>
+
+<h1>
+0
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Reviewed Papers
+</h3>
+
+<h1>
+0
+</h1>
+
+</div>
+
+
+</div>
+
+
+
+
+<!-- ================= SYSTEM ADMIN ================= -->
+
+
+{% elif session["role"] == "system_admin" %}
+
+
+
+<div class="cards">
+
+
+<div class="card">
+
+<h3>
+Total Researchers
+</h3>
+
+<h1>
+{{ researcher_count|default(0) }}
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Total Publications
+</h3>
+
+<h1>
+{{ publication_count|default(0) }}
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Total Institutions
+</h3>
+
+<h1>
+{{ institution_count|default(0) }}
+</h1>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Total Conferences
+</h3>
+
+<h1>
+{{ conference_count|default(0) }}
+</h1>
+
+</div>
+
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+<!-- =================== ACTIVITY =================== -->
+
+
+<div class="activity">
+
+<h2>
+Recent Activities
+</h2>
+
+<hr>
+
+{% if role == "researcher" %}
+
+<p>✓ Profile created successfully</p>
+<p>✓ Start adding publications and collaborations</p>
+
+
+{% elif role == "institution_admin" %}
+
+<p>✓ Institution admin account created</p>
+<p>✓ Manage researchers and publications</p>
+
+
+{% elif role == "reviewer" %}
+
+<p>✓ Reviewer account created</p>
+<p>✓ No publications assigned yet</p>
+
+
+{% elif role == "system_admin" %}
+
+<p>✓ System admin logged in</p>
+<p>✓ User management is available</p>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+<!-- =================== JAVASCRIPT =================== -->
+
+
+<script>
+
+function toggleSidebar() {
+
+    document.getElementById("sidebar").classList.toggle("active");
+
+    document.getElementById("main").classList.toggle("shift");
+
+}
+
+</script>
+
+
+
+</body>
+
+</html>

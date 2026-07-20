@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Node
+node_modules/
+
+# Uploaded publication files
+uploads/
+
+# Virtual environment
+venv/
+
+# Environment variables
+.env

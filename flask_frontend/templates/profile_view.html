@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>My Profile</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/profile.css') }}">
+
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+
+    <div class="navbar-left">
+
+        <button class="menu-btn" onclick="toggleSidebar()">
+            ☰
+        </button>
+
+        <div class="project-title">
+            Scientific Collaboration Network Analyzer
+        </div>
+
+    </div>
+
+    <div class="navbar-right">
+
+        Welcome, {{ session["full_name"] }}
+
+    </div>
+
+</div>
+
+
+<!-- ================= SIDEBAR ================= -->
+
+<div class="sidebar" id="sidebar">
+
+<a href="{{ url_for('dashboard') }}">
+Dashboard
+</a>
+
+<a href="{{ url_for('researchers') }}">
+Researchers
+</a>
+
+<a href="{{ url_for('publications') }}">
+    Publications
+</a>
+
+<a href="#">
+Collaborations
+</a>
+
+<a href="{{ url_for('conferences') }}">
+    Conferences
+</a>
+
+<a href="{{ url_for('researcher_profile') }}" class="active">
+Profile
+</a>
+
+<a href="{{ url_for('logout') }}">
+Logout
+</a>
+
+</div>
+
+
+<!-- ================= MAIN ================= -->
+
+<div class="main" id="main">
+
+<div class="profile-container">
+
+<h2>
+My Profile
+</h2>
+
+{% if session["role"] == "researcher" %}
+
+<form method="POST" action="{{ url_for('researcher_profile') }}">
+
+<label>
+Full Name
+</label>
+
+<input
+type="text"
+name="full_name"
+value="{{ researcher.full_name }}"
+readonly>
+
+<label>
+Email
+</label>
+
+<input
+type="text"
+name="email"
+value="{{ researcher.email }}"
+readonly>
+
+<label>
+Institution
+</label>
+
+<input
+type="text"
+name="institution"
+value="{{ researcher.institution }}"
+required>
+
+<label>
+Department
+</label>
+
+<input
+type="text"
+name="department"
+value="{{ researcher.department }}"
+required>
+
+<label>
+Designation
+</label>
+
+<input
+type="text"
+name="designation"
+value="{{ researcher.designation }}"
+required>
+
+<label>
+Research Interests
+</label>
+
+<input
+type="text"
+name="research_interests"
+value="{{ researcher.research_interests or '' }}">
+
+<label>
+Skills
+</label>
+
+<input
+type="text"
+name="skills"
+value="{{ researcher.skills or '' }}">
+
+<label>
+Phone
+</label>
+
+<input
+type="text"
+name="phone"
+value="{{ researcher.phone or '' }}">
+
+<br><br>
+
+<button type="submit" class="save-btn">
+Update Profile
+</button>
+
+</form>
+
+{% elif session["role"] == "institution_admin" %}
+
+<h3>
+Institution Admin Profile
+</h3>
+
+<p>Institution profile will be displayed here.</p>
+
+{% elif session["role"] == "reviewer" %}
+
+<h3>
+Reviewer Profile
+</h3>
+
+<p>Reviewer profile will be displayed here.</p>
+
+{% endif %}
+</div>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+function toggleSidebar(){
+
+    document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("main").classList.toggle("shift");
+
+}
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,72 @@
+/* ================= PUBLICATION PAGE ================= */
+
+
+/* Make publication modal smaller and scrollable */
+
+#publicationModal .modal-content{
+
+    width:450px;
+
+    max-height:85vh;
+
+    overflow-y:auto;
+
+}
+
+
+
+/* Publication form fields */
+
+#publicationModal input,
+#publicationModal select,
+#publicationModal textarea{
+
+    width:100%;
+
+    padding:12px;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+    box-sizing:border-box;
+
+    font-size:15px;
+
+}
+
+
+
+/* Dropdown styling */
+
+#publicationModal select{
+
+    background:white;
+
+    cursor:pointer;
+
+}
+
+
+
+/* Labels */
+
+#publicationModal label{
+
+    display:block;
+
+    margin-top:12px;
+
+    margin-bottom:6px;
+
+    font-weight:bold;
+
+}input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    appearance: textfield;
+}

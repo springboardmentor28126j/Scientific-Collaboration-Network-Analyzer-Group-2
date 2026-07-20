@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Researchers | Scientific Collaboration Network Analyzer</title>
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/common.css') }}">
+</head>
+
+
+<body>
+
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+
+    <div class="navbar-left">
+
+        <button class="menu-btn" onclick="toggleSidebar()">
+            ☰
+        </button>
+
+        <div class="project-title">
+            Scientific Collaboration Network Analyzer
+        </div>
+
+    </div>
+
+
+    <div class="navbar-right">
+
+        Welcome, {{ session["full_name"] }}
+
+    </div>
+
+</div>
+
+
+
+
+<!-- ================= SIDEBAR ================= -->
+
+
+<div class="sidebar" id="sidebar">
+
+
+<a href="{{ url_for('dashboard') }}">
+    Dashboard
+</a>
+
+
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="{{ url_for('researchers') }}" class="active">
+    Researchers
+</a>
+
+{% endif %}
+
+
+
+{% if session["role"] in ["researcher", "institution_admin", "reviewer", "system_admin"] %}
+
+<a href="{{ url_for('publications') }}">
+    Publications
+</a>
+{% endif %}
+
+
+
+{% if session["role"] in ["institution_admin", "system_admin"] %}
+
+<a href="#">
+    Institutions
+</a>
+
+{% endif %}
+
+
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="#">
+    Collaborations
+</a>
+
+
+<a href="{{ url_for('conferences') }}">
+    Conferences
+</a>
+
+{% endif %}
+
+
+
+{% if session["role"] == "system_admin" %}
+
+<a href="#">
+    Users
+</a>
+
+
+<a href="#">
+    Reports
+</a>
+
+{% endif %}
+
+
+
+<a href="{{ url_for('researcher_profile') }}">
+    Profile
+</a>
+
+
+
+<a href="{{ url_for('logout') }}">
+    Logout
+</a>
+
+
+</div>
+
+
+
+
+
+<!-- ================= MAIN ================= -->
+
+
+<div class="main" id="main">
+
+
+{% if session.get("message") %}
+
+<div class="success-message">
+
+    {{ session["message"] }}
+
+</div>
+
+{% set _ = session.pop("message") %}
+
+{% endif %}
+
+
+
+<div class="top-section">
+
+
+<h1>
+Researchers
+</h1>
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+
+<button class="add-btn" onclick="openModal()">
+
+    + Add Researcher
+
+</button>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+<!-- ================= SEARCH ================= -->
+
+<div class="search-box">
+
+
+<input 
+type="text"
+id="researcherSearch"
+placeholder="Search by Name or Email"
+onkeyup="searchResearcher()">
+
+
+</div>
+
+<!-- ================= TABLE ================= -->
+
+
+<table>
+
+
+<thead>
+
+
+<tr>
+
+<th>
+ID
+</th>
+
+
+<th>
+Full Name
+</th>
+
+
+<th>
+Email
+</th>
+
+
+<th>
+Institution
+</th>
+
+
+<th>
+Department
+</th>
+
+
+<th>
+Designation
+</th>
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<th>
+Action
+</th>
+
+{% endif %}
+
+</tr>
+
+
+</thead>
+
+
+
+
+<tbody>
+
+
+{% if researchers %}
+
+
+
+{% for researcher in researchers %}
+
+
+
+<tr>
+
+
+<td>{{ loop.index }}</td>
+
+
+<td>
+{{ researcher.full_name }}
+</td>
+
+
+<td>
+{{ researcher.email }}
+</td>
+
+
+<td>
+{{ researcher.institution }}
+</td>
+
+
+<td>
+{{ researcher.department }}
+</td>
+
+
+<td>
+{{ researcher.designation }}
+</td>
+
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<td>
+
+
+<a href="{{ url_for('edit_researcher', researcher_id=researcher.id) }}">
+
+<button class="edit-btn">
+Edit
+</button>
+
+</a>
+
+
+
+{% if session["role"] == "system_admin" %}
+
+
+<a href="{{ url_for('delete_researcher', researcher_id=researcher.id) }}"
+onclick="return confirm('Are you sure you want to delete this researcher?');">
+
+<button class="delete-btn">
+Delete
+</button>
+
+</a>
+
+
+{% endif %}
+
+
+</td>
+
+{% endif %}
+
+
+</tr>
+
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+
+<tr>
+
+<td colspan="6" class="empty">
+
+No Researchers Found
+
+</td>
+
+</tr>
+
+
+{% endif %}
+
+
+
+</tbody>
+
+
+
+</table>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- ================= ADD RESEARCHER MODAL ================= -->
+
+
+<div class="modal" id="researcherModal">
+
+
+<div class="modal-content">
+
+
+<h2>
+Add Researcher
+</h2>
+
+
+
+<form method="POST" action="{{ url_for('add_researcher') }}">
+
+
+
+<label>
+Full Name
+</label>
+
+
+<input
+type="text"
+name="full_name"
+placeholder="Enter Full Name"
+required>
+
+
+
+
+<label>
+Email
+</label>
+
+
+<input
+type="email"
+name="email"
+placeholder="Enter Email Address"
+required>
+
+
+
+
+<label>
+Institution
+</label>
+
+
+<input
+type="text"
+name="institution"
+placeholder="Enter Institution"
+required>
+
+
+
+
+<label>
+Department
+</label>
+
+
+<input
+type="text"
+name="department"
+placeholder="Enter Department"
+required>
+
+
+
+
+<label>
+Designation
+</label>
+
+
+<input
+type="text"
+name="designation"
+placeholder="Enter Designation"
+required>
+
+
+
+
+<label>
+Research Interests (Optional)
+</label>
+
+
+<input
+type="text"
+name="research_interests"
+placeholder="Enter Research Interests">
+
+
+
+
+
+<div class="modal-buttons">
+
+
+
+<button type="submit" class="save-btn">
+
+Save
+
+</button>
+
+
+
+
+<button
+type="button"
+class="cancel-btn"
+onclick="closeModal()">
+
+Cancel
+
+</button>
+
+
+
+</div>
+
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+
+<script>
+
+
+function toggleSidebar(){
+
+    document.getElementById("sidebar").classList.toggle("active");
+
+    document.getElementById("main").classList.toggle("shift");
+
+}
+
+
+
+function openModal(){
+
+    document.getElementById("researcherModal").style.display="flex";
+
+}
+
+
+
+function closeModal(){
+
+    document.getElementById("researcherModal").style.display="none";
+
+}
+
+
+</script>
+
+
+
+</body>
+<script>
+
+function searchResearcher(){
+
+    let input = document.getElementById("researcherSearch");
+
+    let filter = input.value.toLowerCase();
+
+
+    let table = document.querySelector("table");
+
+    let rows = table.getElementsByTagName("tr");
+
+
+
+    for(let i = 1; i < rows.length; i++){
+
+
+        let name = rows[i]
+        .getElementsByTagName("td")[1];
+
+
+        let email = rows[i]
+        .getElementsByTagName("td")[2];
+
+
+        let institution = rows[i]
+        .getElementsByTagName("td")[3];
+
+
+
+        if(name || email || institution){
+
+
+            let nameText = name.textContent.toLowerCase();
+
+            let emailText = email.textContent.toLowerCase();
+
+            let institutionText = institution.textContent.toLowerCase();
+
+
+
+            if(
+                nameText.includes(filter) ||
+                emailText.includes(filter) ||
+                institutionText.includes(filter)
+            ){
+
+                rows[i].style.display="";
+
+            }
+            else{
+
+                rows[i].style.display="none";
+
+            }
+
+        }
+
+
+    }
+
+}
+
+</script>
+
+</html>

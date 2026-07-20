@@ -1,0 +1,283 @@
+/* ===========================
+   Global Styles
+=========================== */
+
+body{
+    margin:0;
+    padding:20px 0;
+    font-family:Arial, Helvetica, sans-serif;
+
+    background:linear-gradient(135deg,#1E3C72,#2A5298);
+
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+
+    min-height:100vh;
+}
+
+/* ===========================
+   Authentication Card
+=========================== */
+
+.auth-box{
+
+    width:520px;
+    max-width:90%;
+
+    background:#fff;
+
+    padding:40px;
+
+    border-radius:18px;
+
+    box-shadow:0 15px 35px rgba(0,0,0,.25);
+
+}
+
+/* ===========================
+   Headings
+=========================== */
+
+h1{
+
+    margin:0;
+
+    text-align:center;
+
+    color:#1E3C72;
+
+    font-size:32px;
+
+}
+
+h2{
+
+    margin:10px 0 0;
+
+    text-align:center;
+
+    color:#1E3C72;
+
+    font-size:24px;
+
+}
+
+.subtitle{
+
+    text-align:center;
+
+    color:#555;
+
+    font-size:18px;
+
+    margin:15px 0 30px;
+
+}
+
+/* ===========================
+   Labels
+=========================== */
+
+label{
+
+    display:block;
+
+    margin-top:18px;
+
+    margin-bottom:8px;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    color:#333;
+
+}
+
+/* ===========================
+   Input Fields
+=========================== */
+
+input,
+select{
+
+    width:100%;
+
+    padding:14px;
+
+    font-size:16px;
+
+    font-family:Arial, Helvetica, sans-serif;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+    box-sizing:border-box;
+
+    margin-bottom:10px;
+
+    background:#fff;
+
+    transition:.3s;
+
+}
+
+/* Focus */
+
+input:focus,
+select:focus{
+
+    outline:none;
+
+    border-color:#2563EB;
+
+    box-shadow:0 0 8px rgba(37,99,235,.25);
+
+}
+
+/* ===========================
+   Button
+=========================== */
+
+button{
+
+    width:100%;
+
+    margin-top:25px;
+
+    padding:15px;
+
+    background:#2563EB;
+
+    color:white;
+
+    border:none;
+
+    border-radius:8px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+button:hover{
+
+    background:#1D4ED8;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 8px 18px rgba(37,99,235,.25);
+
+}
+
+/* ===========================
+   Error Message
+=========================== */
+
+.error{
+
+    margin-top:15px;
+
+    color:#DC2626;
+
+    text-align:center;
+
+    font-size:15px;
+
+    font-weight:bold;
+
+}
+
+/* ===========================
+   Bottom Text
+=========================== */
+
+.bottom-text{
+
+    text-align:center;
+
+    margin-top:30px;
+
+    color:#555;
+
+    font-size:16px;
+
+}
+
+.bottom-text a{
+
+    color:#2563EB;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+}
+
+.bottom-text a:hover{
+
+    text-decoration:underline;
+
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media(max-width:600px){
+
+    .auth-box{
+
+        width:90%;
+
+        padding:30px 20px;
+
+    }
+
+    h1{
+
+        font-size:28px;
+
+    }
+
+    h2{
+
+        font-size:22px;
+
+    }
+
+}
+/* ===========================
+   Password Toggle
+=========================== */
+
+.password-box{
+    position: relative;
+}
+
+.password-box input{
+    width: 100%;
+    padding-right: 50px;
+}
+
+.toggle-password{
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #666;
+    font-size: 24px;
+    user-select: none;
+}
+
+.toggle-password:hover{
+    color: #2563EB;
+}

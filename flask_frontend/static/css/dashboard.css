@@ -1,0 +1,254 @@
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f6f9;
+}
+
+
+/* TOP NAVBAR */
+
+.navbar{
+
+    height:70px;
+    background:#1E3C72;
+    color:white;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:0 35px;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.2);
+
+}
+
+.menu-btn{
+
+    background:none;
+    border:none;
+
+    color:white;
+
+    font-size:28px;
+
+    cursor:pointer;
+
+}
+
+
+.navbar h2{
+
+    font-size:22px;
+    margin:0;
+
+}
+.navbar-left{
+
+    display:flex;
+    align-items:center;
+    gap:25px;
+
+}
+
+.project-title{
+
+    font-size:20px;
+    font-weight:bold;
+
+}
+
+.navbar-right{
+
+    font-size:18px;
+    font-weight:600;
+
+}
+
+/* SIDEBAR */
+
+
+.sidebar{
+
+    position:fixed;
+
+    top:70px;
+
+    left:-250px;
+
+    width:240px;
+
+    height:100vh;
+
+    background:#1E3C72;
+
+    transition:0.3s;
+
+    padding-top:20px;
+
+    z-index:1000;
+
+}
+
+
+.sidebar.active{
+
+    left:0;
+
+}
+
+
+
+.sidebar a{
+
+    display:block;
+
+    color:white;
+
+    text-decoration:none;
+
+    padding:15px 25px;
+
+    transition:.3s;
+
+}
+
+
+
+.sidebar a:hover{
+
+    background:#2A5298;
+
+}
+
+
+
+/* MAIN CONTENT */
+
+
+.main{
+
+    padding:30px;
+
+    transition:0.3s;
+
+}
+
+
+
+.main.shift{
+
+    margin-left:240px;
+
+}
+
+
+
+
+.main h1{
+
+    color:#1E3C72;
+
+    margin-bottom:30px;
+
+}
+
+
+
+/* CARDS */
+
+
+.cards{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:25px;
+
+}
+
+
+
+.card{
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:30px;
+
+    text-align:center;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+    transition:.3s;
+
+}
+
+
+
+.card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+
+
+.card h3{
+
+    color:#555;
+
+    margin-bottom:15px;
+
+}
+
+
+
+.card h1{
+
+    color:#1E3C72;
+
+    font-size:42px;
+
+    margin:0;
+
+}
+
+
+
+
+/* ACTIVITY SECTION */
+
+
+.activity{
+
+    margin-top:45px;
+
+    background:white;
+
+    padding:30px;
+
+    border-radius:15px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+}
+
+
+
+.activity h2{
+
+    color:#1E3C72;
+
+}
+
+
+.activity hr{
+
+    border:none;
+
+    border-top:1px solid #ddd;
+
+}

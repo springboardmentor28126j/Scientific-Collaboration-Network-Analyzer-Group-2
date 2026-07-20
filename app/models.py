@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Date, DateTime, func
 from app.database import Base
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
@@ -25,6 +26,7 @@ class Researcher(Base):
     skills = Column(String, nullable=True)
     research_interest = Column(String, nullable=True)
     designation = Column(String, nullable=False)
+    publications = relationship("PublicationAuthor", backref="researcher")
 
 class Institution(Base):
     __tablename__ = "institutions"
@@ -62,5 +64,24 @@ class Publication(Base):
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
+        nullable=False
+    )
+
+    authors = relationship("PublicationAuthor", backref="publication")
+
+class PublicationAuthor(Base):
+    __tablename__ = "publication_authors"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    publication_id = Column(
+        Integer,
+        ForeignKey("publications.id"),
+        nullable=False
+    )
+
+    researcher_id = Column(
+        Integer,
+        ForeignKey("researchers.id"),
         nullable=False
     )

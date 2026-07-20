@@ -36,3 +36,23 @@ class PublicationCreate(BaseModel):
     publication_date: date | None = None
     journal_or_venue: str | None = None
     institution_id: int | None = None
+
+class PublicationAuthorAssign(BaseModel):
+    publication_id: int
+    researcher_ids: list[int]
+
+class AuthorResponse(BaseModel):
+    id: int
+    full_name: str
+
+    class Config:
+        orm_mode = True
+
+
+class PublicationWithAuthors(BaseModel):
+    id: int
+    title: str
+    authors: list[AuthorResponse]
+
+    class Config:
+        orm_mode = True

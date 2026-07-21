@@ -95,14 +95,38 @@ class UserService:
 
     async def list_researchers(
         self,
+        current_user: User,
         search: str | None = None,
     ) -> list[ResearcherRead]:
         """
-        Lists all researchers across institutions, for the public-facing
+        Lists all researchers in their institutions, for the public-facing
         researcher directory. Only verified and active researchers are
         returned.
         """
-        researchers = await self.users.list_researchers(search)
+        researchers = await self.users.list_researchers(
+            institution_id=current_user.institution_id, search=search
+        )
+        return [
+            ResearcherRead(
+                id=r.id,
+                full_name=r.full_name,
+                email=r.email,
+                description=r.description,
+                institution_name=(r.institution.name if r.institution else ""),
+            )
+            for r in researchers
+        ]
+
+    async def list_reviewers(
+        self,
+        search: str | None = None,
+    ) -> list[ResearcherRead]:
+        """
+        Lists all reviewers across institutions, for the public-facing
+        researcher directory. Only verified and active researchers are
+        returned.
+        """
+        researchers = await self.users.list_reviewers(search)
         return [
             ResearcherRead(
                 id=r.id,

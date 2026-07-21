@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.publication_author import PublicationAuthor
     from app.models.review_assignment import ReviewAssignment
     from app.models.publication_history import PublicationHistory
+    from app.models.institution import Institution
 
 
 class PublicationStatus(StrEnum):
@@ -55,6 +56,11 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Enum(PublicationType, name="publication_type"),
         nullable=False,
     )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
 
     status: Mapped[PublicationStatus] = mapped_column(
         Enum(PublicationStatus, name="publication_status"),
@@ -81,6 +87,18 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
         nullable=False,
     )
 
@@ -121,6 +139,11 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="publications",
     )
 
+    institution: Mapped["Institution"] = relationship(
+        "Institution",
+        back_populates="publications",
+    )
+
     authors: Mapped[list["PublicationAuthor"]] = relationship(
         "PublicationAuthor",
         back_populates="publication",
@@ -144,4 +167,11 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="publication",
         cascade="all, delete-orphan",
         order_by="PublicationHistory.created_at.desc()",
+    )
+
+    conference = relationship(
+        "PublicationConference",
+        back_populates="publication",
+        uselist=False,
+        cascade="all, delete-orphan",
     )

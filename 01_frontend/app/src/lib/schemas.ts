@@ -58,8 +58,8 @@ export type InstitutionRegisterFormData = z.infer<typeof institutionRegisterSche
 export const createUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   full_name: z.string().min(1, "Full name is required").max(255),
-  role: z.enum(["RESEARCHER", "REVIEWER"], {
-    required_error: "Please select a role",
+  role: z.enum(["RESEARCHER", "REVIEWER"] as const, {
+    error: "Please select a role",
   }),
   description: z.string().optional(),
 });
@@ -72,3 +72,51 @@ export const verifyEmailSchema = z.object({
 });
 
 export type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>;
+
+// Publication schemas
+export const publicationTypes = [
+  "JOURNAL",
+  "CONFERENCE",
+  "BOOK",
+  "PATENT",
+  "TECHNICAL_REPORT",
+] as const;
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ACCEPTED_PDF_TYPES = ["application/pdf"];
+
+export const createPublicationSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500),
+  abstract: z.string().min(1, "Abstract is required"),
+  publication_type: z.enum(publicationTypes, {
+    error: "Please select a valid publication type",
+  }),
+  doi: z.string().optional(),
+  pdf: z
+    .custom<FileList>((val) => val instanceof FileList, "Please upload a file")
+    .refine((files) => files.length > 0, "PDF file is required")
+    .refine((files) => files[0]?.size <= MAX_FILE_SIZE, "Max file size is 10MB")
+    .refine(
+      (files) => ACCEPTED_PDF_TYPES.includes(files[0]?.type),
+      "Only .pdf files are accepted"
+    ),
+});
+
+export type CreatePublicationFormData = z.infer<typeof createPublicationSchema>;
+
+export const updatePublicationSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500).optional(),
+  abstract: z.string().min(1, "Abstract is required").optional(),
+  publication_type: z.enum(publicationTypes).optional(),
+  doi: z.string().optional(),
+});
+
+export type UpdatePublicationFormData = z.infer<typeof updatePublicationSchema>;
+
+export const addAuthorSchema = z.object({
+  researcher_id: z.string().uuid("Invalid researcher ID"),
+  author_order: z.number().int().min(1, "Author order must be at least 1"),
+  is_corresponding_author: z.boolean().default(false),
+});
+
+export type AddAuthorFormData = z.infer<typeof addAuthorSchema>;

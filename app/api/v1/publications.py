@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi.responses import RedirectResponse
 
 from app.api.deps import get_publication_author_service, get_publication_service
 from app.core.dependencies import get_current_user
@@ -20,6 +21,8 @@ from app.schemas.publication_author import (
 from app.schemas.publication_decision import (
     PublicationDecisionCreate,
 )
+from app.schemas.pagination import PaginatedResponse
+from app.schemas.publication_filter import PublicationFilter
 from app.services.publication_service import PublicationService
 from app.services.publication_author_service import PublicationAuthorService
 
@@ -65,13 +68,17 @@ async def create_publication(
 
 @router.get(
     "",
-    response_model=list[PublicationListItem],
-    summary="List publications",
+    response_model=PaginatedResponse[PublicationRead],
 )
 async def list_publications(
-    publication_service: PublicationService = Depends(get_publication_service),
+    filters: PublicationFilter = Depends(),
+    current_user: User = Depends(get_current_user),
+    service: PublicationService = Depends(get_publication_service),
 ):
-    return await publication_service.list_publications()
+    return await service.list_publications(
+        current_user=current_user,
+        filters=filters,
+    )
 
 
 @router.get(
@@ -148,25 +155,6 @@ async def add_author(
     )
 
 
-@router.post(
-    "/{publication_id}/authors",
-    response_model=PublicationAuthorRead,
-    status_code=status.HTTP_201_CREATED,
-    summary="Add a researcher as a co-author",
-)
-async def add_author(
-    publication_id: uuid.UUID,
-    payload: PublicationAuthorCreate,
-    current_user: User = Depends(get_current_user),
-    author_service: PublicationAuthorService = Depends(get_publication_author_service),
-):
-    return await author_service.add_author(
-        publication_id=publication_id,
-        payload=payload,
-        current_user=current_user,
-    )
-
-
 @router.get(
     "/{publication_id}/authors",
     response_model=list[PublicationAuthorRead],
@@ -216,6 +204,31 @@ async def submit_publication(
         current_user,
     )
 
+@router.get(
+    "/{publication_id}/download",
+    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    summary="Download publication PDF",
+    description=(
+        "Downloads the publication PDF. Only verified users "
+        "are allowed to download papers."
+    ),
+)
+async def download_publication(
+    publication_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    publication_service: PublicationService = Depends(
+        get_publication_service,
+    ),
+):
+    paper_url = await publication_service.download_publication(
+        publication_id=publication_id,
+        current_user=current_user,
+    )
+
+    return RedirectResponse(
+        url=paper_url,
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    )
 
 @router.post(
     "/{publication_id}/decision",

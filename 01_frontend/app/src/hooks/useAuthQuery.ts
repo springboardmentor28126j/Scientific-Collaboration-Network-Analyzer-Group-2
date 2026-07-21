@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
-import { apiClient } from "@/api/client";
+import { getMe, login, forgotPassword, resetPassword, verifyEmail, verifyInvite } from "@/api/auth";
+import { registerInstitution, listInstitutions, activateInstitution, deactivateInstitution } from "@/api/institution";
+import { createInstitutionUser, listInstitutionUsers, activateUser, deactivateUser } from "@/api/user";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
 import type { UserMe, Institution, InstitutionUser } from "@/types";
@@ -11,7 +13,7 @@ export function useMe() {
 
   return useQuery<UserMe>({
     queryKey: ["me"],
-    queryFn: () => apiClient.getMe(),
+    queryFn: () => getMe(),
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: false,
@@ -23,12 +25,12 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: ({ username, password }: { username: string; password: string }) =>
-      apiClient.login(username, password),
+      login(username, password),
     onSuccess: async (data) => {
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("refresh_token", data.refresh_token);
       try {
-        const user = await apiClient.getMe();
+        const user = await getMe();
         useAuthStore.getState().login(data.access_token, data.refresh_token, user);
         toast.success("Login successful!");
         navigate("/dashboard");
@@ -60,7 +62,7 @@ export function useLogout() {
 
 export function useForgotPassword() {
   return useMutation({
-    mutationFn: (email: string) => apiClient.forgotPassword(email),
+    mutationFn: (email: string) => forgotPassword(email),
     onSuccess: () => {
       toast.success("If an account exists, a reset link has been sent");
     },
@@ -75,7 +77,7 @@ export function useResetPassword() {
 
   return useMutation({
     mutationFn: ({ token, new_password }: { token: string; new_password: string }) =>
-      apiClient.resetPassword(token, new_password),
+      resetPassword(token, new_password),
     onSuccess: () => {
       toast.success("Password reset successful! Please login.");
       navigate("/login");
@@ -88,7 +90,7 @@ export function useResetPassword() {
 
 export function useVerifyEmail() {
   return useMutation({
-    mutationFn: (token: string) => apiClient.verifyEmail(token),
+    mutationFn: (token: string) => verifyEmail(token),
     onSuccess: () => {
       toast.success("Email verified successfully!");
     },
@@ -103,7 +105,7 @@ export function useVerifyInvite() {
 
   return useMutation({
     mutationFn: ({ token, password }: { token: string; password: string }) =>
-      apiClient.verifyInvite(token, password),
+      verifyInvite(token, password),
     onSuccess: () => {
       toast.success("Account activated! Please login.");
       navigate("/login");
@@ -126,7 +128,7 @@ export function useRegisterInstitution() {
       admin_email: string;
       admin_password: string;
       logo: File;
-    }) => apiClient.registerInstitution(data),
+    }) => registerInstitution(data),
     onSuccess: () => {
       toast.success("Institution registered! Please check your email to verify.");
       navigate("/login");
@@ -140,7 +142,7 @@ export function useRegisterInstitution() {
 export function useInstitutions() {
   return useQuery<Institution[]>({
     queryKey: ["institutions"],
-    queryFn: () => apiClient.listInstitutions(),
+    queryFn: () => listInstitutions(),
     staleTime: 1000 * 30,
   });
 }
@@ -149,7 +151,7 @@ export function useActivateInstitution() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (institutionId: string) => apiClient.activateInstitution(institutionId),
+    mutationFn: (institutionId: string) => activateInstitution(institutionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institutions"] });
       toast.success("Institution activated");
@@ -164,7 +166,7 @@ export function useDeactivateInstitution() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (institutionId: string) => apiClient.deactivateInstitution(institutionId),
+    mutationFn: (institutionId: string) => deactivateInstitution(institutionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institutions"] });
       toast.success("Institution deactivated");
@@ -179,7 +181,7 @@ export function useDeactivateInstitution() {
 export function useInstitutionUsers(role?: "RESEARCHER" | "REVIEWER") {
   return useQuery<InstitutionUser[]>({
     queryKey: ["institution-users", role],
-    queryFn: () => apiClient.listInstitutionUsers(role),
+    queryFn: () => listInstitutionUsers(role),
     staleTime: 1000 * 30,
   });
 }
@@ -193,7 +195,7 @@ export function useCreateInstitutionUser() {
       full_name: string;
       role: "RESEARCHER" | "REVIEWER";
       description?: string;
-    }) => apiClient.createInstitutionUser(data),
+    }) => createInstitutionUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institution-users"] });
       toast.success("User created and invite sent!");
@@ -208,7 +210,7 @@ export function useActivateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: string) => apiClient.activateUser(userId),
+    mutationFn: (userId: string) => activateUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institution-users"] });
       toast.success("User activated");
@@ -223,7 +225,7 @@ export function useDeactivateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: string) => apiClient.deactivateUser(userId),
+    mutationFn: (userId: string) => deactivateUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["institution-users"] });
       toast.success("User deactivated");

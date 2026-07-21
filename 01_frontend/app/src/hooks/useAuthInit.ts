@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { apiClient } from "@/api/client";
+import { getMe } from "@/api/auth";
 
 export function useAuthInit() {
   const { isAuthenticated, setUser, setLoading, logout } = useAuthStore();
@@ -14,7 +14,7 @@ export function useAuthInit() {
       }
 
       try {
-        const user = await apiClient.getMe();
+        const user = await getMe();
         setUser(user);
       } catch {
         logout();

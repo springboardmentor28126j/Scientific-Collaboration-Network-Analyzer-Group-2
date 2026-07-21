@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { useAuthStore, useIsSuperAdmin, useIsInstitutionAdmin } from "@/stores/authStore";
+import { useAuthStore, useIsSuperAdmin } from "@/stores/authStore";
 import { useLogout } from "@/hooks/useAuthQuery";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   ChevronRight,
   BookOpen,
   ClipboardCheck,
+  FileText,
 } from "lucide-react";
 
 interface NavItem {
@@ -54,6 +55,12 @@ function getNavItems(): NavItem[] {
       roles: ["RESEARCHER"],
     },
     {
+      label: "Publications",
+      path: "/dashboard/publications",
+      icon: <FileText className="h-5 w-5" />,
+      roles: ["SUPER_ADMIN", "INSTITUTION_ADMIN", "RESEARCHER", "REVIEWER"],
+    },
+    {
       label: "My Reviews",
       path: "/dashboard/reviews",
       icon: <ClipboardCheck className="h-5 w-5" />,
@@ -73,7 +80,6 @@ function SidebarContent() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = useIsSuperAdmin();
-  const isInstitutionAdmin = useIsInstitutionAdmin();
   const logoutMutation = useLogout();
 
   const navItems = getNavItems().filter((item) =>
@@ -116,7 +122,9 @@ function SidebarContent() {
               onClick={() => navigate(item.path)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                location.pathname === item.path
+                (item.path === "/dashboard"
+                  ? location.pathname === item.path
+                  : location.pathname.startsWith(item.path))
                   ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               )}

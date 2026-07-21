@@ -1,43 +1,24 @@
-import { trpc } from "@/providers/trpc";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
+import { useAuthStore } from "@/stores/authStore";
+import { useLogout } from "@/hooks/useAuthQuery";
 
-export type AuthUser = {
-  id: number;
-  username: string;
-  name: string | null;
-  role: string;
-};
-
+/**
+ * Convenience hook — replaces the old tRPC-based useAuth.
+ * Returns the current user, auth state, and a logout callback.
+ */
 export function useAuth() {
-  const utils = trpc.useUtils();
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  const {
-    data: user,
+  const logoutMutation = useLogout();
+  const logout = useCallback(() => logoutMutation.mutate(), [logoutMutation]);
+
+  return {
+    user,
     isLoading,
-  } = trpc.auth.me.useQuery(undefined, {
-    staleTime: 1000 * 60 * 5,
-    retry: false,
-  });
-
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: async () => {
-      await utils.invalidate();
-    },
-  });
-
-  const logout = useCallback(
-    () => logoutMutation.mutate(),
-    [logoutMutation],
-  );
-
-  return useMemo(
-    () => ({
-      user: (user ?? null) as AuthUser | null,
-      isAuthenticated: !!user,
-      isAdmin: user?.role === "admin",
-      isLoading: isLoading || logoutMutation.isPending,
-      logout,
-    }),
-    [user, isLoading, logoutMutation.isPending, logout],
-  );
+    isAuthenticated,
+    isAdmin: user?.role === "SUPER_ADMIN",
+    logout,
+  };
 }

@@ -63,9 +63,7 @@ import {
   Mail,
   Calendar,
   Filter,
-  X,
 } from "lucide-react";
-import { toast } from "sonner";
 import type { InstitutionUser } from "@/types";
 
 type RoleFilter = "ALL" | "RESEARCHER" | "REVIEWER";

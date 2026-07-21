@@ -63,6 +63,7 @@ class UserRepository:
 
     async def list_researchers(
         self,
+        institution_id: uuid.UUID,
         search: str | None = None,
     ) -> list[User]:
         stmt = (
@@ -70,6 +71,33 @@ class UserRepository:
             .options(selectinload(User.institution))
             .where(
                 User.role == UserRole.RESEARCHER,
+                User.institution_id == institution_id,
+                User.is_active.is_(True),
+                User.is_verified.is_(True),
+            )
+            .order_by(User.full_name.asc())
+        )
+
+        if search:
+            stmt = stmt.where(
+                or_(
+                    User.full_name.ilike(f"%{search}%"),
+                    User.email.ilike(f"%{search}%"),
+                )
+            )
+        result = await self.session.execute(stmt)
+        print(result)
+        return list(result.scalars().all())
+
+    async def list_reviewers(
+        self,
+        search: str | None = None,
+    ) -> list[User]:
+        stmt = (
+            select(User)
+            .options(selectinload(User.institution))
+            .where(
+                User.role == UserRole.REVIEWER,
                 User.is_active.is_(True),
                 User.is_verified.is_(True),
             )

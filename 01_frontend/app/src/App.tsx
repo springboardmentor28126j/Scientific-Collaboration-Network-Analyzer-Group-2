@@ -18,6 +18,8 @@ import Dashboard from "@/pages/Dashboard";
 import Institutions from "@/pages/Institutions";
 import Users from "@/pages/Users";
 import Researcher from "@/pages/Researcher";
+import Publications from "@/pages/Publications";
+import PublicationDetail from "@/pages/PublicationDetail";
 import Reviewer from "@/pages/Reviewer";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
@@ -78,6 +80,30 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={["RESEARCHER"]}>
               <Researcher />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="research/:id"
+          element={
+            <ProtectedRoute allowedRoles={["RESEARCHER"]}>
+              <PublicationDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="publications"
+          element={
+            <ProtectedRoute>
+              <Publications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="publications/:id"
+          element={
+            <ProtectedRoute>
+              <PublicationDetail />
             </ProtectedRoute>
           }
         />

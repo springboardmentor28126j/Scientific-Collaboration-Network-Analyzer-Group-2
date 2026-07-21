@@ -159,15 +159,24 @@
     z-index:9999;
     backdrop-filter:blur(4px);
 }
-
 .modal{
-    width:650px;
-    max-width:90%;
+
+    width:750px;
+
+    max-width:95%;
+
+    max-height:90vh;
+
+    overflow-y:auto;
+
     background:#fff;
-    border-radius:18px;
-    padding:30px;
+
+    border-radius:20px;
+
+    padding:35px;
+
     box-shadow:0 20px 60px rgba(0,0,0,.25);
-    animation:popup .25s ease;
+
 }
 
 @keyframes popup{
@@ -236,4 +245,127 @@
 
 .cancel-btn:hover{
     background:#dc2626;
+}
+/* =======================
+   Upload Paper Form
+======================= */
+
+.profile-card form{
+    width:100%;
+}
+
+.profile-card input,
+.profile-card textarea,
+.profile-card select{
+
+    width:100%;
+    padding:14px 16px;
+    margin-bottom:18px;
+
+    border:1px solid #d1d5db;
+    border-radius:12px;
+
+    font-size:15px;
+
+    outline:none;
+
+    transition:.3s;
+
+    background:#fff;
+
+    box-sizing:border-box;
+
+}
+
+.profile-card textarea{
+
+    resize:vertical;
+    min-height:140px;
+
+}
+
+.profile-card input:focus,
+.profile-card textarea:focus,
+.profile-card select:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 10px rgba(37,99,235,.15);
+
+}
+
+.profile-card select{
+
+    cursor:pointer;
+
+}
+
+.profile-card button{
+
+    width:100%;
+    margin-top:10px;
+
+}
+/* ==========================
+   Upload Paper Form
+========================== */
+
+.profile-card label{
+
+    display:block;
+    margin-bottom:8px;
+    margin-top:10px;
+
+    font-weight:600;
+
+    color:#1e3a8a;
+
+}
+
+.profile-card input,
+.profile-card textarea,
+.profile-card select{
+
+    width:100%;
+
+    padding:14px;
+
+    margin-bottom:18px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:12px;
+
+    font-size:15px;
+
+    outline:none;
+
+    transition:.3s;
+
+    box-sizing:border-box;
+
+}
+
+.profile-card textarea{
+
+    resize:vertical;
+
+}
+
+.profile-card input:focus,
+.profile-card textarea:focus,
+.profile-card select:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 10px rgba(37,99,235,.15);
+
+}
+
+.profile-card button{
+
+    width:100%;
+
+    margin-top:15px;
+
 }

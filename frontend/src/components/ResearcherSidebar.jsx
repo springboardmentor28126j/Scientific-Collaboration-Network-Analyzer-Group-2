@@ -77,6 +77,9 @@ function ResearcherSidebar() {
         >
           ⚙ Settings
         </Link>
+        <Link to="/my-papers">
+    📄 My Papers
+</Link>
 
       </nav>
 

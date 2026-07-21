@@ -1,4 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy.orm import relationship
+
 from app.database.database import Base
 
 
@@ -38,3 +40,10 @@ class User(Base):
 
     # Role
     role = Column(String(50), default="Researcher")
+
+    # Relationship
+    papers = relationship(
+        "ResearchPaper",
+        back_populates="researcher",
+        cascade="all, delete"
+    )

@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 from app.models.research_paper import ResearchPaper
 from app.models.researcher import Researcher
 
-from app.schemas.research_paper import ResearchPaperCreate
+from app.schemas.research_paper import (
+    ResearchPaperCreate,
+    ResearchPaperUpdate
+)
 from app.schemas.researcher import ResearcherCreate
  
 from app.models.institution import Institution
@@ -211,3 +214,62 @@ def update_user(
     db.refresh(db_user)
 
     return db_user
+# -----------------------------
+# Get Papers by Researcher
+# -----------------------------
+def get_my_papers(
+    db: Session,
+    researcher_id: int
+):
+    return (
+        db.query(ResearchPaper)
+        .filter(
+            ResearchPaper.researcher_id == researcher_id
+        )
+        .all()
+    )
+
+
+# -----------------------------
+# Update Paper
+# -----------------------------
+def update_paper(
+    db: Session,
+    db_paper: ResearchPaper,
+    updated_paper: ResearchPaperUpdate
+):
+
+    update_data = updated_paper.model_dump(
+        exclude_unset=True
+    )
+
+    for key, value in update_data.items():
+
+        setattr(
+            db_paper,
+            key,
+            value
+        )
+
+    db.commit()
+
+    db.refresh(db_paper)
+
+    return db_paper
+
+
+# -----------------------------
+# Delete Paper
+# -----------------------------
+def delete_paper(
+    db: Session,
+    db_paper: ResearchPaper
+):
+
+    db.delete(db_paper)
+
+    db.commit()
+
+    return {
+        "message": "Paper deleted successfully"
+    }

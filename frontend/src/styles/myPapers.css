@@ -1,0 +1,439 @@
+/* ==========================================
+   MY PAPERS PAGE
+========================================== */
+
+.empty{
+    margin-top:40px;
+    background:#ffffff;
+    border-radius:20px;
+    padding:70px;
+    text-align:center;
+    color:#64748b;
+    font-size:22px;
+    font-weight:600;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+}
+
+/* ==========================================
+   PAPER CARD
+========================================== */
+
+.paper-card{
+
+    background:#ffffff;
+
+    margin-top:25px;
+
+    border-radius:20px;
+
+    padding:28px 30px;
+
+    border-left:6px solid #2563eb;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+    transition:.35s ease;
+
+}
+
+.paper-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:0 20px 35px rgba(37,99,235,.18);
+
+}
+
+.paper-card h3{
+
+    color:#1e3a8a;
+
+    font-size:24px;
+
+    margin-bottom:18px;
+
+    font-weight:700;
+
+}
+
+.paper-card p{
+
+    margin:12px 0;
+
+    color:#475569;
+
+    font-size:16px;
+
+    line-height:1.6;
+
+}
+
+.paper-card b{
+
+    color:#2563eb;
+
+}
+
+/* ==========================================
+   STATUS BADGE
+========================================== */
+
+.status{
+
+    display:inline-block;
+
+    margin-top:12px;
+
+    padding:8px 16px;
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+    border-radius:30px;
+
+    font-weight:600;
+
+    font-size:14px;
+
+}
+
+/* Published */
+
+.status.published{
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+}
+
+/* ==========================================
+   BUTTONS
+========================================== */
+
+.paper-buttons{
+
+    display:flex;
+
+    gap:15px;
+
+    margin-top:28px;
+
+}
+
+.paper-buttons button{
+
+    border:none;
+
+    border-radius:10px;
+
+    padding:12px 22px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.paper-buttons button:first-child{
+
+    background:#2563eb;
+
+    color:#fff;
+
+}
+
+.paper-buttons button:first-child:hover{
+
+    background:#1d4ed8;
+
+    transform:translateY(-2px);
+
+}
+
+.paper-buttons .delete{
+
+    background:#ef4444;
+
+    color:#fff;
+
+}
+
+.paper-buttons .delete:hover{
+
+    background:#dc2626;
+
+    transform:translateY(-2px);
+
+}
+
+/* ==========================================
+   MODAL
+========================================== */
+
+.modal-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.45);
+
+    backdrop-filter:blur(5px);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:999;
+
+}
+
+.modal{
+
+    width:760px;
+
+    max-width:95%;
+
+    max-height:90vh;
+
+    overflow-y:auto;
+
+    background:#fff;
+
+    border-radius:20px;
+
+    padding:35px;
+
+    box-shadow:0 25px 60px rgba(0,0,0,.25);
+
+    animation:popup .25s ease;
+
+}
+
+@keyframes popup{
+
+    from{
+
+        transform:scale(.9);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+.modal h2{
+
+    text-align:center;
+
+    color:#1e3a8a;
+
+    margin-bottom:28px;
+
+}
+
+/* ==========================================
+   LABELS
+========================================== */
+
+.modal label{
+
+    display:block;
+
+    margin-top:18px;
+
+    margin-bottom:8px;
+
+    font-weight:600;
+
+    color:#1e3a8a;
+
+}
+
+/* ==========================================
+   INPUTS
+========================================== */
+
+.modal input,
+
+.modal textarea,
+
+.modal select{
+
+    width:100%;
+
+    border:1px solid #d1d5db;
+
+    border-radius:10px;
+
+    padding:12px 15px;
+
+    font-size:15px;
+
+    transition:.3s;
+
+    outline:none;
+
+    background:#fff;
+
+}
+
+.modal textarea{
+
+    min-height:140px;
+
+    resize:vertical;
+
+}
+
+.modal input:focus,
+
+.modal textarea:focus,
+
+.modal select:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 10px rgba(37,99,235,.18);
+
+}
+
+/* ==========================================
+   MODAL BUTTONS
+========================================== */
+
+.modal-buttons{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:15px;
+
+    margin-top:30px;
+
+}
+
+.save-btn{
+
+    background:#2563eb;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 24px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.save-btn:hover{
+
+    background:#1d4ed8;
+
+}
+
+.cancel-btn{
+
+    background:#ef4444;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 24px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.cancel-btn:hover{
+
+    background:#dc2626;
+
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media(max-width:768px){
+
+.paper-card{
+
+    padding:20px;
+
+}
+
+.paper-card h3{
+
+    font-size:20px;
+
+}
+
+.paper-buttons{
+
+    flex-direction:column;
+
+}
+
+.paper-buttons button{
+
+    width:100%;
+
+}
+
+.modal{
+
+    width:95%;
+
+    padding:25px;
+
+}
+
+.modal-buttons{
+
+    flex-direction:column;
+
+}
+
+.modal-buttons button{
+
+    width:100%;
+
+}
+
+}

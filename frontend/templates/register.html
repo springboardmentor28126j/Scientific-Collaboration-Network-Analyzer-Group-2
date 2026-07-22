@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<h1>Create an account</h1>
+<form method="post" class="card-form" id="registrationForm">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
+    <div id="email-check-msg" style="font-size:0.9em; margin-top:0.25rem; display:none;"></div>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required minlength="8">
+
+    <label for="role">Role</label>
+    <select id="role" name="role" required>
+        <option value="researcher">Researcher</option>
+        <option value="institution_admin">Institution Admin</option>
+        <option value="reviewer">Reviewer</option>
+        <option value="system_admin">System Admin</option>
+    </select>
+
+    <div id="institution-field" style="display:none;">
+        <label for="institution_id">Institution</label>
+        <select id="institution_id" name="institution_id">
+            <option value="">— Select your institution —</option>
+            {% for inst in institutions %}
+            <option value="{{ inst.institution_id }}">{{ inst.name }}{% if inst.email_domain %} (@{{ inst.email_domain }}){% endif %}</option>
+            {% endfor %}
+        </select>
+        <p style="font-size:0.85em; color:#666;">
+            Institution admins and reviewers must register with their institution's email domain, if one is configured.
+        </p>
+    </div>
+
+    <button type="submit" id="registerBtn">Register</button>
+</form>
+<p>Already have an account? <a href="{{ url_for('login') }}">Log in</a>.</p>
+
+<script>
+const roleSelect = document.getElementById('role');
+const institutionField = document.getElementById('institution-field');
+const institutionSelect = document.getElementById('institution_id');
+
+function toggleInstitutionField() {
+    const needsInstitution = roleSelect.value === 'institution_admin' || roleSelect.value === 'reviewer';
+    institutionField.style.display = needsInstitution ? 'block' : 'none';
+    institutionSelect.required = needsInstitution;
+}
+roleSelect.addEventListener('change', toggleInstitutionField);
+toggleInstitutionField();
+
+const emailInput = document.getElementById('email');
+const msg = document.getElementById('email-check-msg');
+const registerBtn = document.getElementById('registerBtn');
+
+// This is a best-effort, non-blocking pre-check. The account still requires
+// clicking the emailed verification link afterward -- this just catches
+// obvious typos/fake addresses before the user submits the form.
+emailInput.addEventListener('blur', async function () {
+    const email = emailInput.value.trim();
+    if (!email) {
+        msg.style.display = "none";
+        return;
+    }
+
+    msg.textContent = "Checking email...";
+    msg.style.color = "gray";
+    msg.style.display = "block";
+
+    try {
+        const res = await fetch("/check-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+
+        if (!data.checked) {
+            // Inconclusive (not configured / API down) -- say so plainly instead
+            // of just vanishing, so it's clear nothing is broken.
+            msg.textContent = "ℹ️ Could not verify deliverability right now — you can still continue.";
+            msg.style.color = "gray";
+            return;
+        }
+        if (data.is_valid) {
+            msg.textContent = "✅ Looks like a valid, deliverable email.";
+            msg.style.color = "green";
+        } else {
+            msg.textContent = "⚠️ This email address doesn't appear to exist. Double-check it before continuing.";
+            msg.style.color = "#b45309";
+        }
+    } catch (err) {
+        // Network/backend issue -- fail open, never block registration on this.
+        msg.style.display = "none";
+    }
+});
+</script>
+{% endblock %}

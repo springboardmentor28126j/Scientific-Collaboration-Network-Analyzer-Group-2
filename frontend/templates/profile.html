@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}My Researcher Profile{% endblock %}
+{% block content %}
+<h1>My Researcher Profile</h1>
+
+<form method="post" class="card-form">
+    <label for="first_name">First name</label>
+    <input type="text" id="first_name" name="first_name" value="{{ profile.first_name if profile else '' }}" required>
+
+    <label for="last_name">Last name</label>
+    <input type="text" id="last_name" name="last_name" value="{{ profile.last_name if profile else '' }}" required>
+
+    <label for="academic_title">Academic title</label>
+    <input type="text" id="academic_title" name="academic_title" value="{{ profile.academic_title if profile else '' }}">
+
+    <label for="orcid_id">ORCID iD</label>
+    <input type="text" id="orcid_id" name="orcid_id" value="{{ profile.orcid_id if profile else '' }}">
+
+    <label for="bio">Bio</label>
+    <textarea id="bio" name="bio" rows="4">{{ profile.bio if profile else '' }}</textarea>
+
+    <button type="submit">{{ "Save changes" if profile else "Create profile" }}</button>
+</form>
+
+{% if profile %}
+<div class="card">
+    <h2>Skills</h2>
+    <ul class="tag-list">
+        {% for skill in profile.skills %}
+        <li>
+            {{ skill.name }}
+            <form method="post" action="{{ url_for('remove_skill', skill_id=skill.skill_id) }}" class="inline-form">
+                <button type="submit" class="link-button">remove</button>
+            </form>
+        </li>
+        {% else %}
+        <li>No skills added yet.</li>
+        {% endfor %}
+    </ul>
+    <form method="post" action="{{ url_for('add_skill') }}" class="inline-form">
+        <input type="text" name="skill_name" placeholder="Add a skill" required>
+        <button type="submit">Add</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Research Interests</h2>
+    <ul class="tag-list">
+        {% for interest in profile.interests %}
+        <li>
+            {{ interest.name }}
+            <form method="post" action="{{ url_for('remove_interest', interest_id=interest.interest_id) }}" class="inline-form">
+                <button type="submit" class="link-button">remove</button>
+            </form>
+        </li>
+        {% else %}
+        <li>No interests added yet.</li>
+        {% endfor %}
+    </ul>
+    <form method="post" action="{{ url_for('add_interest') }}" class="inline-form">
+        <input type="text" name="interest_name" placeholder="Add a research interest" required>
+        <button type="submit">Add</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

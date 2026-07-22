@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+{% if account %}
+<div class="card">
+    <p><strong>Email:</strong> {{ account.email }}</p>
+    <p><strong>Role:</strong> {{ account.role }}</p>
+    <p><strong>Account status:</strong> {{ "Active" if account.is_active else "Inactive" }}</p>
+</div>
+{% endif %}
+
+{% if account and account.role == "researcher" %}
+    {% if profile %}
+    <div class="card">
+        <h2>{{ profile.first_name }} {{ profile.last_name }}</h2>
+        <p>{{ profile.academic_title or "" }}</p>
+        <p>{{ profile.bio or "No bio yet." }}</p>
+        <p><strong>Skills:</strong>
+            {% if profile.skills %}
+                {{ profile.skills | map(attribute='name') | join(', ') }}
+            {% else %}
+                None yet
+            {% endif %}
+        </p>
+        <p><strong>Interests:</strong>
+            {% if profile.interests %}
+                {{ profile.interests | map(attribute='name') | join(', ') }}
+            {% else %}
+                None yet
+            {% endif %}
+        </p>
+        <a href="{{ url_for('profile') }}">Edit profile</a>
+    </div>
+    {% else %}
+    <div class="card">
+        <p>You haven't set up your researcher profile yet.</p>
+        <a href="{{ url_for('profile') }}">Create your profile</a>
+    </div>
+    {% endif %}
+{% endif %}
+
+{% endblock %}

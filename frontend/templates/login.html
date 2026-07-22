@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<h1>Login</h1>
+<form method="post" class="card-form">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+
+    <button type="submit">Log in</button>
+</form>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<div id="g_id_onload"
+     data-client_id="244237880139-es9h95bv5q4a3hacssvp4c2h6ccc47lo.apps.googleusercontent.com"
+     data-callback="handleGoogleSignIn">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<!-- Shown only if Google tells us this is a brand-new account that still needs a role. -->
+<div id="google-role-picker" style="display:none; margin-top:1rem;">
+    <p>One more step — tell us your role to finish creating your account:</p>
+    <label for="google-role">Role</label>
+    <select id="google-role">
+        <option value="researcher">Researcher</option>
+        <option value="institution_admin">Institution Admin</option>
+        <option value="reviewer">Reviewer</option>
+    </select>
+
+    <label for="google-institution-id">Institution ID (required for admin/reviewer)</label>
+    <input type="number" id="google-institution-id">
+
+    <button type="button" onclick="submitGoogleRole()">Finish sign-up</button>
+</div>
+
+<script>
+let pendingGoogleIdToken = null;
+
+async function finishGoogleLogin(data) {
+    // Hand the tokens to Flask so they land in the server-side session,
+    // then redirect the browser the same way a normal login does.
+    const res = await fetch("/auth/google-session", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+        }),
+    });
+    if (res.ok) {
+        window.location.href = "/dashboard";
+    } else {
+        alert("Google sign-in succeeded but the session could not be created. Please try again.");
+    }
+}
+
+async function handleGoogleSignIn(response) {
+    pendingGoogleIdToken = response.credential;
+
+    const res = await fetch("http://localhost:8000/api/v1/auth/google", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id_token: pendingGoogleIdToken }),
+    });
+    const data = await res.json();
+
+    if (data.needs_role_selection) {
+        document.getElementById("google-role-picker").style.display = "block";
+    } else if (data.access_token) {
+        await finishGoogleLogin(data);
+    } else {
+        alert("Google sign-in failed. Please try again.");
+    }
+}
+
+async function submitGoogleRole() {
+    const role = document.getElementById("google-role").value;
+    const institutionIdRaw = document.getElementById("google-institution-id").value;
+    const institution_id = institutionIdRaw ? parseInt(institutionIdRaw, 10) : null;
+
+    const res = await fetch("http://localhost:8000/api/v1/auth/google", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id_token: pendingGoogleIdToken, role, institution_id }),
+    });
+    const data = await res.json();
+
+    if (data.access_token) {
+        await finishGoogleLogin(data);
+    } else {
+        alert("Could not complete sign-up. Please check your role/institution and try again.");
+    }
+}
+</script>
+
+<p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a>.</p>
+
+<details style="margin-top:1rem;">
+    <summary>Didn't get a verification email?</summary>
+    <form method="post" action="{{ url_for('resend_verification') }}" class="card-form" style="margin-top:0.5rem;">
+        <label for="resend-email">Email</label>
+        <input type="email" id="resend-email" name="email" required>
+        <button type="submit">Resend verification email</button>
+    </form>
+</details>
+{% endblock %}

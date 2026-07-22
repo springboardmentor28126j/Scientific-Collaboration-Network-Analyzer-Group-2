@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Conferences{% endblock %}
+{% block content %}
+<h1>Conferences</h1>
+<p><a href="{{ url_for('new_conference') }}">+ New Conference</a></p>
+
+{% if conferences %}
+<div class="card-list">
+    {% for conf in conferences %}
+    <div class="card">
+        <h3><a href="{{ url_for('conference_detail', conference_id=conf.conference_id) }}">{{ conf.name }}</a></h3>
+        <p>{{ conf.start_date }} — {{ conf.end_date }} | {{ conf.location or "" }}</p>
+        <p>Status: {{ conf.status }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No conferences yet.</p>
+{% endif %}
+{% endblock %}

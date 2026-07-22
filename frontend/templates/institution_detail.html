@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ institution.name }}{% endblock %}
+{% block content %}
+<h1>{{ institution.name }}</h1>
+<div class="card">
+    <p><strong>Type:</strong> {{ institution.type or "—" }}</p>
+    <p><strong>Country:</strong> {{ institution.country or "—" }}</p>
+    <p><strong>Address:</strong> {{ institution.address or "—" }}</p>
+    <p><strong>Email domain:</strong> {{ institution.email_domain and "@" ~ institution.email_domain or "Not configured" }}</p>
+    <p><a href="{{ url_for('edit_institution', institution_id=institution.institution_id) }}">Edit</a></p>
+</div>
+
+<h2>Departments</h2>
+{% if departments %}
+<ul>
+    {% for d in departments %}
+    <li>
+        {{ d.name }} {% if d.code %}({{ d.code }}){% endif %}
+        <form method="post"
+              action="{{ url_for('remove_department', institution_id=institution.institution_id, department_id=d.department_id) }}"
+              style="display:inline;" onsubmit="return confirm('Remove this department?');">
+            <button type="submit" style="font-size:0.8em;">Remove</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No departments yet.</p>
+{% endif %}
+
+<form method="post" action="{{ url_for('add_department', institution_id=institution.institution_id) }}" class="card-form">
+    <label for="dept_name">New department name</label>
+    <input type="text" id="dept_name" name="name" required>
+    <label for="dept_code">Code (optional)</label>
+    <input type="text" id="dept_code" name="code">
+    <button type="submit">Add Department</button>
+</form>
+
+<form method="post" action="{{ url_for('delete_institution', institution_id=institution.institution_id) }}"
+      onsubmit="return confirm('Delete this institution? Departments will be removed too. This cannot be undone.');"
+      style="margin-top:2rem;">
+    <button type="submit">Delete Institution</button>
+</form>
+
+<p><a href="{{ url_for('institutions') }}">Back to institutions</a></p>
+{% endblock %}

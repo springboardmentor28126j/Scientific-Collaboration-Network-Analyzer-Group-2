@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ publication.title }}{% endblock %}
+{% block content %}
+<h1>{{ publication.title }}</h1>
+<div class="card">
+    <p><strong>Type:</strong> {{ publication.publication_type }}</p>
+    <p><strong>Status:</strong> {{ publication.status }}</p>
+    <p><strong>Venue:</strong> {{ publication.venue_name or "—" }}</p>
+    <p><strong>DOI:</strong> {{ publication.doi or "—" }}</p>
+    <p><strong>Publication date:</strong> {{ publication.publication_date or "—" }}</p>
+    <p>{{ publication.abstract or "No abstract." }}</p>
+
+    {% if publication.file_path %}
+    <p><a href="{{ url_for('download_publication', publication_id=publication.publication_id) }}">📄 Download attached file</a></p>
+    {% else %}
+    <p>No file attached yet.</p>
+    {% endif %}
+</div>
+
+<form method="post" action="{{ url_for('upload_publication', publication_id=publication.publication_id) }}"
+      enctype="multipart/form-data" class="card-form">
+    <label for="file">{% if publication.file_path %}Replace file{% else %}Upload file{% endif %} (PDF, DOC, DOCX — max 20MB)</label>
+    <input type="file" id="file" name="file" accept=".pdf,.doc,.docx" required>
+    <button type="submit">Upload</button>
+</form>
+
+<form method="post" action="{{ url_for('delete_publication', publication_id=publication.publication_id) }}"
+      onsubmit="return confirm('Delete this publication? This cannot be undone.');">
+    <a href="{{ url_for('edit_publication', publication_id=publication.publication_id) }}">Edit</a>
+    &nbsp;|&nbsp;
+    <button type="submit">Delete</button>
+</form>
+
+<p><a href="{{ url_for('publications') }}">Back to publications</a></p>
+{% endblock %}

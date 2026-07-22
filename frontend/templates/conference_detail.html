@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ conference.name }}{% endblock %}
+{% block content %}
+<h1>{{ conference.name }}</h1>
+<div class="card">
+    <p><strong>Dates:</strong> {{ conference.start_date }} — {{ conference.end_date }}</p>
+    <p><strong>Location:</strong> {{ conference.location or "—" }}</p>
+    <p><strong>Status:</strong> {{ conference.status }}</p>
+    {% if conference.website_url %}
+    <p><a href="{{ conference.website_url }}" target="_blank" rel="noopener">Conference website</a></p>
+    {% endif %}
+    <p>{{ conference.description or "" }}</p>
+    <p><a href="{{ url_for('edit_conference', conference_id=conference.conference_id) }}">Edit conference</a></p>
+</div>
+
+<h2>Register to participate</h2>
+<form method="post" action="{{ url_for('register_conference', conference_id=conference.conference_id) }}" class="card-form">
+    <label for="role">Role</label>
+    <select id="role" name="role" required>
+        <option value="attendee">Attendee</option>
+        <option value="presenter">Presenter</option>
+        <option value="organizer">Organizer</option>
+        <option value="reviewer">Reviewer</option>
+    </select>
+
+    <label for="presentation_title">Presentation title (if presenting)</label>
+    <input type="text" id="presentation_title" name="presentation_title">
+
+    <button type="submit">Register</button>
+</form>
+
+<h2>Participants</h2>
+{% if participants %}
+<ul class="participant-list">
+    {% for p in participants %}
+    <li>
+        <strong>{{ p.researcher_name }}</strong> — {{ p.role }} ({{ p.submission_status }})
+        {% if p.presentation_title %} — "{{ p.presentation_title }}"{% endif %}
+
+        {% if my_researcher_id and p.researcher_id == my_researcher_id %}
+        <details style="display:inline-block; margin-left:1rem;">
+            <summary>Manage my registration</summary>
+            <form method="post"
+                  action="{{ url_for('update_participation', conference_id=conference.conference_id, participation_id=p.participation_id) }}"
+                  style="margin-top:0.5rem;">
+                <label>Role</label>
+                <select name="role">
+                    <option value="attendee" {% if p.role == "attendee" %}selected{% endif %}>Attendee</option>
+                    <option value="presenter" {% if p.role == "presenter" %}selected{% endif %}>Presenter</option>
+                    <option value="organizer" {% if p.role == "organizer" %}selected{% endif %}>Organizer</option>
+                    <option value="reviewer" {% if p.role == "reviewer" %}selected{% endif %}>Reviewer</option>
+                </select>
+                <input type="text" name="presentation_title" placeholder="Presentation title"
+                       value="{{ p.presentation_title or '' }}">
+                <button type="submit">Update</button>
+            </form>
+            <form method="post"
+                  action="{{ url_for('cancel_participation', conference_id=conference.conference_id, participation_id=p.participation_id) }}"
+                  onsubmit="return confirm('Cancel your registration for this conference?');"
+                  style="margin-top:0.5rem;">
+                <button type="submit">Cancel my registration</button>
+            </form>
+        </details>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No participants registered yet.</p>
+{% endif %}
+
+<p><a href="{{ url_for('conferences') }}">Back to conferences</a></p>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Researcher Directory{% endblock %}
+{% block content %}
+<h1>Researcher Directory</h1>
+
+<form method="get" class="card-form inline-form">
+    <input type="text" name="skill" placeholder="Filter by skill" value="{{ skill }}">
+    <input type="text" name="interest" placeholder="Filter by interest" value="{{ interest }}">
+    <button type="submit">Search</button>
+</form>
+
+<div class="card">
+    {% for r in results %}
+    <div class="researcher-row">
+        <strong>{{ r.first_name }} {{ r.last_name }}</strong> — {{ r.academic_title or "Researcher" }}
+        <p>Skills: {{ r.skills | map(attribute='name') | join(', ') if r.skills else "None" }}</p>
+    </div>
+    {% else %}
+    <p>No researchers found matching your search.</p>
+    {% endfor %}
+</div>
+{% endblock %}

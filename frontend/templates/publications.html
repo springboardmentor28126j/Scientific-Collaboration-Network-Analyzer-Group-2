@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Publications{% endblock %}
+{% block content %}
+<h1>Publications</h1>
+<p><a href="{{ url_for('new_publication') }}">+ New Publication</a></p>
+
+{% if result['items'] %}
+<div class="card-list">
+    {% for pub in result['items'] %}
+    <div class="card">
+        <h3><a href="{{ url_for('publication_detail', publication_id=pub.publication_id) }}">{{ pub.title }}</a></h3>
+        <p>{{ pub.publication_type }} — {{ pub.status }}</p>
+        <p>{{ pub.venue_name or "" }} {{ pub.publication_date or "" }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('publications', page=page-1, page_size=page_size) }}">&laquo; Previous</a>
+    {% endif %}
+    <span>Page {{ page }} ({{ result.total }} total)</span>
+    {% if page * page_size < result.total %}
+    <a href="{{ url_for('publications', page=page+1, page_size=page_size) }}">Next &raquo;</a>
+    {% endif %}
+</div>
+
+<form method="get" style="margin-top:1rem;">
+    <label for="page_size">Per page:</label>
+    <select id="page_size" name="page_size" onchange="this.form.submit()">
+        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+        <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+    </select>
+</form>
+{% else %}
+<p>No publications yet.</p>
+{% endif %}
+{% endblock %}

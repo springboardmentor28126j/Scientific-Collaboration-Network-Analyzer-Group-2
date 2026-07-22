@@ -630,3 +630,63 @@ select {
         display: none;
     }
 }
+
+/* ============ PUBLICATIONS ============ */
+
+.pub-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pub-card {
+    background: #fafafa;
+    border: 1px solid #f0f1f3;
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pub-info h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.pub-meta {
+    display: flex;
+    gap: 14px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.status-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-draft {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-submitted {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.status-published {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.status-archived {
+    background: #fee2e2;
+    color: #b91c1c;
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Conferences - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="sidebar-logo" style="text-decoration: none;">🔬 SciCollab</a>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏠</span> Dashboard
+                </a>
+                <a href="{{ url_for('institutions') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏢</span> Institutions
+</a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📄</span> Publications
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">📁</span> Projects
+                </a>
+                <a href="{{ url_for('conferences') }}" class="sidebar-link active">
+                    <span class="sidebar-icon">🎓</span> Conferences
+                </a>
+                <a href="{{ url_for('profile') }}" class="sidebar-link">
+                    <span class="sidebar-icon">👤</span> Profile
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">{{ session.get('email') }}</div>
+                <a href="{{ url_for('logout') }}" class="sidebar-logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">Conferences</h1>
+                    <p class="dashboard-subtitle">Track conference registrations and events</p>
+                </div>
+                <a href="{{ url_for('add_conference') }}" class="btn-nav" style="text-decoration:none;">+ Add Conference</a>
+            </div>
+
+            {% if conferences %}
+            <div class="pub-list">
+                {% for conf in conferences %}
+                <div class="pub-card">
+                    <div class="pub-info">
+                        <h3>{{ conf.name }}</h3>
+                        <div class="pub-meta">
+                            {% if conf.location %}<span class="pub-type">📍 {{ conf.location }}</span>{% endif %}
+                            {% if conf.start_date %}<span class="pub-doi">{{ conf.start_date }} → {{ conf.end_date }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dashboard-section">
+                <div class="empty-state">
+                    <div class="empty-icon">🎓</div>
+                    <p>No conferences yet</p>
+                    <a href="{{ url_for('add_conference') }}" class="link">Add your first conference</a>
+                </div>
+            </div>
+            {% endif %}
+
+        </main>
+
+    </div>
+
+</body>
+</html>

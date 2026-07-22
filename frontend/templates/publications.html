@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Publications - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="sidebar-logo" style="text-decoration: none;">🔬 SciCollab</a>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏠</span> Dashboard
+                </a>
+                <a href="{{ url_for('institutions') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏢</span> Institutions
+</a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link active">
+                    <span class="sidebar-icon">📄</span> Publications
+                </a>
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">📁</span> Projects
+                </a>
+                <a href="{{ url_for('conferences') }}" class="sidebar-link">
+    <span class="sidebar-icon">🎓</span> Conferences
+</a>
+                <a href="{{ url_for('profile') }}" class="sidebar-link">
+                    <span class="sidebar-icon">👤</span> Profile
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">{{ session.get('email') }}</div>
+                <a href="{{ url_for('logout') }}" class="sidebar-logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">Publications</h1>
+                    <p class="dashboard-subtitle">Manage your research papers and publications</p>
+                </div>
+                <a href="{{ url_for('add_publication') }}" class="btn-nav" style="text-decoration:none;">+ Add Publication</a>
+            </div>
+
+            {% if publications %}
+            <div class="pub-list">
+                {% for pub in publications %}
+                <div class="pub-card">
+                    <div class="pub-info">
+                        <h3>{{ pub.title }}</h3>
+                        <div class="pub-meta">
+                            <span class="pub-type">{{ pub.type.replace('_', ' ').title() }}</span>
+                            {% if pub.doi %}<span class="pub-doi">DOI: {{ pub.doi }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <span class="status-badge status-{{ pub.status }}">{{ pub.status.title() }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dashboard-section">
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <p>No publications yet</p>
+                    <a href="{{ url_for('add_publication') }}" class="link">Add your first publication</a>
+                </div>
+            </div>
+            {% endif %}
+
+        </main>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Publication - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="{{ url_for('home') }}" class="logo" style="text-decoration: none; color: inherit;">🔬 SciCollab</a>
+    </div>
+
+    <div class="center-wrapper">
+        <div class="card">
+            <div class="subtitle">New entry</div>
+            <div class="title">Add Publication</div>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('add_publication') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <input type="text" name="title" placeholder="Publication title" required>
+                </div>
+
+                <div class="form-group">
+                    <select name="type" required>
+                        <option value="journal_paper">Journal Paper</option>
+                        <option value="conference_paper">Conference Paper</option>
+                        <option value="book">Book</option>
+                        <option value="patent">Patent</option>
+                        <option value="technical_report">Technical Report</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" name="doi" placeholder="DOI (optional)">
+                </div>
+                <div class="form-group">
+    <label style="font-size: 13px; color: #6b7280; display: block; margin-bottom: 6px;">Upload document (optional)</label>
+    <input type="file" name="file" style="width: 100%; padding: 10px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+</div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 8px;">Save Publication</button>
+            </form>
+
+            <div class="bottom-text">
+                <a href="{{ url_for('publications') }}" class="link">Back to Publications</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

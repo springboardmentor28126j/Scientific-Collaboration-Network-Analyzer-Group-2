@@ -17,15 +17,18 @@
                 <a href="{{ url_for('dashboard') }}" class="sidebar-link active">
                     <span class="sidebar-icon">🏠</span> Dashboard
                 </a>
-                <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">📄</span> Publications
-                </a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link">
+    <span class="sidebar-icon">📄</span> Publications
+</a>
+<a href="{{ url_for('institutions') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏢</span> Institutions
+</a>                        
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon">📁</span> Projects
                 </a>
-                <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">🎓</span> Conferences
-                </a>
+                <a href="{{ url_for('conferences') }}" class="sidebar-link">
+    <span class="sidebar-icon">🎓</span> Conferences
+</a>
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon">🤝</span> Collaborations
                 </a>
@@ -45,47 +48,61 @@
 
             <div class="dashboard-header">
                 <div>
-                    <h1 class="dashboard-title">Researcher Dashboard</h1>
+                    <h1 class="dashboard-title">Hello, {{ display_name }} 👋</h1>
                     <p class="dashboard-subtitle">Track your publications, projects, and collaborations</p>
                 </div>
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">📄</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Publications</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📁</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Projects</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🎓</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Conferences</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Collaborators</div>
+    <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-number">{{ pub_count }}</div>
+        <div class="stat-label">Publications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📁</div>
+        <div class="stat-number">0</div>
+        <div class="stat-label">Projects</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🎓</div>
+        <div class="stat-number">{{ conf_count }}</div>
+        <div class="stat-label">Conferences</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-number">0</div>
+        <div class="stat-label">Collaborators</div>
+    </div>
+</div>
+
+            <div class="dashboard-section">
+    <div class="section-header">
+        <h2>Recent Publications</h2>
+        <a href="{{ url_for('publications') }}" class="link">View all</a>
+    </div>
+    {% if recent_pubs %}
+    <div class="pub-list">
+        {% for pub in recent_pubs %}
+        <div class="pub-card">
+            <div class="pub-info">
+                <h3>{{ pub.title }}</h3>
+                <div class="pub-meta">
+                    <span class="pub-type">{{ pub.type.replace('_', ' ').title() }}</span>
                 </div>
             </div>
-
-            <div class="dashboard-sections">
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <h2>Recent Publications</h2>
-                        <a href="#" class="link">View all</a>
-                    </div>
-                    <div class="empty-state">
-                        <div class="empty-icon">📄</div>
-                        <p>No publications yet</p>
-                        <a href="#" class="link">Add your first publication</a>
-                    </div>
-                </div>
-
+            <span class="status-badge status-{{ pub.status }}">{{ pub.status.title() }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <p>No publications yet</p>
+        <a href="{{ url_for('add_publication') }}" class="link">Add your first publication</a>
+    </div>
+    {% endif %}
+</div>
                 <div class="dashboard-section">
                     <div class="section-header">
                         <h2>Active Projects</h2>

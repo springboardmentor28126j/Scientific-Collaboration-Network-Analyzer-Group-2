@@ -89,34 +89,99 @@ class Publication(Base):
 
     researcher = relationship("Researcher")
 class Institution(Base):
+
     __tablename__ = "institutions"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
-    name = Column(String(150), nullable=False)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        unique=True
+    )
 
-    location = Column(String(150), nullable=False)
+    name = Column(
+        String(150),
+        nullable=False
+    )
 
-    website = Column(String(255))
+    institution_type = Column(
+        String(100)
+    )
 
-    email = Column(String(100))
+    location = Column(
+        String(150),
+        nullable=False
+    )
 
-    phone = Column(String(20))
+    website = Column(
+        String(255)
+    )
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    phone = Column(
+        String(20)
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
 class Conference(Base):
+
     __tablename__ = "conferences"
 
-    id = Column(Integer, primary_key=True, index=True)
 
-    title = Column(String(255), nullable=False)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
-    organizer = Column(String(255), nullable=False)
 
-    location = Column(String(150), nullable=False)
+    title = Column(
+        String(255),
+        nullable=False
+    )
 
-    conference_date = Column(String(50), nullable=False)
 
-    website = Column(String(255))
+    organizer = Column(
+        String(255),
+        nullable=False
+    )
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+
+    location = Column(
+        String(150),
+        nullable=False
+    )
+
+
+    conference_date = Column(
+        String(50),
+        nullable=False
+    )
+
+
+    website = Column(
+        String(255)
+    )
+
+
+    institution = Column(
+        String(150)
+    )
+
+
+    event_type = Column(
+        String(100)
+    )
+
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )

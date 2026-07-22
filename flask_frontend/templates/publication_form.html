@@ -12,9 +12,8 @@
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/common.css') }}">
 
-
 <link rel="stylesheet"
-href="{{ url_for('static', filename='css/edit_researcher.css') }}">
+href="{{ url_for('static', filename='css/form.css') }}">
 
 
 </head>
@@ -58,48 +57,125 @@ Welcome, {{ session["full_name"] }}
 
 
 
-<!-- ================= SIDEBAR ================= -->
 
+<!-- SIDEBAR -->
 
 <div class="sidebar" id="sidebar">
 
 
 <a href="{{ url_for('dashboard') }}">
-Dashboard
+    Dashboard
 </a>
 
+
+
+<!-- Researchers -->
+
+{% if session["role"] in ["institution_admin", "system_admin"] %}
 
 <a href="{{ url_for('researchers') }}">
-Researchers
+    Researchers
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Publications -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
 
 <a href="{{ url_for('publications') }}" class="active">
-Publications
+    Publications
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Institutions -->
+
+{% if session["role"] == "system_admin" %}
 
 <a href="#">
-Collaborations
+    Institutions
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Collaborations -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
 
 <a href="#">
-Conferences
+    Collaborations
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Conferences -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="{{ url_for('conferences') }}">
+    Conferences
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Profile -->
+
+{% if session["role"] == "researcher" %}
 
 <a href="{{ url_for('researcher_profile') }}">
-Profile
+    Profile
 </a>
+
+
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}">
+    Profile
+</a>
+
+
+{% endif %}
+
+
+
+
+<!-- System Admin -->
+
+{% if session["role"] == "system_admin" %}
+
+
+
+<a href="#">
+    Reports
+</a>
+
+{% endif %}
+
 
 
 <a href="{{ url_for('logout') }}">
-Logout
+    Logout
 </a>
 
 
 </div>
+
 
 
 

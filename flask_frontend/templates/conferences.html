@@ -12,10 +12,12 @@
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/common.css') }}">
 
+
 </head>
 
 
 <body>
+
 
 
 <!-- ================= NAVBAR ================= -->
@@ -53,49 +55,123 @@ Welcome, {{ session["full_name"] }}
 
 
 
-<!-- ================= SIDEBAR ================= -->
-
+<!-- SIDEBAR -->
 
 <div class="sidebar" id="sidebar">
 
 
 <a href="{{ url_for('dashboard') }}">
-Dashboard
+    Dashboard
 </a>
 
 
-<a href="{{ url_for('researchers') }}">
-Researchers
+
+<!-- Researchers -->
+
+{% if session["role"] in ["institution_admin", "system_admin"] %}
+
+<a href="{{ url_for('researchers') }}" class="active">
+    Researchers
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Publications -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
 
 <a href="{{ url_for('publications') }}">
-Publications
+    Publications
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Institutions -->
+
+{% if session["role"] == "system_admin" %}
+
+<a href="#">
+    Institutions
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Collaborations -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="#">
+    Collaborations
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Conferences -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="{{ url_for('conferences') }}">
+    Conferences
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Profile -->
+
+{% if session["role"] == "researcher" %}
+
+<a href="{{ url_for('researcher_profile') }}">
+    Profile
 </a>
 
 
-<a href="{{ url_for('conferences') }}" class="active">
-Conferences
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}">
+    Profile
 </a>
+
+
+{% endif %}
+
+
+
+
+<!-- System Admin -->
+
+{% if session["role"] == "system_admin" %}
 
 
 <a href="#">
-Collaborations
+    Reports
 </a>
 
+{% endif %}
 
-<a href="{{ url_for('researcher_profile') }}">
-Profile
-</a>
+
 
 
 <a href="{{ url_for('logout') }}">
-Logout
+    Logout
 </a>
 
 
 </div>
-
 
 
 
@@ -194,6 +270,13 @@ Conference Title
 Organizer
 </th>
 
+<th>
+Institution
+</th>
+
+<th>
+Event Type
+</th>
 
 <th>
 Location
@@ -260,6 +343,15 @@ Action
 </td>
 
 
+<td>
+{{ conference.institution }}
+</td>
+
+
+<td>
+{{ conference.event_type }}
+</td>
+
 
 <td>
 {{ conference.location }}
@@ -292,7 +384,6 @@ Visit
 
 
 
-
 <td>
 
 
@@ -304,6 +395,11 @@ Edit
 </button>
 </a>
 
+{% endif %}
+
+
+
+{% if session["role"] == "system_admin" %}
 
 <a href="{{ url_for('delete_conference', id=conference.id) }}"
 onclick="return confirm('Are you sure you want to delete this conference?');">
@@ -315,6 +411,7 @@ Delete
 </a>
 
 {% endif %}
+
 
 </td>
 
@@ -334,7 +431,7 @@ Delete
 
 <tr>
 
-<td colspan="7" class="empty">
+<td colspan="9" class="empty">
 
 No Conferences Found
 
@@ -444,8 +541,43 @@ required
 
 >
 
+<label>
+Institution
+</label>
+
+<select name="institution" required>
+
+{% for institution in institutions %}
+
+<option value="{{ institution.name }}">
+{{ institution.name }}
+</option>
+
+{% endfor %}
+
+</select>
 
 
+<label>
+Event Type
+</label>
+
+<select name="event_type" required>
+
+<option value="Conference">
+Conference
+</option>
+
+<option value="Workshop">
+Workshop
+</option>
+
+<option value="Seminar">
+Seminar
+</option>
+
+
+</select>
 
 
 
@@ -586,7 +718,7 @@ let title=rows[i]
 
 
 let location=rows[i]
-.getElementsByTagName("td")[3];
+.getElementsByTagName("td")[5];
 
 
 

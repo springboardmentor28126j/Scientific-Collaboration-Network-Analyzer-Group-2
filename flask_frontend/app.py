@@ -70,6 +70,7 @@ def login():
                 print("LOGIN USER:", data["email"])
                 print("LOGIN ROLE:", data["role"])
                 session["researcher_id"] = data.get("researcher_id")
+                session["institution"] = data.get("institution")
 
                 return redirect(
                     url_for("dashboard")
@@ -251,32 +252,48 @@ def dashboard():
 
     researcher_count = 0
     publication_count = 0
-    institution_count = 0
+    department_count = 0
     conference_count = 0
 
 
-    # Researchers count
-    response = requests.get(
-        f"{API_URL}/researchers/",
-        headers=headers
-    )
 
-    if response.status_code == 200:
-        researchers = response.json()
-        researcher_count = len(researchers)
+    # ================= INSTITUTION ADMIN =================
+
+    if session["role"] == "institution_admin":
 
 
-
-    # Publications count
-
-    if session["role"] == "researcher":
+        # -------- Researchers --------
 
         response = requests.get(
-            f"{API_URL}/publications/user/{session['user_id']}",
+            f"{API_URL}/researchers/",
             headers=headers
         )
 
-    else:
+
+        researchers = []
+
+
+        if response.status_code == 200:
+
+            researchers = response.json()
+
+
+            # Only this institution researchers
+
+            researchers = [
+
+                r for r in researchers
+
+                if r.get("institution") == session.get("institution")
+
+            ]
+
+
+            researcher_count = len(researchers)
+
+
+
+        # -------- Publications --------
 
         response = requests.get(
             f"{API_URL}/publications/",
@@ -284,14 +301,176 @@ def dashboard():
         )
 
 
-    if response.status_code == 200:
+        if response.status_code == 200:
 
-        publications = response.json()
-        publication_count = len(publications)
+
+            publications = response.json()
+
+
+            institution_researcher_ids = [
+
+                r["id"]
+
+                for r in researchers
+
+            ]
+
+
+            publications = [
+
+                p for p in publications
+
+                if p.get("researcher_id") 
+                in institution_researcher_ids
+
+            ]
+
+
+            publication_count = len(publications)
+
+
+
+        # -------- Departments --------
+
+        departments = set()
+
+
+        for r in researchers:
+
+            if r.get("department"):
+
+                departments.add(
+                    r.get("department")
+                )
+
+
+        department_count = len(departments)
+
+
+
+        # -------- Conferences --------
+
+        response = requests.get(
+            f"{API_URL}/conferences/",
+            headers=headers
+        )
+
+
+        if response.status_code == 200:
+
+
+            conferences = response.json()
+
+
+            conferences = [
+
+                c for c in conferences
+
+                if c.get("institution") == session.get("institution")
+
+            ]
+
+
+            conference_count = len(conferences)
+
+
+
+
+
+    # ================= RESEARCHER =================
+
+    elif session["role"] == "researcher":
+
+
+        response = requests.get(
+            f"{API_URL}/publications/user/{session['user_id']}",
+            headers=headers
+        )
+
+
+        if response.status_code == 200:
+
+            publications = response.json()
+
+            publication_count = len(publications)
+
+
+
+        response = requests.get(
+            f"{API_URL}/conferences/",
+            headers=headers
+        )
+
+
+        if response.status_code == 200:
+
+            conferences = response.json()
+
+            conference_count = len(conferences)
+
+
+
+
+
+    # ================= SYSTEM ADMIN =================
+
+    elif session["role"] == "system_admin":
+
+
+        # Researchers
+
+        response = requests.get(
+            f"{API_URL}/researchers/",
+            headers=headers
+        )
+
+
+        if response.status_code == 200:
+
+            researchers = response.json()
+
+            researcher_count = len(researchers)
+
+
+
+
+        # Publications
+
+        response = requests.get(
+            f"{API_URL}/publications/",
+            headers=headers
+        )
+
+
+        if response.status_code == 200:
+
+            publications = response.json()
+
+            publication_count = len(publications)
+
+
+
+
+        # Conferences
+
+        response = requests.get(
+            f"{API_URL}/conferences/",
+            headers=headers
+        )
+
+
+        if response.status_code == 200:
+
+            conferences = response.json()
+
+            conference_count = len(conferences)
+
+
 
 
 
     return render_template(
+
         "dashboard.html",
 
         role=session["role"],
@@ -302,10 +481,12 @@ def dashboard():
 
         publication_count=publication_count,
 
-        institution_count=institution_count,
+        department_count=department_count,
 
         conference_count=conference_count
+
     )
+
 # ---------------------- Researchers ----------------------
 
 @app.route("/researchers")
@@ -320,6 +501,8 @@ def researchers():
     }
 
 
+    # Get all researchers from backend
+
     response = requests.get(
         f"{API_URL}/researchers/",
         headers=headers
@@ -330,19 +513,41 @@ def researchers():
 
 
     if response.status_code == 200:
+
         researchers = response.json()
+
+
+        print("ALL RESEARCHERS:", researchers)
+        print("USER ROLE:", session.get("role"))
+        print("SESSION INSTITUTION:", session.get("institution"))
+
+
+
+        # Institution Admin -> show only own institution researchers
+
+        if session.get("role") == "institution_admin":
+
+
+            institution_name = session.get("institution")
+
+
+            researchers = [
+
+                r for r in researchers
+
+                if r.get("institution") == institution_name
+
+            ]
+
+
+            print("FILTERED RESEARCHERS:", researchers)
+
 
 
     return render_template(
         "researchers.html",
         researchers=researchers
     )
-
-
-
-
-
-
 # ---------------------- Add Researcher ----------------------
 
 @app.route("/researchers/add", methods=["POST"])
@@ -664,9 +869,98 @@ def researcher_profile():
     return render_template(
         "profile.html"
     )
+@app.route("/institution/profile", methods=["GET", "POST"])
+def institution_profile():
 
-# ---------------------- Publications ----------------------
+    if "token" not in session:
+        return redirect(url_for("login"))
 
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    # ---------- SAVE / UPDATE PROFILE ----------
+    if request.method == "POST":
+
+        data = {
+
+            "name": request.form.get("name"),
+            "institution_type": request.form.get("institution_type"),
+            "location": request.form.get("location"),
+            "website": request.form.get("website"),
+            "phone": request.form.get("phone")
+
+        }
+
+        print("FORM DATA:", data)
+
+        # Check if profile already exists
+        check_response = requests.get(
+            f"{API_URL}/institutions/profile/me",
+            headers=headers
+        )
+
+        if check_response.status_code == 200:
+
+            # Profile exists -> Update
+            response = requests.put(
+                f"{API_URL}/institutions/profile",
+                json=data,
+                headers=headers
+            )
+            print(response.status_code)
+            print(response.text)
+
+        else:
+
+            # Profile doesn't exist -> Create
+            response = requests.post(
+                f"{API_URL}/institutions/profile",
+                json=data,
+                headers=headers
+            )
+
+        print("UPDATE STATUS:", response.status_code)
+        print("UPDATE RESPONSE:", response.text)
+
+        if response.status_code in [200, 201]:
+
+            return redirect(
+                url_for("institution_profile")
+            )
+
+        return render_template(
+            "profile.html",
+            institution=data,
+            error=response.json().get(
+                "detail",
+                "Profile save failed"
+            )
+        )
+
+    # ---------- CHECK EXISTING PROFILE ----------
+
+    response = requests.get(
+        f"{API_URL}/institutions/profile/me",
+        headers=headers
+    )
+
+    print("INSTITUTION STATUS:", response.status_code)
+    print("INSTITUTION RESPONSE:", response.text)
+
+    if response.status_code == 200:
+
+        institution = response.json()
+
+        return render_template(
+            "profile_view.html",
+            institution=institution
+        )
+
+    return render_template(
+        "profile.html",
+        institution=None
+    )
 # ---------------------- Publications ----------------------
 
 @app.route("/publications")
@@ -682,71 +976,137 @@ def publications():
 
 
     publications = []
-
-
-    # ---------------- Get Publications ----------------
-
-    if session["role"] == "researcher":
-
-        response = requests.get(
-            f"{API_URL}/publications/user/{session['user_id']}",
-            headers=headers
-        )
-
-    else:
-
-        response = requests.get(
-            f"{API_URL}/publications/",
-            headers=headers
-        )
-
-
-    if response.status_code == 200:
-        publications = response.json()
-
-
-
-    # ---------------- Get Researchers ----------------
-    # Researcher -> only their own name
-    # Admin -> all researchers
-
     researchers = []
 
 
-    if session["role"] == "researcher":
+    # ================= GET RESEARCHERS =================
 
-        response = requests.get(
-            f"{API_URL}/researchers/user/{session['user_id']}",
-            headers=headers
-        )
-        print("USER ID:", session["user_id"])
-        print("RESEARCHER RESPONSE:", response.text)
 
-        if response.status_code == 200:
+    response = requests.get(
+        f"{API_URL}/researchers/",
+        headers=headers
+    )
+
+
+    if response.status_code == 200:
+
+        all_researchers = response.json()
+
+
+
+        # Researcher -> only himself
+
+        if session["role"] == "researcher":
 
             researchers = [
-                response.json()
+
+                r for r in all_researchers
+
+                if r["user_id"] == session["user_id"]
+
             ]
 
 
-    else:
 
-        response = requests.get(
-            f"{API_URL}/researchers/",
-            headers=headers
-        )
+        # Institution Admin -> only his institution researchers
+
+        elif session["role"] == "institution_admin":
 
 
-        if response.status_code == 200:
+            researchers = [
 
-            researchers = response.json()
+                r for r in all_researchers
+
+                if r.get("institution") == session.get("institution")
+
+            ]
+
+
+
+        # System Admin -> all researchers
+
+        else:
+
+            researchers = all_researchers
+
+
+
+
+    # ================= GET PUBLICATIONS =================
+
+
+    response = requests.get(
+        f"{API_URL}/publications/",
+        headers=headers
+    )
+
+
+    if response.status_code == 200:
+
+
+        all_publications = response.json()
+
+
+
+        # Researcher -> only own publications
+
+        if session["role"] == "researcher":
+
+
+            publications = [
+
+                p for p in all_publications
+
+                if p.get("researcher_id") in 
+                [r["id"] for r in researchers]
+
+            ]
+
+
+
+        # Institution Admin -> publications of institution researchers
+
+        elif session["role"] == "institution_admin":
+
+
+            institution_researcher_ids = [
+
+                r["id"]
+
+                for r in researchers
+
+            ]
+
+
+            publications = [
+
+                p for p in all_publications
+
+                if p.get("researcher_id") 
+                in institution_researcher_ids
+
+            ]
+
+
+
+        # System Admin -> all publications
+
+        else:
+
+
+            publications = all_publications
+
 
 
 
     return render_template(
+
         "publications.html",
+
         publications=publications,
+
         researchers=researchers
+
     )
 @app.route("/publication/add", methods=["POST"])
 def add_publication():
@@ -834,7 +1194,6 @@ def delete_publication(id):
     return redirect(
         url_for("publications")
     )
-@app.route("/publication/edit/<int:id>", methods=["GET","POST"])
 @app.route("/publication/edit/<int:id>", methods=["GET", "POST"])
 def edit_publication(id):
 
@@ -940,6 +1299,8 @@ def edit_publication(id):
     )
 # ---------------------- Conferences ----------------------
 
+# ---------------------- Conferences ----------------------
+
 @app.route("/conferences")
 def conferences():
 
@@ -952,31 +1313,64 @@ def conferences():
     }
 
 
-    response = requests.get(
-        f"{API_URL}/conferences/",
-        headers=headers
-    )
+
+    # -------- Get Conferences --------
+
+    if session["role"] in ["researcher", "institution_admin"]:
+
+        response = requests.get(
+            f"{API_URL}/conferences/my",
+            headers=headers
+        )
+
+
+    else:
+
+        # System Admin sees all conferences
+
+        response = requests.get(
+            f"{API_URL}/conferences/",
+            headers=headers
+        )
+
 
 
     conferences = []
 
 
     if response.status_code == 200:
+
         conferences = response.json()
+
+
+
+    # -------- Get Institutions for Dropdown --------
+
+    response = requests.get(
+        f"{API_URL}/institutions/",
+        headers=headers
+    )
+
+
+    institutions = []
+
+
+    if response.status_code == 200:
+
+        institutions = response.json()
+
 
 
     return render_template(
         "conferences.html",
-        conferences=conferences
+        conferences=conferences,
+        institutions=institutions
     )
-
-
 
 # ---------------------- Add Conference ----------------------
 
 @app.route("/conference/add", methods=["POST"])
 def add_conference():
-
 
     if "token" not in session:
         return redirect(url_for("login"))
@@ -992,29 +1386,24 @@ def add_conference():
 
         "conference_date": request.form.get("conference_date"),
 
-        "website": request.form.get("website")
+        "website": request.form.get("website"),
+
+        "institution": request.form.get("institution"),
+
+        "event_type": request.form.get("event_type")
 
     }
-
 
 
     headers = {
-
-        "Authorization":
-        f"Bearer {session['token']}"
-
+        "Authorization": f"Bearer {session['token']}"
     }
 
 
-
     response = requests.post(
-
         f"{API_URL}/conferences/",
-
         json=data,
-
         headers=headers
-
     )
 
 
@@ -1022,10 +1411,113 @@ def add_conference():
     print(response.text)
 
 
-    return redirect(
-        url_for("conferences")
+    return redirect(url_for("conferences"))
+
+# ---------------------- Edit Conference ----------------------
+
+# ---------------------- Edit Conference ----------------------
+
+@app.route("/conference/edit/<int:id>", methods=["GET","POST"])
+def edit_conference(id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+
+    # -------- UPDATE CONFERENCE --------
+
+    if request.method == "POST":
+
+
+        data = {
+
+            "title": request.form.get("title"),
+
+            "location": request.form.get("location"),
+
+            "conference_date": request.form.get("conference_date"),
+
+            "website": request.form.get("website")
+
+        }
+        print("JSON SENT TO FASTAPI:")
+        print(data)
+
+
+        response = requests.put(
+
+            f"{API_URL}/conferences/{id}",
+
+            json=data,
+
+            headers=headers
+
+        )
+
+
+        print("UPDATE CONFERENCE STATUS:", response.status_code)
+        print("UPDATE RESPONSE:", response.text)
+
+
+
+        return redirect(
+            url_for("conferences")
+        )
+
+
+
+
+    # -------- GET CONFERENCE DETAILS --------
+
+    response = requests.get(
+
+        f"{API_URL}/conferences/{id}",
+
+        headers=headers
+
     )
 
+
+    conference = response.json()
+
+
+    return render_template(
+
+        "edit_conference.html",
+
+        conference=conference
+
+    )
+# ---------------------- Delete Conference ----------------------
+
+@app.route("/conference/delete/<int:id>")
+def delete_conference(id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    response = requests.delete(
+        f"{API_URL}/conferences/{id}",
+        headers=headers
+    )
+
+
+    print("DELETE CONFERENCE:", response.status_code)
+
+
+    return redirect(url_for("conferences"))
 # ---------------------- Logout ----------------------
 
 @app.route("/logout")

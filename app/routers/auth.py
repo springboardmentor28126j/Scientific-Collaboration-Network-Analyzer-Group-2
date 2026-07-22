@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models import User, Researcher
+from app.models import User, Researcher, Institution
 from app.schemas import UserRegister, UserResponse
 from app.auth import hash_password, verify_password, create_access_token
 
@@ -67,11 +67,13 @@ def login(
         User.email == form_data.username
     ).first()
 
+
     if not db_user:
         raise HTTPException(
             status_code=400,
             detail="Invalid email"
         )
+
 
     if not verify_password(
         form_data.password,
@@ -82,6 +84,8 @@ def login(
             detail="Invalid password"
         )
 
+
+
     access_token = create_access_token(
         data={
             "sub": db_user.email,
@@ -90,21 +94,59 @@ def login(
         }
     )
 
+
+
     researcher_id = None
+    institution_name = None
+
+
+
+    # -------- Researcher Login --------
 
     if db_user.role == "researcher":
+
+
         researcher = db.query(Researcher).filter(
             Researcher.user_id == db_user.id
         ).first()
 
+
         if researcher:
+
             researcher_id = researcher.id
 
+
+
+    # -------- Institution Admin Login --------
+
+    elif db_user.role == "institution_admin":
+
+
+        institution = db.query(Institution).filter(
+            Institution.user_id == db_user.id
+        ).first()
+
+
+        if institution:
+
+            institution_name = institution.name
+
+
+
     return {
+
         "access_token": access_token,
+
         "email": db_user.email,
+
         "full_name": db_user.full_name,
+
         "role": db_user.role,
+
         "user_id": db_user.id,
-        "researcher_id": researcher_id
+
+        "researcher_id": researcher_id,
+
+        "institution": institution_name
+
     }

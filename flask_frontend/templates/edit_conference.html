@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Edit Conference | Scientific Collaboration Network Analyzer</title>
+
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/common.css') }}">
+
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/form.css') }}">
+
+
+</head>
+
+
+<body>
+
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+
+
+<div class="navbar-left">
+
+
+<button class="menu-btn" onclick="toggleSidebar()">
+☰
+</button>
+
+
+<div class="project-title">
+Scientific Collaboration Network Analyzer
+</div>
+
+
+</div>
+
+
+
+<div class="navbar-right">
+
+Welcome, {{ session["full_name"] }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================= SIDEBAR ================= -->
+
+
+<div class="sidebar" id="sidebar">
+
+
+<a href="{{ url_for('dashboard') }}">
+Dashboard
+</a>
+
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<a href="{{ url_for('researchers') }}">
+Researchers
+</a>
+
+{% endif %}
+
+
+
+
+{% if session["role"] in ["researcher","institution_admin","system_admin","reviewer"] %}
+
+<a href="{{ url_for('publications') }}">
+Publications
+</a>
+
+{% endif %}
+
+
+
+
+{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+<a href="{{ url_for('conferences') }}" class="active">
+Conferences
+</a>
+
+{% endif %}
+
+
+
+
+{% if session["role"] == "researcher" %}
+
+<a href="{{ url_for('researcher_profile') }}">
+Profile
+</a>
+
+
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}">
+Profile
+</a>
+
+
+{% endif %}
+
+
+
+
+<a href="{{ url_for('logout') }}">
+Logout
+</a>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= MAIN ================= -->
+
+
+<div class="main" id="main">
+
+
+<div class="edit-container">
+
+
+<h1>
+Edit Conference
+</h1>
+
+
+
+
+
+<form method="POST"
+action="{{ url_for('edit_conference', id=conference.id) }}">
+
+
+
+
+<label>
+Conference Title
+</label>
+
+<input
+type="text"
+name="title"
+value="{{ conference.title }}"
+required>
+
+
+
+
+
+<label>
+Organizer
+</label>
+
+<input
+type="text"
+value="{{ conference.organizer }}"
+readonly>
+
+
+
+
+
+<label>
+Institution
+</label>
+
+<input
+type="text"
+value="{{ conference.institution }}"
+readonly>
+
+
+
+
+
+<label>
+Event Type
+</label>
+
+<input
+type="text"
+value="{{ conference.event_type }}"
+readonly>
+
+
+
+
+
+<label>
+Location
+</label>
+
+<input
+type="text"
+name="location"
+value="{{ conference.location }}"
+required>
+
+
+
+
+
+<label>
+Conference Date
+</label>
+
+<input
+type="date"
+name="conference_date"
+value="{{ conference.conference_date }}"
+required>
+
+
+
+
+
+<label>
+Website
+</label>
+
+<input
+type="text"
+name="website"
+value="{{ conference.website }}">
+
+
+
+
+<div class="modal-buttons">
+
+
+<button type="submit"
+class="save-btn">
+
+Update
+
+</button>
+
+
+
+
+<a href="{{ url_for('conferences') }}">
+
+<button type="button"
+class="cancel-btn">
+
+Cancel
+
+</button>
+
+</a>
+
+
+</div>
+
+
+
+</form>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<script>
+
+function toggleSidebar(){
+
+document.getElementById("sidebar").classList.toggle("active");
+
+document.getElementById("main").classList.toggle("shift");
+
+}
+
+</script>
+
+
+
+</body>
+
+</html>

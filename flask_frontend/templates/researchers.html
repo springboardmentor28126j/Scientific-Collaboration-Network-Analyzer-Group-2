@@ -56,7 +56,7 @@
 
 
 
-{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+{% if session["role"] in ["institution_admin", "system_admin"] %}
 
 <a href="{{ url_for('researchers') }}" class="active">
     Researchers
@@ -75,7 +75,7 @@
 
 
 
-{% if session["role"] in ["institution_admin", "system_admin"] %}
+{% if session["role"] in ["system_admin"] %}
 
 <a href="#">
     Institutions
@@ -102,10 +102,6 @@
 
 {% if session["role"] == "system_admin" %}
 
-<a href="#">
-    Users
-</a>
-
 
 <a href="#">
     Reports
@@ -115,10 +111,21 @@
 
 
 
+{% if session["role"] == "researcher" %}
+
 <a href="{{ url_for('researcher_profile') }}">
     Profile
 </a>
 
+
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}">
+    Profile
+</a>
+
+
+{% endif %}
 
 
 <a href="{{ url_for('logout') }}">

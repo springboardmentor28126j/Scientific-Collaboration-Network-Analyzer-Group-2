@@ -56,7 +56,7 @@
 
 
 <!-- Researcher Menu -->
-{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+{% if session["role"] in ["institution_admin", "system_admin"] %}
 
 <a href="{{ url_for('researchers') }}">
     Researchers
@@ -78,7 +78,7 @@
 
 
 <!-- Institutions -->
-{% if session["role"] in ["institution_admin", "system_admin"] %}
+{% if session["role"] in ["system_admin"] %}
 
 <a href="#">
     Institutions
@@ -115,9 +115,7 @@
 
 {% if session["role"] == "system_admin" %}
 
-<a href="#">
-    Users
-</a>
+
 
 <a href="#">
     Reports
@@ -131,9 +129,15 @@
 
 <!-- Profile -->
 
-{% if session["role"] in ["researcher", "institution_admin", "reviewer", "system_admin"] %}
+{% if session["role"] == "researcher" %}
 
 <a href="{{ url_for('researcher_profile') }}">
+    Profile
+</a>
+
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}">
     Profile
 </a>
 
@@ -262,7 +266,19 @@ Departments
 </h3>
 
 <h1>
-0
+{{ department_count|default(0) }}
+</h1>
+
+</div>
+
+<div class="card">
+
+<h3>
+Conferences
+</h3>
+
+<h1>
+{{ conference_count|default(0) }}
 </h1>
 
 </div>

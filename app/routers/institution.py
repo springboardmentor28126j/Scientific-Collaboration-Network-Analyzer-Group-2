@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app import crud, schemas
 from app.database import SessionLocal
-from app import schemas, crud
 from app.oauth2 import get_current_user
-from app.models import User
+from app.models import User, Institution
 
 router = APIRouter(
     prefix="/institutions",
@@ -36,6 +36,88 @@ def get_all_institutions(
 ):
     return crud.get_all_institutions(db)
 
+@router.post("/profile", response_model=schemas.InstitutionResponse)
+def create_institution_profile(
+    institution: schemas.InstitutionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    existing = db.query(Institution).filter(
+        Institution.user_id == current_user.id
+    ).first()
+
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Institution profile already exists"
+        )
+
+
+    new_institution = Institution(
+        user_id=current_user.id,
+        name=institution.name,
+        institution_type=institution.institution_type,
+        location=institution.location,
+        website=institution.website,
+        phone=institution.phone
+    )
+
+
+    db.add(new_institution)
+    db.commit()
+    db.refresh(new_institution)
+
+
+    return new_institution
+
+@router.get("/profile/me", response_model=schemas.InstitutionResponse)
+def get_my_institution_profile(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    institution = db.query(Institution).filter(
+        Institution.user_id == current_user.id
+    ).first()
+
+
+    if not institution:
+        raise HTTPException(
+            status_code=404,
+            detail="Institution profile not found"
+        )
+
+
+    return institution
+@router.put("/profile", response_model=schemas.InstitutionResponse)
+def update_my_institution_profile(
+    institution: schemas.InstitutionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    existing = db.query(Institution).filter(
+        Institution.user_id == current_user.id
+    ).first()
+
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail="Institution profile not found"
+        )
+
+    existing.name = institution.name
+    existing.institution_type = institution.institution_type
+    existing.location = institution.location
+    existing.website = institution.website
+    existing.phone = institution.phone
+
+    db.commit()
+    db.refresh(existing)
+
+    return existing
 
 @router.get("/{institution_id}", response_model=schemas.InstitutionResponse)
 def get_institution(
@@ -78,3 +160,35 @@ def delete_institution(
         raise HTTPException(status_code=404, detail="Institution not found")
 
     return {"message": "Institution deleted successfully"}
+
+@router.get("/{institution_id}/conferences")
+def get_institution_conferences(
+    institution_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+
+    # Get institution details
+    institution = crud.get_institution_by_id(
+        db,
+        institution_id
+    )
+
+
+    if not institution:
+        raise HTTPException(
+            status_code=404,
+            detail="Institution not found"
+        )
+
+
+    # Get related conferences
+    conferences = crud.get_conferences_by_institution(
+        db,
+        institution.name
+    )
+
+
+    return conferences
+
+

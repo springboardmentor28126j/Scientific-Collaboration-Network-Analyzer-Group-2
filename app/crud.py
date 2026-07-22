@@ -167,6 +167,14 @@ def delete_institution(db: Session, institution_id: int):
         db.commit()
 
     return db_institution
+def get_conferences_by_institution(
+    db: Session,
+    institution_name: str
+):
+    return db.query(models.Conference).filter(
+        models.Conference.institution == institution_name
+    ).all()
+    
 def create_conference(db: Session, conference: schemas.ConferenceCreate):
     db_conference = models.Conference(**conference.model_dump())
     db.add(db_conference)
@@ -190,19 +198,34 @@ def update_conference(
     conference_id: int,
     conference: schemas.ConferenceUpdate
 ):
+
     db_conference = db.query(models.Conference).filter(
         models.Conference.id == conference_id
     ).first()
 
+
     if db_conference:
-        for key, value in conference.model_dump().items():
-            setattr(db_conference, key, value)
+
+        update_data = conference.model_dump(
+            exclude_unset=True
+        )
+
+
+        for key, value in update_data.items():
+
+            setattr(
+                db_conference,
+                key,
+                value
+            )
+
 
         db.commit()
+
         db.refresh(db_conference)
 
-    return db_conference
 
+    return db_conference
 
 def delete_conference(db: Session, conference_id: int):
     db_conference = db.query(models.Conference).filter(

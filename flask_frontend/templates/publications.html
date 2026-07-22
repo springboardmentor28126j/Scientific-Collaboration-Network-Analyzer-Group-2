@@ -64,37 +64,117 @@ Welcome, {{ session["full_name"] }}
 
 
 <a href="{{ url_for('dashboard') }}">
-Dashboard
+    Dashboard
 </a>
 
+
+
+<!-- Researchers -->
+
+{% if session["role"] in ["institution_admin", "system_admin"] %}
 
 <a href="{{ url_for('researchers') }}">
-Researchers
+    Researchers
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Publications -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
 
 <a href="{{ url_for('publications') }}" class="active">
-Publications
+    Publications
 </a>
+
+{% endif %}
+
+
+
+
+<!-- Institutions -->
+
+{% if session["role"] == "system_admin" %}
+
+<a href="#">
+    Institutions
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Collaborations -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+<a href="#">
+    Collaborations
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Conferences -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
 
 <a href="{{ url_for('conferences') }}">
     Conferences
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Profile -->
+
+{% if session["role"] == "researcher" %}
+
 <a href="{{ url_for('researcher_profile') }}">
-Profile
+    Profile
 </a>
+
+
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}">
+    Profile
+</a>
+
+
+{% endif %}
+
+
+
+
+<!-- System Admin -->
+
+{% if session["role"] == "system_admin" %}
+
+
+
+<a href="#">
+    Reports
+</a>
+
+{% endif %}
 
 
 
 <a href="{{ url_for('logout') }}">
-Logout
+    Logout
 </a>
 
 
-
 </div>
-
 
 
 
@@ -134,30 +214,17 @@ Publications
 </div>
 
 
-
-
-
-
-
 <!-- SEARCH -->
-
 
 <div class="search-box">
 
-
-<input 
-type="text"
-id="searchInput"
-placeholder="Search by Title or DOI"
-onkeyup="searchPublication()">
-
+    <input 
+        type="text"
+        id="searchInput"
+        placeholder="Search by Researcher or Title"
+        onkeyup="searchPublication()">
 
 </div>
-
-
-
-
-
 
 
 <!-- TABLE -->
@@ -580,80 +647,58 @@ Cancel
 
 <script>
 
-
 function toggleSidebar(){
 
-document.getElementById("sidebar").classList.toggle("active");
+    document.getElementById("sidebar").classList.toggle("active");
 
-document.getElementById("main").classList.toggle("shift");
+    document.getElementById("main").classList.toggle("shift");
 
 }
-
 
 
 function openModal(){
 
-document.getElementById("publicationModal").style.display="flex";
+    document.getElementById("publicationModal").style.display = "flex";
 
 }
-
 
 
 function closeModal(){
 
-document.getElementById("publicationModal").style.display="none";
+    document.getElementById("publicationModal").style.display = "none";
 
 }
 
 
-
-</script>
-
-
-
-</body>
-<script>
-
 function searchPublication(){
 
     let input = document.getElementById("searchInput");
-
     let filter = input.value.toLowerCase();
 
-
     let table = document.querySelector("table");
-
     let rows = table.getElementsByTagName("tr");
-
 
     for(let i = 1; i < rows.length; i++){
 
-        let title = rows[i]
-        .getElementsByTagName("td")[1];
+        let researcher = rows[i].getElementsByTagName("td")[1];
+        let title = rows[i].getElementsByTagName("td")[2];
 
+        if(researcher && title){
 
-        let doi = rows[i]
-        .getElementsByTagName("td")[5];
-
-
-        if(title || doi){
-
+            let researcherText = researcher.textContent.toLowerCase();
             let titleText = title.textContent.toLowerCase();
 
-            let doiText = doi.textContent.toLowerCase();
-
-
             if(
-                titleText.includes(filter) ||
-                doiText.includes(filter)
+                researcherText.includes(filter) ||
+                titleText.includes(filter)
             ){
 
-                rows[i].style.display="";
+                rows[i].style.display = "";
 
             }
             else{
 
-                rows[i].style.display="none";
+                rows[i].style.display = "none";
 
             }
 
@@ -665,4 +710,7 @@ function searchPublication(){
 
 </script>
 
+</body>
+
 </html>
+

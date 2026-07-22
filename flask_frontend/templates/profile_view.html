@@ -44,37 +44,118 @@ href="{{ url_for('static', filename='css/profile.css') }}">
 
 <div class="sidebar" id="sidebar">
 
+
 <a href="{{ url_for('dashboard') }}">
 Dashboard
 </a>
+
+
+
+<!-- Researchers -->
+
+{% if session["role"] in ["institution_admin", "system_admin"] %}
 
 <a href="{{ url_for('researchers') }}">
 Researchers
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Publications -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
+
 <a href="{{ url_for('publications') }}">
-    Publications
+Publications
 </a>
+
+{% endif %}
+
+
+
+
+<!-- Institutions -->
+
+{% if session["role"] == "system_admin" %}
+
+<a href="#">
+Institutions
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Collaborations -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
 
 <a href="#">
 Collaborations
 </a>
 
+{% endif %}
+
+
+
+
+<!-- Conferences -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
 <a href="{{ url_for('conferences') }}">
-    Conferences
+Conferences
 </a>
+
+{% endif %}
+
+
+
+
+<!-- Profile -->
+
+{% if session["role"] == "researcher" %}
 
 <a href="{{ url_for('researcher_profile') }}" class="active">
 Profile
 </a>
 
+
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}" class="active">
+Profile
+</a>
+
+
+{% endif %}
+
+
+
+
+<!-- System Admin -->
+
+{% if session["role"] == "system_admin" %}
+
+<a href="#">
+Reports
+</a>
+
+{% endif %}
+
+
+
+
 <a href="{{ url_for('logout') }}">
 Logout
 </a>
 
+
 </div>
-
-
 <!-- ================= MAIN ================= -->
 
 <div class="main" id="main">
@@ -176,11 +257,82 @@ Update Profile
 
 {% elif session["role"] == "institution_admin" %}
 
-<h3>
-Institution Admin Profile
-</h3>
+<form method="POST" action="{{ url_for('institution_profile') }}">
 
-<p>Institution profile will be displayed here.</p>
+<label>
+Admin Name
+</label>
+
+<input
+type="text"
+name="full_name"
+value="{{ session['full_name'] }}"
+readonly>
+
+<label>
+Email
+</label>
+
+<input
+type="text"
+name="email"
+value="{{ session['email'] }}"
+readonly>
+
+<label>
+Institution Name
+</label>
+
+<input
+type="text"
+name="name"
+value="{{ institution.name }}"
+required>
+
+<label>
+Institution Type
+</label>
+
+<input
+type="text"
+name="institution_type"
+value="{{ institution.institution_type or '' }}">
+
+<label>
+Website
+</label>
+
+<input
+type="url"
+name="website"
+value="{{ institution.website or '' }}">
+
+<label>
+Address
+</label>
+
+<input
+type="text"
+name="location"
+value="{{ institution.location }}"
+required>
+
+<label>
+Phone
+</label>
+
+<input
+type="text"
+name="phone"
+value="{{ institution.phone or '' }}">
+
+<br><br>
+
+<button type="submit" class="save-btn">
+Update Profile
+</button>
+
+</form>
 
 {% elif session["role"] == "reviewer" %}
 

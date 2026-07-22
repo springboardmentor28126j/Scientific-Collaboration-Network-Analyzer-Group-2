@@ -117,53 +117,82 @@ class PublicationResponse(BaseModel):
         
 class InstitutionCreate(BaseModel):
     name: str
+    institution_type: str | None = None
     location: str
     website: str | None = None
-    email: EmailStr
-    phone: str
+    phone: str | None = None
 
 
 class InstitutionUpdate(BaseModel):
     name: str
+    institution_type: str | None = None
     location: str
     website: str | None = None
-    email: EmailStr
-    phone: str
+    phone: str | None = None
 
 
 class InstitutionResponse(BaseModel):
     id: int
+    user_id: int
     name: str
+    institution_type: str | None = None
     location: str
     website: str | None = None
-    email: EmailStr
-    phone: str
+    phone: str | None = None
 
     class Config:
         from_attributes = True
+        
+# ---------------- Conference Schemas ----------------
+
 class ConferenceCreate(BaseModel):
+
     title: str
+
     organizer: str
+
     location: str
+
     conference_date: str
+
     website: str | None = None
+
+    institution: str
+
+    event_type: str
 
 
 class ConferenceUpdate(BaseModel):
-    title: str
-    organizer: str
-    location: str
-    conference_date: str
+
+    title: str | None = None
+
+    location: str | None = None
+
+    conference_date: str | None = None
+
     website: str | None = None
+
 
 
 class ConferenceResponse(BaseModel):
+
     id: int
+
     title: str
+
     organizer: str
+
     location: str
+
     conference_date: str
+
     website: str | None = None
 
+    institution: str
+
+    event_type: str
+
+
     class Config:
+
         from_attributes = True

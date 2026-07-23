@@ -1,10 +1,12 @@
 from pydantic import BaseModel, EmailStr
+from datetime import date
 
 class UserRegister(BaseModel):
     full_name: str
     email: EmailStr
     password: str
     role: str
+    institution_name: str | None = None
 
 
 class UserLogin(BaseModel):
@@ -124,7 +126,6 @@ class InstitutionCreate(BaseModel):
 
 
 class InstitutionUpdate(BaseModel):
-    name: str
     institution_type: str | None = None
     location: str
     website: str | None = None
@@ -195,4 +196,50 @@ class ConferenceResponse(BaseModel):
 
     class Config:
 
+        from_attributes = True
+
+# ---------------- Conference Registration Schemas ----------------
+
+class ConferenceRegistrationCreate(BaseModel):
+
+    conference_id: int
+
+    participation_type: str
+    # Attendee / Presenter
+
+    presentation_title: str | None = None
+
+    publication_id: int | None = None
+
+    presentation_mode: str | None = None
+    # Oral / Poster
+
+
+
+class ConferenceRegistrationResponse(BaseModel):
+
+    id: int
+
+    researcher_id: int
+
+    researcher_name: str | None = None
+
+    conference_id: int
+
+    conference_title: str | None = None
+
+    participation_type: str
+
+    presentation_title: str | None = None
+
+    publication_id: int | None = None
+
+    presentation_mode: str | None = None
+
+    status: str
+
+    registration_date: date | None = None
+
+
+    class Config:
         from_attributes = True

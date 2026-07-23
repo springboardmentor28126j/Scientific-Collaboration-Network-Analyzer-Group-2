@@ -23,7 +23,10 @@ def get_db():
 @router.post("/register", response_model=UserResponse)
 def register(user: UserRegister, db: Session = Depends(get_db)):
 
-    existing_user = db.query(User).filter(User.email == user.email).first()
+    # Check if email already exists
+    existing_user = db.query(User).filter(
+        User.email == user.email
+    ).first()
 
     if existing_user:
         raise HTTPException(
@@ -31,6 +34,7 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
             detail="Email already registered"
         )
 
+    # Allowed roles
     allowed_roles = [
         "researcher",
         "institution_admin",
@@ -43,6 +47,26 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
             detail="Invalid role selected."
         )
 
+    # Institution Admin validation
+    if user.role == "institution_admin":
+
+        if not user.institution_name or user.institution_name.strip() == "":
+            raise HTTPException(
+                status_code=400,
+                detail="Institution Name is required."
+            )
+
+        existing_institution = db.query(Institution).filter(
+            Institution.name == user.institution_name.strip()
+        ).first()
+
+        if existing_institution:
+            raise HTTPException(
+                status_code=400,
+                detail="This institution already has an Institution Admin."
+            )
+
+    # Create User
     new_user = User(
         full_name=user.full_name,
         email=user.email,
@@ -54,9 +78,24 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
+    # Automatically create Institution
+    if user.role == "institution_admin":
+
+        institution = Institution(
+            user_id=new_user.id,
+            name=user.institution_name.strip(),
+            institution_type="",
+            location="",
+            website="",
+            phone=""
+        )
+
+        db.add(institution)
+        db.commit()
+        db.refresh(institution)
+
     return new_user
-
-
+    
 @router.post("/login")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),

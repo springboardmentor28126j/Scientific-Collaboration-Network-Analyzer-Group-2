@@ -85,15 +85,37 @@
     </span>
 
 </div>
-        <label for="role">Role</label>
+<label for="role">Role</label>
 
-        <select id="role" name="role" required>
-          <option value="" selected disabled>Select Role</option>
-          <option value="researcher">Researcher</option>
-          <option value="institution_admin">Institution Admin</option>
-          <option value="reviewer">Reviewer</option>
-        </select>
+<select
+    id="role"
+    name="role"
+    onchange="toggleInstitutionField()"
+    required>
 
+    <option value="" selected disabled>Select Role</option>
+
+    <option value="researcher">Researcher</option>
+
+    <option value="institution_admin">Institution Admin</option>
+
+    <option value="reviewer">Reviewer</option>
+
+</select>
+
+<div id="institutionField" style="display:none;">
+
+    <label for="institution_name">
+        Institution Name
+    </label>
+
+    <input
+        type="text"
+        id="institution_name"
+        name="institution_name"
+        placeholder="Enter Institution Name">
+
+</div>
         <button type="submit">
             Create Account
         </button>
@@ -130,6 +152,29 @@ function togglePassword(id, icon){
 
         field.type = "password";
         icon.textContent = "visibility";
+
+    }
+
+}
+function toggleInstitutionField(){
+
+    const role = document.getElementById("role").value;
+
+    const field = document.getElementById("institutionField");
+
+    const input = document.getElementById("institution_name");
+
+    if(role === "institution_admin"){
+
+        field.style.display = "block";
+        input.required = true;
+
+    }
+    else{
+
+        field.style.display = "none";
+        input.required = false;
+        input.value = "";
 
     }
 

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -119,13 +120,10 @@ def login():
 
 
 # ---------------------- Register ----------------------
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
-
     if request.method == "POST":
-
 
         full_name = request.form.get("full_name")
 
@@ -137,10 +135,10 @@ def register():
 
         role = request.form.get("role")
 
+        institution_name = request.form.get("institution_name")
 
 
         if password != confirm_password:
-
 
             return render_template(
 
@@ -151,9 +149,7 @@ def register():
             )
 
 
-
         try:
-
 
             response = requests.post(
 
@@ -167,27 +163,24 @@ def register():
 
                     "password": password,
 
-                    "role": role
+                    "role": role,
+
+                    "institution_name": institution_name
 
                 }
 
             )
-
-
 
             print("REGISTER STATUS:", response.status_code)
 
             print("REGISTER RESPONSE:", response.text)
 
 
-
             if response.status_code == 200:
-
 
                 return redirect(
                     url_for("login")
                 )
-
 
 
             try:
@@ -200,11 +193,9 @@ def register():
 
                 )
 
-
             except ValueError:
 
                 error_message = response.text
-
 
 
             return render_template(
@@ -216,9 +207,7 @@ def register():
             )
 
 
-
         except requests.exceptions.ConnectionError:
-
 
             return render_template(
 
@@ -229,13 +218,7 @@ def register():
             )
 
 
-
     return render_template("register.html")
-
-
-
-
-
 
 # ---------------------- Dashboard ----------------------
 @app.route("/dashboard")
@@ -884,7 +867,6 @@ def institution_profile():
 
         data = {
 
-            "name": request.form.get("name"),
             "institution_type": request.form.get("institution_type"),
             "location": request.form.get("location"),
             "website": request.form.get("website"),
@@ -1299,8 +1281,6 @@ def edit_publication(id):
     )
 # ---------------------- Conferences ----------------------
 
-# ---------------------- Conferences ----------------------
-
 @app.route("/conferences")
 def conferences():
 
@@ -1309,7 +1289,7 @@ def conferences():
 
 
     headers = {
-        "Authorization": f"Bearer {session['token']}"
+        "Authorization": f"Bearer " + session["token"]
     }
 
 
@@ -1344,6 +1324,25 @@ def conferences():
 
 
 
+    # -------- Convert Conference Date --------
+
+    for conference in conferences:
+
+        try:
+
+            conference["conference_date_obj"] = datetime.strptime(
+                conference["conference_date"],
+                "%Y-%m-%d"
+            )
+
+        except:
+
+            conference["conference_date_obj"] = None
+
+
+
+
+
     # -------- Get Institutions for Dropdown --------
 
     response = requests.get(
@@ -1361,10 +1360,12 @@ def conferences():
 
 
 
+
     return render_template(
         "conferences.html",
         conferences=conferences,
-        institutions=institutions
+        institutions=institutions,
+        today=datetime.today()
     )
 
 # ---------------------- Add Conference ----------------------
@@ -1518,6 +1519,266 @@ def delete_conference(id):
 
 
     return redirect(url_for("conferences"))
+
+@app.route("/conference/register/<int:id>", methods=["GET", "POST"])
+def register_conference(id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    # Get conference details
+
+    response = requests.get(
+        f"{API_URL}/conferences/{id}",
+        headers=headers
+    )
+
+
+    if response.status_code != 200:
+        return "Conference not found"
+
+
+    conference = response.json()
+
+
+
+    # Get publications for presenter selection
+
+    publications_response = requests.get(
+        f"{API_URL}/publications/user/{session['user_id']}",
+        headers=headers
+    )
+
+
+    publications = []
+
+    if publications_response.status_code == 200:
+        publications = publications_response.json()
+
+
+
+    if request.method == "POST":
+
+
+        data = {
+
+            "conference_id": id,
+
+            "participation_type": request.form["participation_type"],
+
+            "presentation_title": request.form.get("presentation_title"),
+
+            "publication_id": request.form.get("publication_id") or None,
+
+            "presentation_mode": request.form.get("presentation_mode")
+
+        }
+
+
+
+        response = requests.post(
+
+            f"{API_URL}/conference-registration/",
+
+            json=data,
+
+            headers=headers
+
+        )
+
+
+        if response.status_code == 200:
+
+            return redirect(
+                url_for("conferences")
+            )
+
+
+
+    return render_template(
+
+        "register_conference.html",
+
+        conference=conference,
+
+        publications=publications
+
+    )
+
+@app.route("/conference/<int:id>/participants")
+def conference_participants(id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    response = requests.get(
+        f"{API_URL}/conference-registration/conference/{id}",
+        headers=headers
+    )
+
+
+    participants = []
+
+
+    if response.status_code == 200:
+
+        participants = response.json()
+
+        print("PARTICIPANTS DATA:")
+        print(participants)
+
+
+    else:
+
+        print("ERROR:", response.status_code)
+        print(response.text)
+
+
+
+    return render_template(
+        "conference_participants.html",
+        participants=participants
+    )
+
+@app.route("/my-conference-history")
+def my_conference_history():
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    response = requests.get(
+        f"{API_URL}/conference-registration/my",
+        headers=headers
+    )
+
+
+    registrations = []
+
+
+    if response.status_code == 200:
+        registrations = response.json()
+
+
+    return render_template(
+        "my_conference_history.html",
+        registrations=registrations
+    )
+    
+@app.route("/institutions")
+def institutions():
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    response = requests.get(
+        f"{API_URL}/institutions/",
+        headers=headers
+    )
+
+    institutions = []
+
+    if response.status_code == 200:
+        institutions = response.json()
+
+    return render_template(
+        "institutions.html",
+        institutions=institutions
+    )
+
+@app.route("/institutions/edit/<int:id>", methods=["GET", "POST"])
+def edit_institution(id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    if request.method == "POST":
+
+        data = {
+            "website": request.form["website"],
+            "phone": request.form["phone"]
+        }
+
+
+        response = requests.put(
+            f"{API_URL}/institutions/{id}",
+            json=data,
+            headers=headers
+        )
+
+
+        if response.status_code == 200:
+            return redirect(url_for("institutions"))
+
+
+
+    response = requests.get(
+        f"{API_URL}/institutions/{id}",
+        headers=headers
+    )
+
+
+    institution = response.json()
+
+
+    return render_template(
+        "edit_institution.html",
+        institution=institution
+    )
+
+@app.route("/institutions/delete/<int:id>")
+def delete_institution(id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    response = requests.delete(
+        f"{API_URL}/institutions/{id}",
+        headers=headers
+    )
+
+
+    if response.status_code == 200:
+        return redirect(url_for("institutions"))
+
+
+    else:
+        print("DELETE INSTITUTION ERROR:")
+        print(response.text)
+
+        return "Failed to delete institution"
 # ---------------------- Logout ----------------------
 
 @app.route("/logout")

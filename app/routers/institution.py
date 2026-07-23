@@ -47,30 +47,21 @@ def create_institution_profile(
         Institution.user_id == current_user.id
     ).first()
 
-
-    if existing:
+    if not existing:
         raise HTTPException(
-            status_code=400,
-            detail="Institution profile already exists"
+            status_code=404,
+            detail="Institution not found."
         )
 
+    existing.institution_type = institution.institution_type
+    existing.location = institution.location
+    existing.website = institution.website
+    existing.phone = institution.phone
 
-    new_institution = Institution(
-        user_id=current_user.id,
-        name=institution.name,
-        institution_type=institution.institution_type,
-        location=institution.location,
-        website=institution.website,
-        phone=institution.phone
-    )
-
-
-    db.add(new_institution)
     db.commit()
-    db.refresh(new_institution)
+    db.refresh(existing)
 
-
-    return new_institution
+    return existing
 
 @router.get("/profile/me", response_model=schemas.InstitutionResponse)
 def get_my_institution_profile(
@@ -108,7 +99,8 @@ def update_my_institution_profile(
             detail="Institution profile not found"
         )
 
-    existing.name = institution.name
+    
+
     existing.institution_type = institution.institution_type
     existing.location = institution.location
     existing.website = institution.website

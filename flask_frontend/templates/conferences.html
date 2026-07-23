@@ -184,13 +184,28 @@ Welcome, {{ session["full_name"] }}
 <div class="main" id="main">
 
 
-
 <div class="top-section">
 
 
 <h1>
 Conferences
 </h1>
+
+
+
+{% if session["role"] == "researcher" %}
+
+<a href="{{ url_for('my_conference_history') }}">
+
+<button class="save-btn">
+My Conference History
+</button>
+
+</a>
+
+{% endif %}
+
+
 
 
 
@@ -205,7 +220,6 @@ Conferences
 
 
 {% endif %}
-
 
 
 </div>
@@ -293,7 +307,7 @@ Website
 </th>
 
 
-{% if session["role"] in ["institution_admin","system_admin"] %}
+{% if session["role"] in ["institution_admin","system_admin","researcher"] %}
 
 <th>
 Action
@@ -399,6 +413,8 @@ Edit
 
 
 
+
+
 {% if session["role"] == "system_admin" %}
 
 <a href="{{ url_for('delete_conference', id=conference.id) }}"
@@ -413,8 +429,72 @@ Delete
 {% endif %}
 
 
-</td>
 
+
+
+
+<!-- Participants -->
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<a href="{{ url_for('conference_participants', id=conference.id) }}">
+
+<button class="view-btn">
+Participants
+</button>
+
+</a>
+
+{% endif %}
+
+
+
+
+
+
+
+
+<!-- Researcher Registration -->
+
+{% if session["role"] == "researcher" %}
+
+
+
+{% if conference.conference_date_obj and conference.conference_date_obj.date() > today.date() %}
+
+
+
+<a href="{{ url_for('register_conference', id=conference.id) }}">
+
+<button class="save-btn">
+Register
+</button>
+
+</a>
+
+
+
+{% else %}
+
+
+
+<button class="closed-btn" disabled>
+Registration Closed
+</button>
+
+
+
+{% endif %}
+
+
+
+{% endif %}
+
+
+
+
+
+</td>
 
 
 </tr>

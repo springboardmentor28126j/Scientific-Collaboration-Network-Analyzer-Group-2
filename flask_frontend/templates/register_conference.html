@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Conference Registration</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/common.css') }}">
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/form.css') }}">
+
+</head>
+
+
+<body>
+
+
+<!-- NAVBAR -->
+
+<div class="navbar">
+
+<div class="navbar-left">
+
+<button class="menu-btn" onclick="toggleSidebar()">
+☰
+</button>
+
+
+<div class="project-title">
+Scientific Collaboration Network Analyzer
+</div>
+
+</div>
+
+
+<div class="navbar-right">
+
+Welcome, {{ session["full_name"] }}
+
+</div>
+
+</div>
+
+
+
+<!-- SIDEBAR -->
+
+<div class="sidebar" id="sidebar">
+
+
+<a href="{{ url_for('dashboard') }}">
+Dashboard
+</a>
+
+
+<a href="{{ url_for('conferences') }}" class="active">
+Conferences
+</a>
+
+
+<a href="{{ url_for('logout') }}">
+Logout
+</a>
+
+
+</div>
+
+
+
+
+
+<!-- MAIN -->
+
+<div class="main" id="main">
+
+
+<div class="edit-container">
+
+
+<h1>
+Register Conference
+</h1>
+
+
+
+<h3>
+{{ conference.title }}
+</h3>
+
+
+<p>
+Type: {{ conference.event_type }}
+</p>
+
+
+<p>
+Date: {{ conference.conference_date }}
+</p>
+
+
+
+
+
+<form method="POST">
+
+
+
+<label>
+Participation Type
+</label>
+
+
+<select name="participation_type"
+id="participation_type"
+onchange="showPresentationFields()"
+required>
+
+
+<option value="">
+Select
+</option>
+
+
+<option value="Attendee">
+Attendee
+</option>
+
+
+<option value="Presenter">
+Presenter
+</option>
+
+
+</select>
+
+
+
+
+
+<div id="presentationFields"
+style="display:none;">
+
+
+
+<label>
+Presentation Title
+</label>
+
+
+<input
+type="text"
+name="presentation_title"
+id="presentation_title">
+
+
+
+
+
+<label>
+Select Publication
+</label>
+
+
+<select name="publication_id"
+id="publication_id"
+onchange="fillPresentationTitle()">
+
+
+<option value="">
+Select Publication
+</option>
+
+
+{% for publication in publications %}
+
+<option value="{{ publication.id }}"
+data-title="{{ publication.title }}">
+
+{{ publication.title }}
+
+</option>
+
+{% endfor %}
+
+
+</select>
+
+
+
+<label>
+Presentation Mode
+</label>
+
+
+<select 
+name="presentation_mode"
+id="presentation_mode">
+
+
+<option value="">
+Select Mode
+</option>
+
+
+<option value="Oral">
+Oral
+</option>
+
+
+<option value="Poster">
+Poster
+</option>
+
+
+</select>
+
+
+
+</div>
+
+
+
+
+
+<button type="submit"
+class="update-btn">
+
+Register
+
+</button>
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<script>
+
+function fillPresentationTitle(){
+
+    let publication =
+    document.getElementById("publication_id");
+
+
+    let selected =
+    publication.options[publication.selectedIndex];
+
+
+    let title =
+    selected.getAttribute("data-title");
+
+
+    document.getElementById(
+        "presentation_title"
+    ).value = title || "";
+
+}
+
+function toggleSidebar(){
+
+document.getElementById("sidebar").classList.toggle("active");
+
+document.getElementById("main").classList.toggle("shift");
+
+}
+
+
+
+
+function showPresentationFields(){
+
+
+let type =
+document.getElementById("participation_type").value;
+
+
+let fields =
+document.getElementById("presentationFields");
+
+
+let publication =
+document.getElementById("publication_id");
+
+
+let title =
+document.getElementById("presentation_title");
+
+
+let mode =
+document.getElementById("presentation_mode");
+
+
+
+if(type=="Presenter"){
+
+
+fields.style.display="block";
+
+
+publication.required = true;
+
+title.required = true;
+
+mode.required = true;
+
+
+}
+
+else{
+
+
+fields.style.display="none";
+
+
+publication.required = false;
+
+title.required = false;
+
+mode.required = false;
+
+
+
+publication.value="";
+
+title.value="";
+
+mode.value="";
+
+
+}
+
+
+}
+
+</script>
+
+
+
+</body>
+
+</html>

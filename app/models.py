@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
-from datetime import datetime
-from .database import Base
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import datetime, date
+from .database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -106,6 +106,7 @@ class Institution(Base):
 
     name = Column(
         String(150),
+        unique=True,
         nullable=False
     )
 
@@ -184,4 +185,62 @@ class Conference(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+
+class ConferenceRegistration(Base):
+
+    __tablename__ = "conference_registrations"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    researcher_id = Column(
+        Integer,
+        ForeignKey("researchers.id"),
+        nullable=False
+    )
+
+    conference_id = Column(
+        Integer,
+        ForeignKey("conferences.id"),
+        nullable=False
+    )
+
+    participation_type = Column(
+        String(50),
+        nullable=False
+    )
+
+    presentation_title = Column(
+        String(255),
+        nullable=True
+    )
+
+    publication_id = Column(
+        Integer,
+        nullable=True
+    )
+
+    presentation_mode = Column(
+        String(50),
+        nullable=True
+    )
+
+    status = Column(
+        String(50),
+        default="Registered"
+    )
+
+    registration_date = Column(
+        Date,
+        default=date.today
+    )
+
+
+    researcher = relationship(
+        "Researcher"
+    )
+
+
+    conference = relationship(
+        "Conference"
     )

@@ -80,7 +80,7 @@
 <!-- Institutions -->
 {% if session["role"] in ["system_admin"] %}
 
-<a href="#">
+<a href="{{ url_for('institutions') }}">
     Institutions
 </a>
 

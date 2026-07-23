@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/common.css') }}">
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/form.css') }}">
+
+<title>Edit Institution</title>
+
+</head>
+
+
+<body>
+
+
+<!-- ================= NAVBAR ================= -->
+
+<div class="navbar">
+
+
+<div class="navbar-left">
+
+<button class="menu-btn" onclick="toggleSidebar()">
+☰
+</button>
+
+
+<div class="project-title">
+Scientific Collaboration Network Analyzer
+</div>
+
+
+</div>
+
+
+
+<div class="navbar-right">
+
+Welcome, {{ session["full_name"] }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================= SIDEBAR ================= -->
+
+<div class="sidebar" id="sidebar">
+
+
+<a href="{{ url_for('dashboard') }}">
+Dashboard
+</a>
+
+
+
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<a href="{{ url_for('researchers') }}">
+Researchers
+</a>
+
+{% endif %}
+
+
+
+
+
+{% if session["role"] in ["researcher","institution_admin","system_admin","reviewer"] %}
+
+<a href="{{ url_for('publications') }}">
+Publications
+</a>
+
+{% endif %}
+
+
+
+
+
+{% if session["role"] == "system_admin" %}
+
+<a href="{{ url_for('institutions') }}" class="active">
+Institutions
+</a>
+
+{% endif %}
+
+
+
+
+
+{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+<a href="#">
+Collaborations
+</a>
+
+{% endif %}
+
+
+
+
+
+{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+<a href="{{ url_for('conferences') }}">
+Conferences
+</a>
+
+{% endif %}
+
+
+
+
+
+{% if session["role"] == "researcher" %}
+
+<a href="{{ url_for('researcher_profile') }}">
+Profile
+</a>
+
+
+{% elif session["role"] == "institution_admin" %}
+
+<a href="{{ url_for('institution_profile') }}">
+Profile
+</a>
+
+{% endif %}
+
+
+
+
+
+{% if session["role"] == "system_admin" %}
+
+<a href="#">
+Reports
+</a>
+
+{% endif %}
+
+
+
+
+
+<a href="{{ url_for('logout') }}">
+Logout
+</a>
+
+
+</div>
+
+
+
+
+
+
+<!-- ================= MAIN ================= -->
+
+
+<div class="main">
+
+
+<div class="edit-container">
+
+
+<h1>
+Edit Institution
+</h1>
+
+
+
+<form method="POST">
+
+
+
+<label>
+Institution Name
+</label>
+
+
+<input
+type="text"
+value="{{ institution.name }}"
+readonly>
+
+
+
+<label>
+Institution Type
+</label>
+
+
+<input
+type="text"
+value="{{ institution.institution_type }}"
+readonly>
+
+
+
+<label>
+Location
+</label>
+
+
+<input
+type="text"
+value="{{ institution.location }}"
+readonly>
+
+
+
+
+
+<label>
+Website
+</label>
+
+
+<input
+type="text"
+name="website"
+value="{{ institution.website }}">
+
+
+
+
+
+<label>
+Phone
+</label>
+
+
+<input
+type="text"
+name="phone"
+value="{{ institution.phone }}">
+
+
+
+
+
+<button type="submit" class="update-btn">
+    Update Institution
+</button>
+
+
+
+</form>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<script>
+
+function toggleSidebar(){
+
+document.getElementById("sidebar").classList.toggle("active");
+
+document.getElementById("main").classList.toggle("shift");
+
+}
+
+</script>
+
+
+
+</body>
+
+</html>

@@ -6,7 +6,8 @@ from app.routers import (
     researcher,
     publication,
     institution,
-    conference
+    conference,
+    conference_registration
 )
 from app.routers.auth import router as auth_router
 
@@ -29,6 +30,7 @@ app.include_router(researcher.router)
 app.include_router(publication.router)
 app.include_router(institution.router)
 app.include_router(conference.router)
+app.include_router(conference_registration.router)
 
 
 @app.get("/")

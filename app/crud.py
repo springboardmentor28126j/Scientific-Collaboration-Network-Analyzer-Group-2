@@ -237,3 +237,165 @@ def delete_conference(db: Session, conference_id: int):
         db.commit()
 
     return db_conference
+
+# ---------------- Conference Registration CRUD ----------------
+
+
+def create_conference_registration(
+    db: Session,
+    registration: schemas.ConferenceRegistrationCreate,
+    researcher_id: int
+):
+
+    db_registration = models.ConferenceRegistration(
+
+        researcher_id=researcher_id,
+
+        conference_id=registration.conference_id,
+
+        participation_type=registration.participation_type,
+
+        presentation_title=registration.presentation_title,
+
+        publication_id=registration.publication_id,
+
+        presentation_mode=registration.presentation_mode
+
+    )
+
+
+    db.add(db_registration)
+
+    db.commit()
+
+    db.refresh(db_registration)
+
+
+    return db_registration
+
+
+
+def get_registrations_by_researcher(
+    db: Session,
+    researcher_id: int
+):
+
+    registrations = db.query(
+        models.ConferenceRegistration
+    ).filter(
+        models.ConferenceRegistration.researcher_id == researcher_id
+    ).all()
+
+
+    result = []
+
+
+    for registration in registrations:
+
+        result.append({
+
+            "id": registration.id,
+
+            "researcher_id": registration.researcher_id,
+
+            "researcher_name": registration.researcher.full_name
+            if registration.researcher
+            else None,
+
+            "conference_id": registration.conference_id,
+
+            "conference_title": registration.conference.title
+            if registration.conference
+            else None,
+
+            "participation_type": registration.participation_type,
+
+            "presentation_title": registration.presentation_title,
+
+            "publication_id": registration.publication_id,
+
+            "presentation_mode": registration.presentation_mode,
+
+            "status": registration.status,
+
+            "registration_date": registration.registration_date
+
+        })
+
+
+    return result
+
+
+
+
+
+def get_conference_participants(
+    db: Session,
+    conference_id: int
+):
+
+    registrations = db.query(
+        models.ConferenceRegistration
+    ).filter(
+        models.ConferenceRegistration.conference_id == conference_id
+    ).all()
+
+
+    result = []
+
+
+    for registration in registrations:
+
+        result.append({
+
+            "id": registration.id,
+
+            "researcher_id": registration.researcher_id,
+
+            "researcher_name": registration.researcher.full_name
+            if registration.researcher
+            else None,
+
+            "conference_id": registration.conference_id,
+
+            "conference_title": registration.conference.title
+            if registration.conference
+            else None,
+
+            "participation_type": registration.participation_type,
+
+            "presentation_title": registration.presentation_title,
+
+            "publication_id": registration.publication_id,
+
+            "presentation_mode": registration.presentation_mode,
+
+            "status": registration.status,
+
+            "registration_date": registration.registration_date
+
+        })
+
+
+    return result
+    
+def delete_conference_registration(
+    db: Session,
+    registration_id: int
+):
+
+    registration = db.query(
+        models.ConferenceRegistration
+    ).filter(
+        models.ConferenceRegistration.id == registration_id
+    ).first()
+
+
+    if registration:
+
+        db.delete(registration)
+
+        db.commit()
+
+
+    return registration

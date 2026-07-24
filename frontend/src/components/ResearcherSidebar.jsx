@@ -89,6 +89,9 @@ function ResearcherSidebar() {
         🎓 My Conferences
     </Link>
 </li>
+<Link to="/institution-management">
+    🏛 Institution Management
+</Link>
       <button
         className="logout-btn"
         onClick={logout}

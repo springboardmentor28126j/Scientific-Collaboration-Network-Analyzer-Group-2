@@ -18,6 +18,7 @@ import AddConference from "./pages/AddConference";
 import MyConferences from "./pages/MyConferences";
 import EditConference from "./pages/EditConference";
 import ConferenceDetails from "./pages/ConferenceDetails";
+import InstitutionManagement from "./pages/InstitutionManagement";
 
 function App() {
   return (
@@ -93,6 +94,10 @@ function App() {
 <Route
     path="/conference/:id"
     element={<ConferenceDetails />}
+/>
+<Route
+    path="/institution-management"
+    element={<InstitutionManagement />}
 />
 
 

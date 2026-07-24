@@ -1,9 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File,
+    Form
+)
 from sqlalchemy.orm import Session
 
 from app.database.database import SessionLocal
 
 from app import crud
+import os
+import shutil
+import uuid
+
+from app.models.research_paper import ResearchPaper
 
 from app.models.user import User
 
@@ -122,17 +134,51 @@ def my_papers(
     response_model=ResearchPaperResponse
 )
 def create_paper(
-    paper: ResearchPaperCreate,
+
+    title: str = Form(...),
+    authors: str = Form(...),
+    abstract: str = Form(...),
+    publication_year: int = Form(...),
+    source: str = Form(...),
+    doi: str = Form(...),
+    keywords: str = Form(None),
+    status: str = Form("Draft"),
+
+    pdf: UploadFile = File(None),
+
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
+
 ):
 
-    new_paper = paper.model_dump()
+    paper_file = ""
 
-    new_paper["researcher_id"] = current_user.id
+    if pdf:
 
-    db_paper = crud.ResearchPaper(
-        **new_paper
+        os.makedirs("uploads", exist_ok=True)
+
+        filename = f"{uuid.uuid4()}_{pdf.filename}"
+
+        file_path = os.path.join("uploads", filename)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(pdf.file, buffer)
+
+        paper_file = file_path
+
+    db_paper = ResearchPaper(
+
+        title=title,
+        authors=authors,
+        abstract=abstract,
+        publication_year=publication_year,
+        source=source,
+        doi=doi,
+        keywords=keywords,
+        status=status,
+        paper_file=paper_file,
+        researcher_id=current_user.id
+
     )
 
     db.add(db_paper)
@@ -142,49 +188,6 @@ def create_paper(
     db.refresh(db_paper)
 
     return db_paper
-
-
-# --------------------------------
-# Update Paper
-# --------------------------------
-
-@router.put(
-    "/{paper_id}",
-    response_model=ResearchPaperResponse
-)
-def update_paper(
-    paper_id: int,
-    updated_paper: ResearchPaperUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-
-    db_paper = crud.get_paper_by_id(
-        db,
-        paper_id
-    )
-
-    if not db_paper:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Paper not found"
-        )
-
-    if db_paper.researcher_id != current_user.id:
-
-        raise HTTPException(
-            status_code=403,
-            detail="Not Authorized"
-        )
-
-    return crud.update_paper(
-        db,
-        db_paper,
-        updated_paper
-    )
-
-
 # --------------------------------
 # Delete Paper
 # --------------------------------

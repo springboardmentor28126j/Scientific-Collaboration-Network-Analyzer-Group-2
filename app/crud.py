@@ -18,7 +18,7 @@ from app.schemas.collaboration import CollaborationCreate
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import hash_password
-
+from app.models.conferences import Conference
 
 # -----------------------------
 # Research Papers CRUD
@@ -272,4 +272,80 @@ def delete_paper(
 
     return {
         "message": "Paper deleted successfully"
+    }
+# ============================
+# Conference CRUD
+# ============================
+
+from app.models.conferences import Conference
+
+
+def get_all_conferences(db):
+    return db.query(Conference).all()
+
+
+def get_conference_by_id(db, conference_id):
+    return (
+        db.query(Conference)
+        .filter(Conference.id == conference_id)
+        .first()
+    )
+
+
+def get_my_conferences(db, researcher_id):
+    return (
+        db.query(Conference)
+        .filter(Conference.researcher_id == researcher_id)
+        .all()
+    )
+
+
+def create_conference(db, conference):
+    db.add(conference)
+    db.commit()
+    db.refresh(conference)
+    return conference
+
+
+def update_conference(db, db_conference, updated_data):
+
+    data = updated_data.model_dump(exclude_unset=True)
+
+    for key, value in data.items():
+        setattr(db_conference, key, value)
+
+    db.commit()
+    db.refresh(db_conference)
+
+    return db_conference
+
+
+def delete_conference(db, conference):
+
+    db.delete(conference)
+    db.commit()
+
+    return {
+        "message": "Conference deleted successfully"
+    }
+def get_dashboard_stats(db, researcher_id):
+
+    papers = db.query(ResearchPaper).filter(
+        ResearchPaper.researcher_id == researcher_id
+    ).count()
+
+    conferences = db.query(Conference).filter(
+        Conference.researcher_id == researcher_id
+    ).count()
+
+    collaborations = 0
+
+    return {
+
+        "papers": papers,
+
+        "conferences": conferences,
+
+        "collaborations": collaborations
+
     }

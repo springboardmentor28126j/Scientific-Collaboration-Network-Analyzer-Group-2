@@ -14,16 +14,18 @@ function UploadPaper() {
 
     const navigate = useNavigate();
 
-    const [paper, setPaper] = useState({
-        title: "",
-        authors: "",
-        abstract: "",
-        publication_year: "",
-        source: "",
-        doi: "",
-        keywords: "",
-        status: "Draft"
-    });
+const [pdf, setPdf] = useState(null);
+
+const [paper, setPaper] = useState({
+    title: "",
+    authors: "",
+    abstract: "",
+    publication_year: "",
+    source: "",
+    doi: "",
+    keywords: "",
+    status: "Draft"
+});
 
     const handleChange = (e) => {
         setPaper({
@@ -32,38 +34,53 @@ function UploadPaper() {
         });
     };
 
-    const handleSubmit = async (e) => {
+   const handleSubmit = async (e) => {
 
-        e.preventDefault();
+    e.preventDefault();
 
-        try {
+    try {
 
-            const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token");
 
-            await api.post(
-                "/papers/",
-                paper,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+        const formData = new FormData();
 
-            alert("✅ Paper uploaded successfully!");
+        formData.append("title", paper.title);
+        formData.append("authors", paper.authors);
+        formData.append("abstract", paper.abstract);
+        formData.append("publication_year", paper.publication_year);
+        formData.append("source", paper.source);
+        formData.append("doi", paper.doi);
+        formData.append("keywords", paper.keywords);
+        formData.append("status", paper.status);
 
-            navigate("/my-papers");
-
-        } catch (error) {
-
-            console.log(error);
-
-            alert("❌ Failed to upload paper.");
-
+        if (pdf) {
+            formData.append("pdf", pdf);
         }
 
-    };
+        await api.post(
+            "/papers/",
+            formData,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data"
+                }
+            }
+        );
 
+        alert("✅ Paper uploaded successfully!");
+
+        navigate("/my-papers");
+
+    } catch (error) {
+
+        console.log(error);
+
+        alert("❌ Failed to upload paper.");
+
+    }
+
+};
     return (
         <>
             <DashboardNavbar />
@@ -149,15 +166,24 @@ function UploadPaper() {
                                 onChange={handleChange}
                             />
 
-                            <label>Status</label>
-                            <select
-                                name="status"
-                                value={paper.status}
-                                onChange={handleChange}
-                            >
-                                <option value="Draft">Draft</option>
-                                <option value="Published">Published</option>
-                            </select>
+            <label>Status</label>
+
+<select
+    name="status"
+    value={paper.status}
+    onChange={handleChange}
+>
+    <option value="Draft">Draft</option>
+    <option value="Published">Published</option>
+</select>
+
+<label>Research Paper (PDF)</label>
+
+<input
+    type="file"
+    accept=".pdf"
+    onChange={(e) => setPdf(e.target.files[0])}
+/>
 
                             <button
                                 className="edit-profile-btn"

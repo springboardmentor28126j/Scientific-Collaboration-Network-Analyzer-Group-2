@@ -14,6 +14,10 @@ import UploadPaper from "./pages/UploadPaper";
 import Collaborations from "./pages/Collaborations";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import AddConference from "./pages/AddConference";
+import MyConferences from "./pages/MyConferences";
+import EditConference from "./pages/EditConference";
+import ConferenceDetails from "./pages/ConferenceDetails";
 
 function App() {
   return (
@@ -70,6 +74,25 @@ function App() {
 <Route
   path="/settings"
   element={<Settings />}
+/>
+<Route
+    path="/add-conference"
+    element={<AddConference />}
+/>
+
+<Route
+    path="/my-conferences"
+    element={<MyConferences />}
+/>
+
+<Route
+    path="/edit-conference/:id"
+    element={<EditConference />}
+/>
+
+<Route
+    path="/conference/:id"
+    element={<ConferenceDetails />}
 />
 
 

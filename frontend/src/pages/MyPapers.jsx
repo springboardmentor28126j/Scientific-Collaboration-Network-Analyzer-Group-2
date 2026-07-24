@@ -199,20 +199,32 @@ function MyPapers() {
 
                                 <div className="paper-buttons">
 
-                                    <button
-                                        onClick={() => handleEdit(paper)}
-                                    >
-                                        ✏ Edit
-                                    </button>
+    {paper.paper_file && (
+        <a
+            href={`http://127.0.0.1:8000/${paper.paper_file.replace(/\\/g, "/")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            <button type="button">
+                📄 View PDF
+            </button>
+        </a>
+    )}
 
-                                    <button
-                                        className="delete"
-                                        onClick={() => handleDelete(paper.id)}
-                                    >
-                                        🗑 Delete
-                                    </button>
+    <button
+        onClick={() => handleEdit(paper)}
+    >
+        ✏ Edit
+    </button>
 
-                                </div>
+    <button
+        className="delete"
+        onClick={() => handleDelete(paper.id)}
+    >
+        🗑 Delete
+    </button>
+
+</div>
 
                             </div>
 

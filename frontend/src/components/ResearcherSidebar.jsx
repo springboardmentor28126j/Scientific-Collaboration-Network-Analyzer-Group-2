@@ -77,12 +77,18 @@ function ResearcherSidebar() {
         >
           ⚙ Settings
         </Link>
-        <Link to="/my-papers">
-    📄 My Papers
-</Link>
-
       </nav>
+      <li>
+    <Link to="/add-conference">
+        ➕ Add Conference
+    </Link>
+</li>
 
+<li>
+    <Link to="/my-conferences">
+        🎓 My Conferences
+    </Link>
+</li>
       <button
         className="logout-btn"
         onClick={logout}

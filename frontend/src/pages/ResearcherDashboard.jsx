@@ -11,6 +11,15 @@ import "../styles/dashboard.css";
 function ResearcherDashboard() {
 
     const [user, setUser] = useState(null);
+    const [stats, setStats] = useState({
+
+    papers: 0,
+
+    conferences: 0,
+
+    collaborations: 0
+
+});
 
     useEffect(() => {
 
@@ -41,10 +50,46 @@ function ResearcherDashboard() {
             }
 
         };
+        const fetchStats = async () => {
 
-        fetchUser();
+    try {
 
+        const token = localStorage.getItem("token");
+
+        const response = await api.get(
+
+            "/dashboard/stats",
+
+            {
+
+                headers: {
+
+                    Authorization: `Bearer ${token}`
+
+                }
+
+            }
+
+        );
+
+        setStats(response.data);
+
+    }
+
+    catch (error) {
+
+        console.log(error);
+
+    }
+
+};
+
+       Promise.all([
+    fetchUser(),
+    fetchStats()
+]);
     }, []);
+
 
     return (
 
@@ -72,7 +117,7 @@ function ResearcherDashboard() {
 
                                     <h3>📄 My Papers</h3>
 
-                                    <h1>0</h1>
+                                   <h1>{stats.papers}</h1>
 
                                 </div>
 
@@ -80,23 +125,23 @@ function ResearcherDashboard() {
 
                                     <h3>🤝 Collaborations</h3>
 
-                                    <h1>0</h1>
+                                    <h1>{stats.collaborations}</h1>
 
                                 </div>
 
-                                <div className="card researchers-card">
+                              <div className="card researchers-card">
 
-                                    <h3>📊 Citations</h3>
+    <h3>📅 My Conferences</h3>
 
-                                    <h1>0</h1>
+    <h1>{stats.conferences}</h1>
 
-                                </div>
+</div>
 
                                 <div className="card institutions-card">
 
-                                    <h3>👀 Profile Views</h3>
+                                   <h3>👤 My Profile</h3>
 
-                                    <h1>0</h1>
+<h1>✓</h1>
 
                                 </div>
 

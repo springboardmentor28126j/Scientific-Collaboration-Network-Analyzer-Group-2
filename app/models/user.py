@@ -47,3 +47,7 @@ class User(Base):
         back_populates="researcher",
         cascade="all, delete"
     )
+    conferences = relationship(
+    "Conference",
+    back_populates="researcher"
+)

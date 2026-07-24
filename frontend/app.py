@@ -168,8 +168,18 @@ def publications():
     except requests.exceptions.ConnectionError:
         pubs = []
 
-    return render_template("publications.html", publications=pubs)
+    # Researchers ka data fetch karo taaki author name dikha sakein
+    try:
+        r_response = requests.get(f"{API_URL}/researchers/")
+        researchers = r_response.json() if r_response.status_code == 200 else []
+        researcher_map = {r["id"]: r["full_name"] for r in researchers}
+    except requests.exceptions.ConnectionError:
+        researcher_map = {}
 
+    for pub in pubs:
+        pub["author_name"] = researcher_map.get(pub.get("author_id"), "Unknown")
+
+    return render_template("publications.html", publications=pubs)
 
 @app.route("/publications/add", methods=["GET", "POST"])
 def add_publication():
@@ -209,6 +219,18 @@ def add_publication():
             return render_template("add_publication.html", error="Cannot connect to server")
 
     return render_template("add_publication.html")
+
+@app.route("/publications/delete/<int:pub_id>")
+def delete_publication(pub_id):
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    try:
+        requests.delete(f"{API_URL}/publications/{pub_id}")
+    except requests.exceptions.ConnectionError:
+        pass
+
+    return redirect(url_for("publications"))
 
 @app.route("/conferences")
 def conferences():

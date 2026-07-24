@@ -53,15 +53,23 @@
             <div class="pub-list">
                 {% for pub in publications %}
                 <div class="pub-card">
-                    <div class="pub-info">
-                        <h3>{{ pub.title }}</h3>
-                        <div class="pub-meta">
-                            <span class="pub-type">{{ pub.type.replace('_', ' ').title() }}</span>
-                            {% if pub.doi %}<span class="pub-doi">DOI: {{ pub.doi }}</span>{% endif %}
-                        </div>
-                    </div>
-                    <span class="status-badge status-{{ pub.status }}">{{ pub.status.title() }}</span>
-                </div>
+    <div class="pub-info">
+        <h3>{{ pub.title }}</h3>
+        <div class="pub-meta">
+            <span class="pub-type">{{ pub.type.replace('_', ' ').title() }}</span>
+            {% if pub.doi %}<span class="pub-doi">DOI: {{ pub.doi }}</span>{% endif %}
+            <span class="pub-doi">👤 {{ pub.author_name }}</span>
+        </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span class="status-badge status-{{ pub.status }}">{{ pub.status.title() }}</span>
+        <a href="{{ url_for('delete_publication', pub_id=pub.id) }}"
+           onclick="return confirm('Delete this publication?');"
+           style="color: #ef4444; text-decoration: none; font-size: 13px; font-weight: 600;">
+            Delete
+        </a>
+    </div>
+</div>
                 {% endfor %}
             </div>
             {% else %}

@@ -83,3 +83,7 @@ def delete_institution(institution_id: int, db: Session = Depends(get_db)):
         "message": "Institution deleted successfully",
         "institution_id": institution_id
     }
+
+@router.get("/{institution_id}/report")
+def institution_report(institution_id: int, db: Session = Depends(get_db)):
+    return crud.get_institution_report(db, institution_id)

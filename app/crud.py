@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from app import models, schemas, auth
 
-def create_user(db: Session, user: schemas.UserCreate):
 
-    print("Password received:", user.password)
-    print("Length:", len(user.password))
+# ---------------- USERS ----------------
+
+def create_user(db: Session, user: schemas.UserCreate):
 
     hashed_password = auth.hash_password(user.password)
 
@@ -21,19 +21,28 @@ def create_user(db: Session, user: schemas.UserCreate):
 
     return db_user
 
+
 def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
+    return db.query(models.User).filter(
+        models.User.email == email
+    ).first()
 
 
-def create_researcher(db: Session, researcher: schemas.ResearcherCreate):
+
+# ---------------- RESEARCHERS ----------------
+
+def create_researcher(
+    db: Session,
+    researcher: schemas.ResearcherCreate
+):
+
     db_researcher = models.Researcher(
         full_name=researcher.full_name,
         department=researcher.department,
-        institution=researcher.institution,
-        institution_id=researcher.institution_id,
         skills=researcher.skills,
         research_interest=researcher.research_interest,
-        designation=researcher.designation
+        designation=researcher.designation,
+        institution_id=researcher.institution_id
     )
 
     db.add(db_researcher)
@@ -42,32 +51,54 @@ def create_researcher(db: Session, researcher: schemas.ResearcherCreate):
 
     return db_researcher
 
+
+
 def get_researchers(db: Session):
     return db.query(models.Researcher).all()
 
-def get_researcher_by_id(db: Session, id: int):
-    return db.query(models.Researcher).filter(models.Researcher.id == id).first()
 
-def update_researcher(db: Session, id: int, updated):
-    researcher = db.query(models.Researcher).filter(models.Researcher.id == id).first()
+
+def get_researcher_by_id(db: Session, id: int):
+    return db.query(models.Researcher).filter(
+        models.Researcher.id == id
+    ).first()
+
+
+
+def update_researcher(
+    db: Session,
+    id: int,
+    updated: schemas.ResearcherCreate
+):
+
+    researcher = get_researcher_by_id(db, id)
 
     if not researcher:
         return None
 
+
     researcher.full_name = updated.full_name
     researcher.department = updated.department
-    researcher.institution = updated.institution
-    researcher.institution_id = updated.institution_id
     researcher.skills = updated.skills
     researcher.research_interest = updated.research_interest
     researcher.designation = updated.designation
+    researcher.institution_id = updated.institution_id
+
 
     db.commit()
     db.refresh(researcher)
 
     return researcher
 
-def create_institution(db: Session, institution: schemas.InstitutionCreate):
+
+
+# ---------------- INSTITUTIONS ----------------
+
+def create_institution(
+    db: Session,
+    institution: schemas.InstitutionCreate
+):
+
     db_institution = models.Institution(
         name=institution.name,
         address=institution.address,
@@ -82,16 +113,21 @@ def create_institution(db: Session, institution: schemas.InstitutionCreate):
     return db_institution
 
 
+
 def get_institutions(db: Session):
     return db.query(models.Institution).all()
 
 
-def get_institution_by_id(db: Session, institution_id: int):
-    return (
-        db.query(models.Institution)
-        .filter(models.Institution.id == institution_id)
-        .first()
-    )
+
+def get_institution_by_id(
+    db: Session,
+    institution_id: int
+):
+
+    return db.query(models.Institution).filter(
+        models.Institution.id == institution_id
+    ).first()
+
 
 
 def update_institution(
@@ -99,15 +135,21 @@ def update_institution(
     institution_id: int,
     updated_institution: schemas.InstitutionCreate
 ):
-    institution = get_institution_by_id(db, institution_id)
+
+    institution = get_institution_by_id(
+        db,
+        institution_id
+    )
 
     if not institution:
         return None
+
 
     institution.name = updated_institution.name
     institution.address = updated_institution.address
     institution.website = updated_institution.website
     institution.contact_email = updated_institution.contact_email
+
 
     db.commit()
     db.refresh(institution)
@@ -115,55 +157,169 @@ def update_institution(
     return institution
 
 
-def delete_institution(db: Session, institution_id: int):
-    institution = get_institution_by_id(db, institution_id)
+
+def delete_institution(
+    db: Session,
+    institution_id: int
+):
+
+    institution = get_institution_by_id(
+        db,
+        institution_id
+    )
 
     if not institution:
         return None
+
 
     db.delete(institution)
     db.commit()
 
     return institution
 
-def create_publication(db: Session, publication: schemas.PublicationCreate):
+
+
+
+# ---------------- PUBLICATIONS ----------------
+
+
+def create_publication(
+    db: Session,
+    publication: schemas.PublicationCreate
+):
+
+    # Get researchers
+    researchers = db.query(models.Researcher).filter(
+        models.Researcher.id.in_(publication.researcher_ids)
+    ).all()
+
+
+    # Create publication
+
     db_publication = models.Publication(
+
         title=publication.title,
+
         abstract=publication.abstract,
+
         publication_type=publication.publication_type,
+
         status=publication.status,
+
         doi=publication.doi,
+
         publication_date=publication.publication_date,
+
         journal_or_venue=publication.journal_or_venue,
+
         institution_id=publication.institution_id
     )
 
+
+    # Attach authors
+
+    db_publication.authors = researchers
+
+
     db.add(db_publication)
+
     db.commit()
+
     db.refresh(db_publication)
+
+
+
+    # -----------------------------------
+    # CREATE COLLABORATION NETWORK
+    # -----------------------------------
+
+    if len(researchers) > 1:
+
+
+        for i in range(len(researchers)):
+
+            for j in range(i + 1, len(researchers)):
+
+
+                collaboration = models.Collaboration(
+
+                    researcher1_id=researchers[i].id,
+
+                    researcher2_id=researchers[j].id,
+
+                    publication_id=db_publication.id
+
+                )
+
+
+                db.add(collaboration)
+
+
+
+        db.commit()
+
+
 
     return db_publication
 
 
+
+
 def get_publications(db: Session):
+
     return db.query(models.Publication).all()
 
-def get_publication_by_id(db: Session, publication_id: int):
-    return (
-        db.query(models.Publication)
-        .filter(models.Publication.id == publication_id)
-        .first()
-    )
+
+
+def get_publication_by_id(
+    db: Session,
+    publication_id: int
+):
+
+    return db.query(models.Publication).filter(
+        models.Publication.id == publication_id
+    ).first()
+
+
+
+def get_publications_by_status(
+    db: Session,
+    status: str
+):
+
+    return db.query(models.Publication).filter(
+        models.Publication.status == status
+    ).all()
+
+
+
+def get_publications_by_institution(
+    db: Session,
+    institution_id: int
+):
+
+    return db.query(models.Publication).filter(
+        models.Publication.institution_id == institution_id
+    ).all()
+
+
 
 def update_publication(
     db: Session,
     publication_id: int,
     updated_publication: schemas.PublicationCreate
 ):
-    publication = get_publication_by_id(db, publication_id)
+
+    publication = get_publication_by_id(
+        db,
+        publication_id
+    )
+
 
     if not publication:
         return None
+
+
 
     publication.title = updated_publication.title
     publication.abstract = updated_publication.abstract
@@ -174,18 +330,153 @@ def update_publication(
     publication.journal_or_venue = updated_publication.journal_or_venue
     publication.institution_id = updated_publication.institution_id
 
+
+
     db.commit()
     db.refresh(publication)
 
     return publication
 
-def delete_publication(db: Session, publication_id: int):
-    publication = get_publication_by_id(db, publication_id)
+
+
+
+def delete_publication(
+    db: Session,
+    publication_id: int
+):
+
+    publication = get_publication_by_id(
+        db,
+        publication_id
+    )
+
 
     if not publication:
         return None
 
+
     db.delete(publication)
+
     db.commit()
 
     return publication
+
+
+
+
+
+# ---------------- CONFERENCES ----------------
+
+
+def create_conference(
+    db: Session,
+    conference: schemas.ConferenceCreate
+):
+
+    db_conf = models.Conference(
+        **conference.dict()
+    )
+
+
+    db.add(db_conf)
+
+    db.commit()
+
+    db.refresh(db_conf)
+
+    return db_conf
+
+
+
+def get_conferences(db: Session):
+
+    return db.query(models.Conference).all()
+
+
+
+def get_conference_by_id(
+    db: Session,
+    conference_id: int
+):
+
+    return db.query(models.Conference).filter(
+        models.Conference.id == conference_id
+    ).first()
+
+
+
+def register_participation(
+    db: Session,
+    participation: schemas.ConferenceParticipationCreate
+):
+
+    db_part = models.ConferenceParticipation(
+        **participation.dict()
+    )
+
+
+    db.add(db_part)
+
+    db.commit()
+
+    db.refresh(db_part)
+
+    return db_part
+
+
+
+def get_participants_by_conference(
+    db: Session,
+    conference_id: int
+):
+
+    return db.query(
+        models.ConferenceParticipation
+    ).filter(
+        models.ConferenceParticipation.conference_id == conference_id
+    ).all()
+
+
+
+def get_conferences_by_researcher(
+    db: Session,
+    researcher_id: int
+):
+
+    return db.query(
+        models.ConferenceParticipation
+    ).filter(
+        models.ConferenceParticipation.researcher_id == researcher_id
+    ).all()
+
+
+
+
+# ---------------- REPORTS ----------------
+
+
+def get_institution_report(
+    db: Session,
+    institution_id: int
+):
+
+    researchers = db.query(
+        models.Researcher
+    ).filter(
+        models.Researcher.institution_id == institution_id
+    ).count()
+
+
+    publications = db.query(
+        models.Publication
+    ).filter(
+        models.Publication.institution_id == institution_id
+    ).count()
+
+
+
+    return {
+        "institution_id": institution_id,
+        "researchers": researchers,
+        "publications": publications
+    }

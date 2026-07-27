@@ -1,58 +1,119 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional, List
 from datetime import date
 
+# ---------------- USERS ----------------
 class UserCreate(BaseModel):
     name: str
     email: str
     password: str
     role: str
 
-
 class UserLogin(BaseModel):
     email: str
     password: str
 
+# ---------------- INSTITUTIONS ----------------
+class InstitutionCreate(BaseModel):
+    name: str
+    address: Optional[str] = None
+    website: Optional[str] = None
+    contact_email: Optional[str] = None
+
+# ---------------- RESEARCHERS ----------------
 class ResearcherCreate(BaseModel):
     full_name: str
     department: str
-    institution: str
     skills: str
     research_interest: str
     designation: str
-    institution_id: int | None = None
-
-class InstitutionCreate(BaseModel):
-    name: str
-    address: str | None = None
-    website: str | None = None
-    contact_email: str | None = None
-
-class PublicationCreate(BaseModel):
-    title: str
-    abstract: str | None = None
-    publication_type: str
-    status: str = "draft"
-    doi: str | None = None
-    publication_date: date | None = None
-    journal_or_venue: str | None = None
-    institution_id: int | None = None
-
-class PublicationAuthorAssign(BaseModel):
-    publication_id: int
-    researcher_ids: list[int]
+    institution_id: int   
 
 class AuthorResponse(BaseModel):
     id: int
     full_name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
+# ---------------- PUBLICATIONS ----------------
+class PublicationCreate(BaseModel):
+    title: str
+    abstract: Optional[str] = None
+    publication_type: str
+    status: str = "draft"
+    doi: Optional[str] = None
+    publication_date: Optional[date] = None
+    journal_or_venue: Optional[str] = None
+    institution_id: Optional[int] = None
+    researcher_ids: List[int] = Field(default_factory=list)
+
+class PublicationResponse(BaseModel):
+    id: int
+    title: str
+    abstract: Optional[str]
+    publication_type: str
+    status: str
+    doi: Optional[str]
+
+    class Config:
+        from_attributes = True
 
 class PublicationWithAuthors(BaseModel):
     id: int
     title: str
-    authors: list[AuthorResponse]
+    authors: List[AuthorResponse]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class PublicationAuthorAssign(BaseModel):
+    publication_id: int
+    researcher_ids: List[int]
+
+# ---------------- CONFERENCES ----------------
+class ConferenceCreate(BaseModel):
+    name: str
+    location: Optional[str] = None
+    start_date: date
+    end_date: date
+
+class ConferenceResponse(BaseModel):
+    id: int
+    name: str
+    location: Optional[str]
+    start_date: date
+    end_date: date
+
+    class Config:
+        from_attributes = True
+
+class ConferenceParticipationCreate(BaseModel):
+    researcher_id: int
+    conference_id: int
+    presentation_title: Optional[str] = None
+
+class ConferenceParticipationResponse(BaseModel):
+    id: int
+    researcher_id: int
+    conference_id: int
+    presentation_title: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class CollaborationCreate(BaseModel):
+    researcher1_id: int
+    researcher2_id: int
+    publication_id: int
+
+
+class CollaborationResponse(BaseModel):
+    id: int
+    researcher1_id: int
+    researcher2_id: int
+    publication_id: int
+
+    class Config:
+        from_attributes = True

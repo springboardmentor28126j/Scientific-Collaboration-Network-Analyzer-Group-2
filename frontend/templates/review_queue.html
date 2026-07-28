@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Review Queue — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Review Queue</h1>
+      <div class="section-sub">{{ publications|length }} publication{{ '' if publications|length == 1 else 's' }} awaiting your review</div>
+    </div>
+  </div>
+
+  {% if publications %}
+  <div class="card-list">
+    {% for pub in publications %}
+    <div class="item-card pub">
+      <div>
+        <div>
+          {% if pub.year %}<span class="pill pill-purple">{{ pub.year }}</span>{% endif %}
+          {% if pub.venue %}<span class="pill pill-purple">{{ pub.venue }}</span>{% endif %}
+          <span class="pill pill-teal">{{ pub.status | capitalize }}</span>
+        </div>
+        <p class="item-title">{{ pub.title }}</p>
+        <div class="item-sub">{{ pub.authors|length }} author{{ '' if pub.authors|length == 1 else 's' }}</div>
+        {% if pub.abstract %}<p style="font-size:13px; color:var(--muted); margin-top:6px;">{{ pub.abstract }}</p>{% endif %}
+        {% if pub.file_url %}<a href="{{ pub.file_url }}" class="item-link" style="color:#534AB7;" target="_blank" rel="noopener">View file &rarr;</a>{% endif %}
+      </div>
+
+      <form method="POST" action="{{ url_for('review_publication', publication_id=pub.id) }}" style="width:100%; margin-top:14px; display:flex; flex-direction:column; gap:8px;">
+        <label for="comment-{{ pub.id }}">Comment (required if rejecting, optional if approving)</label>
+        <textarea id="comment-{{ pub.id }}" name="comment" rows="2" placeholder="Feedback for the author"></textarea>
+        <div style="display:flex; gap:10px;">
+          <button type="submit" name="decision" value="approve" class="btn-inline btn-purple" style="margin:0;">Approve &amp; Publish</button>
+          <button type="submit" name="decision" value="reject" class="btn-inline" style="margin:0; background:#fff; color:#B3261E; border:1px solid #B3261E;">Reject</button>
+        </div>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">Nothing waiting for your review right now.</div>
+  {% endif %}
+</div>
+{% endblock %}

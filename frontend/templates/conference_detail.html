@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ conference.name }} — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <a class="muted-link" href="{{ url_for('conferences') }}">&larr; All conferences</a>
+  <h1 style="margin-top:10px;">{{ conference.name }}</h1>
+  <div style="color: var(--muted); font-size:14px; margin-bottom:24px;">
+    {{ conference.start_date }}{% if conference.end_date %} &ndash; {{ conference.end_date }}{% endif %}
+    &middot; {{ conference.location or "Location TBA" }}
+    {% if conference.conference_type %} &middot; {{ conference.conference_type.replace('_', ' ') }}{% endif %}
+    {% if conference.website_link %} &middot; <a class="muted-link" href="{{ conference.website_link }}" target="_blank">website</a>{% endif %}
+  </div>
+  {% if conference.description %}
+    <p>{{ conference.description }}</p>
+  {% endif %}
+
+  {% if not registered %}
+  <div class="profile-field" style="flex-direction:column; align-items:flex-start; padding:16px 0; margin-top:16px;">
+    <strong>Not registered yet</strong>
+    <form method="POST" action="{{ url_for('register_conference', conference_id=conference_id) }}" style="width:100%; margin-top:10px;">
+      <label for="role">Register as</label>
+      <select id="role" name="role">
+        <option value="attendee">Attendee</option>
+        <option value="presenter">Presenter</option>
+      </select>
+      <p style="font-size:12px; color:var(--muted); margin-top:2px;">Organizer/Reviewer roles are assigned by the conference organizer after you register.</p>
+      <label for="presentation_title">Presentation title (if presenting)</label>
+      <input type="text" id="presentation_title" name="presentation_title" placeholder="Optional">
+      <button type="submit">Register</button>
+    </form>
+  </div>
+{% else %}
+  <div class="profile-field" style="flex-direction:column; align-items:flex-start; padding:16px 0; margin-top:16px;">
+    {% if my_status == 'confirmed' %}
+      <span class="flash success">Your registration is confirmed for this conference</span>
+    {% elif my_status == 'attended' %}
+      <span class="flash success">You attended this conference</span>
+    {% elif my_status == 'cancelled' %}
+      <span class="flash error">You cancelled your registration for this conference</span>
+    {% else %}
+      <span class="flash success">You're registered for this conference</span>
+    {% endif %}
+  </div>
+{% endif %}
+
+  <h2 style="font-size:18px; margin-top:36px;">Participants</h2>
+  {% if participants %}
+    {% for p in participants %}
+      <div class="profile-field" style="flex-direction:column; align-items:flex-start; padding:14px 0;">
+        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+          <div>
+            <strong>Researcher #{{ p.researcher_id }}</strong>
+            <span style="color:var(--muted); font-size:13px;">
+              &middot; {{ p.role }}{% if p.presentation_title %} &middot; {{ p.presentation_title }}{% endif %}
+            </span>
+          </div>
+          <span class="v">{{ p.status }}</span>
+        </div>
+
+        {% if is_organizer %}
+        <form method="POST" action="{{ url_for('update_participation_status', participation_id=p.id) }}"
+              style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <select name="status">
+            <option value="registered" {% if p.status == 'registered' %}selected{% endif %}>Registered</option>
+            <option value="confirmed" {% if p.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="attended" {% if p.status == 'attended' %}selected{% endif %}>Attended</option>
+            <option value="cancelled" {% if p.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+          </select>
+          <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0; padding:6px 12px;">Update</button>
+        </form>
+        <form method="POST" action="{{ url_for('update_participation_role', participation_id=p.id) }}"
+              style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <select name="role">
+            <option value="attendee" {% if p.role == 'attendee' %}selected{% endif %}>Attendee</option>
+            <option value="presenter" {% if p.role == 'presenter' %}selected{% endif %}>Presenter</option>
+            <option value="organizer" {% if p.role == 'organizer' %}selected{% endif %}>Organizer</option>
+            <option value="reviewer" {% if p.role == 'reviewer' %}selected{% endif %}>Reviewer</option>
+          </select>
+          <button type="submit" class="btn-inline btn-purple" style="margin:0; padding:6px 12px;">Set role</button>
+        </form>
+        {% elif p.researcher_id == my_researcher_id and p.status in ['registered', 'confirmed'] %}
+        <form method="POST" action="{{ url_for('update_participation_status', participation_id=p.id) }}"
+              onsubmit="return confirm('Cancel your registration?');" style="margin-top:8px;">
+          <input type="hidden" name="status" value="cancelled">
+          <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Cancel my registration</button>
+        </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="color: var(--muted);">No participants yet.</p>
+  {% endif %}
+
+  <h2 style="font-size:18px; margin-top:36px;">Agenda</h2>
+  {% if agenda %}
+    {% for s in agenda %}
+      <div class="profile-field" style="flex-direction:column; align-items:flex-start; padding:14px 0;">
+        <div style="display:flex; justify-content:space-between; width:100%;">
+          <strong>{{ s.title }}</strong>
+          <span class="v">{{ s.start_time.replace('T', ' ') }}{% if s.end_time %} &ndash; {{ s.end_time.replace('T', ' ') }}{% endif %}</span>
+        </div>
+        <div style="color: var(--muted); font-size:13px; margin-top:4px;">
+          {{ s.room or "Room TBA" }}
+          {% if s.speaker_email %} &middot; speaker: {{ s.speaker_email }} ({{ s.speaker_role }}){% endif %}
+        </div>
+        {% if s.description %}
+          <p style="font-size:14px; margin:6px 0 0 0;">{{ s.description }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="color: var(--muted);">No sessions scheduled yet.</p>
+  {% endif %}
+
+  <h2 style="font-size:16px; margin-top:32px;">Add a session</h2>
+  <form method="POST" action="{{ url_for('create_session', conference_id=conference_id) }}">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" required>
+
+    <label for="room">Room / location</label>
+    <input type="text" id="room" name="room">
+
+    <label for="start_time">Start time</label>
+    <input type="datetime-local" id="start_time" name="start_time" required>
+
+    <label for="end_time">End time</label>
+    <input type="datetime-local" id="end_time" name="end_time">
+
+    <label for="speaker_participation_id">Speaker (optional)</label>
+    <select id="speaker_participation_id" name="speaker_participation_id">
+      <option value="">No speaker assigned</option>
+      {% for p in participants %}
+        <option value="{{ p.id }}">Researcher #{{ p.researcher_id }} ({{ p.role }}{% if p.presentation_title %} — {{ p.presentation_title }}{% endif %})</option>
+      {% endfor %}
+    </select>
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description"></textarea>
+
+    <button type="submit">Add to agenda</button>
+  </form>
+</div>
+{% endblock %}

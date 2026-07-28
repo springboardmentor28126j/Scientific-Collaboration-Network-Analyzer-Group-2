@@ -1,0 +1,30 @@
+{% if pagination.total > 0 %}
+<div class="pagination">
+  <div class="pagination-info">
+    Showing {{ pagination.start_index }}&ndash;{{ pagination.end_index }} of {{ pagination.total }}
+  </div>
+  <div class="pagination-controls">
+    {% if pagination.has_prev %}
+      <a href="{{ url_for(request.endpoint, page=pagination.page - 1, **base_args) }}" class="page-link" aria-label="Previous page">&laquo; Prev</a>
+    {% else %}
+      <span class="page-link disabled">&laquo; Prev</span>
+    {% endif %}
+
+    {% for p in pagination.page_numbers %}
+      {% if p is none %}
+        <span class="page-ellipsis">&hellip;</span>
+      {% elif p == pagination.page %}
+        <span class="page-link active" aria-current="page">{{ p }}</span>
+      {% else %}
+        <a href="{{ url_for(request.endpoint, page=p, **base_args) }}" class="page-link">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+      <a href="{{ url_for(request.endpoint, page=pagination.page + 1, **base_args) }}" class="page-link" aria-label="Next page">Next &raquo;</a>
+    {% else %}
+      <span class="page-link disabled">Next &raquo;</span>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

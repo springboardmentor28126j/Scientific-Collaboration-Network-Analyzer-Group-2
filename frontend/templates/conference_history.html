@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}My Conferences — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1>My Conferences</h1>
+
+  {% if history %}
+    {% for item in history %}
+      <div class="profile-field" style="flex-direction:column; align-items:flex-start; padding:16px 0;">
+        <div style="display:flex; justify-content:space-between; width:100%;">
+          <strong>{{ item.conference.name }}</strong>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="v">{{ item.status }}</span>
+            {% if item.status in ['registered', 'confirmed'] %}
+            <form method="POST" action="{{ url_for('update_participation_status', participation_id=item.id) }}"
+                  onsubmit="return confirm('Cancel this registration?');" style="display:inline;">
+              <input type="hidden" name="status" value="cancelled">
+              <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Cancel</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        <div style="color: var(--muted); font-size:13px; margin-top:4px;">
+          {{ item.conference.start_date }}{% if item.conference.end_date %} &ndash; {{ item.conference.end_date }}{% endif %}
+          &middot; {{ item.conference.location or "Location TBA" }} &middot; role: {{ item.role }}
+          {% if item.registered_at %} &middot; registered {{ item.registered_at.split('T')[0] }}{% endif %}
+        </div>
+       {% if item.presentation_title %}
+  <div style="font-size:14px; margin-top:6px;">Presenting: {{ item.presentation_title }}</div>
+{% endif %}
+
+{% if item.file_url %}
+  <div style="font-size:14px; margin-top:8px;">
+    <a class="muted-link" href="{{ item.file_url }}" target="_blank">
+      &#128206; {{ item.original_filename }}
+    </a>
+  </div>
+{% else %}
+  <form method="POST" action="{{ url_for('upload_presentation', participation_id=item.id) }}"
+        enctype="multipart/form-data" style="margin-top:10px;">
+    <label for="file-{{ item.id }}">Attach presentation file (PDF/PPT/DOC, max 10MB)</label>
+    <input type="file" id="file-{{ item.id }}" name="file" accept=".pdf,.ppt,.pptx,.doc,.docx">
+    <button type="submit">Upload</button>
+  </form>
+{% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="color: var(--muted);">You haven't registered for any conferences yet.</p>
+    <a class="muted-link" href="{{ url_for('conferences') }}">Browse conferences &rarr;</a>
+  {% endif %}
+</div>
+{% endblock %}

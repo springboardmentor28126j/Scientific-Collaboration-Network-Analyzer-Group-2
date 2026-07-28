@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -12,6 +15,9 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL",
     f"sqlite:///{DATABASE_FILE.as_posix()}"
 )
+
+print("USING DATABASE:", DATABASE_URL)  # 👈 ADD THIS
+
 
 connect_args = (
     {"check_same_thread": False}

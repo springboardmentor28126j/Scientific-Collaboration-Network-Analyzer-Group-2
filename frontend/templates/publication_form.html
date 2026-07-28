@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if publication else 'Add' }} Publication — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1>{{ 'Edit publication' if publication else 'Add publication' }}</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" value="{{ publication.title if publication else '' }}" required>
+
+    <label for="coauthor_ids">Co-author researcher IDs (comma-separated, optional)</label>
+    <input type="text" id="coauthor_ids" name="coauthor_ids" placeholder="e.g. 4, 7"
+           value="{{ existing_coauthor_ids if publication else '' }}">
+
+    <div class="field-row">
+      <div>
+        <label for="year">Year</label>
+        <input type="number" id="year" name="year" value="{{ publication.year if publication else '' }}">
+      </div>
+      <div>
+        <label for="venue">Venue</label>
+        <input type="text" id="venue" name="venue" value="{{ publication.venue if publication else '' }}">
+      </div>
+    </div>
+
+    <label for="doi_link">DOI or link</label>
+    <input type="text" id="doi_link" name="doi_link" placeholder="https://doi.org/..." value="{{ publication.doi_link if publication else '' }}">
+
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      {% set current_status = publication.status if publication else 'draft' %}
+      <option value="draft" {{ 'selected' if current_status == 'draft' }}>Draft</option>
+      <option value="submitted" {{ 'selected' if current_status == 'submitted' }}>Submitted for review</option>
+      {% if current_status == 'published' %}
+      <option value="published" selected>Published</option>
+      {% endif %}
+      <option value="archived" {{ 'selected' if current_status == 'archived' }}>Archived</option>
+    </select>
+    {% if current_status == 'submitted' %}
+      <p style="font-size:13px; color:var(--muted); margin-top:4px;">Waiting on an assigned reviewer to approve or reject it.</p>
+    {% endif %}
+
+    <label for="type">Type</label>
+    <select id="type" name="type">
+      {% set current_type = publication.type if publication else '' %}
+      <option value="" {{ 'selected' if not current_type }}>-- Select --</option>
+      <option value="journal_paper" {{ 'selected' if current_type == 'journal_paper' }}>Journal Paper</option>
+      <option value="conference_paper" {{ 'selected' if current_type == 'conference_paper' }}>Conference Paper</option>
+      <option value="book" {{ 'selected' if current_type == 'book' }}>Book</option>
+      <option value="patent" {{ 'selected' if current_type == 'patent' }}>Patent</option>
+      <option value="technical_report" {{ 'selected' if current_type == 'technical_report' }}>Technical Report</option>
+    </select>
+
+    <label for="abstract">Abstract (optional)</label>
+    <textarea id="abstract" name="abstract">{{ publication.abstract if publication else '' }}</textarea>
+
+    {% if publication and publication.review_comment %}
+    <div class="profile-field" style="flex-direction:column; align-items:flex-start; background:#FBEAEA; border-radius:8px; padding:12px; margin-top:12px;">
+      <span class="k">Reviewer feedback</span>
+      <span class="v" style="font-weight:normal;">{{ publication.review_comment }}</span>
+    </div>
+    {% endif %}
+
+    {% if not publication %}
+    <label for="file">Paper file (optional)</label>
+    <input type="file" id="file" name="file" accept=".pdf,.doc,.docx">
+    {% endif %}
+
+    <div style="display:flex; gap:10px; margin-top:24px;">
+      <button type="submit" style="margin:0; background:#534AB7;">Save publication</button>
+      <a href="{{ url_for('publications') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Cancel</a>
+    </div>
+  </form>
+
+  {% if publication %}
+  <div style="margin-top:32px; padding-top:24px; border-top:1px solid var(--border);">
+    <h2 style="font-size:16px;">Paper file</h2>
+    {% if publication.original_filename %}
+      <p style="font-size:13px; color:var(--muted);">
+        Current file: <a href="{{ publication.file_url }}" target="_blank" rel="noopener">{{ publication.original_filename }}</a>
+      </p>
+    {% else %}
+      <p style="font-size:13px; color:var(--muted);">No file uploaded yet.</p>
+    {% endif %}
+    <form method="POST" action="{{ url_for('upload_publication_file', publication_id=publication.id) }}" enctype="multipart/form-data" style="margin-top:8px;">
+      <input type="file" name="file" accept=".pdf,.doc,.docx" required>
+      <button type="submit" class="btn-inline btn-purple" style="margin-top:12px;">Upload</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

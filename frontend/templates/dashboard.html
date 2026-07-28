@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1>Welcome, {{ user.email }}</h1>
+  <p style="color: var(--muted)">Role: {{ user.role }}</p>
+
+  {% if user.role == 'system_admin' %}
+    {# ---------- Admin Dashboard ---------- #}
+    <div class="profile-field">
+      <span class="k">Total Users</span>
+      <span class="v">{{ admin_stats.total_users if admin_stats else '—' }}</span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Active / Inactive</span>
+      <span class="v">
+        {% if admin_stats %}{{ admin_stats.active_users }} active / {{ admin_stats.inactive_users }} inactive{% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Institutions</span>
+      <span class="v">{{ admin_stats.total_institutions if admin_stats else '—' }}</span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Conferences</span>
+      <span class="v">{{ admin_stats.total_conferences if admin_stats else '—' }}</span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Publications</span>
+      <span class="v">{{ admin_stats.total_publications if admin_stats else '—' }}</span>
+    </div>
+
+    <a class="muted-link" href="{{ url_for('admin_users') }}">Manage users &rarr;</a><br>
+    <a class="muted-link" href="{{ url_for('institution') }}">Manage institutions &rarr;</a>
+
+  {% elif user.role == 'institution_admin' %}
+    {# ---------- Institution Dashboard ---------- #}
+    <div class="profile-field">
+      <span class="k">Institutions</span>
+      <span class="v"><a href="{{ url_for('institution') }}">View / manage your institution &rarr;</a></span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Publications</span>
+      <span class="v"><a href="{{ url_for('publications') }}">View publications &rarr;</a></span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Conferences</span>
+      <span class="v"><a href="{{ url_for('conferences') }}">View conferences &rarr;</a></span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Collaboration Statistics</span>
+      <span class="v">Coming in Milestone 3</span>
+    </div>
+
+    <a class="muted-link" href="{{ url_for('profile') }}">Go to your profile &rarr;</a>
+
+  {% elif user.role == 'reviewer' %}
+    {# ---------- Reviewer Dashboard ---------- #}
+    <div class="profile-field">
+      <span class="k">Pending Reviews</span>
+      <span class="v">
+        {% if reviewer_pending_count is not none %}
+          <a href="{{ url_for('review_queue') }}">{{ reviewer_pending_count }} publication{{ '' if reviewer_pending_count == 1 else 's' }} awaiting your review &rarr;</a>
+        {% else %}
+          <a href="{{ url_for('review_queue') }}">View review queue &rarr;</a>
+        {% endif %}
+      </span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Publications</span>
+      <span class="v"><a href="{{ url_for('publications') }}">View publications &rarr;</a></span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Conferences</span>
+      <span class="v"><a href="{{ url_for('conferences') }}">View conferences &rarr;</a></span>
+    </div>
+
+    <a class="muted-link" href="{{ url_for('profile') }}">Go to your profile &rarr;</a>
+
+  {% else %}
+    {# ---------- Researcher Dashboard ---------- #}
+    <div class="profile-field">
+      <span class="k">Publications</span>
+      <span class="v"><a href="{{ url_for('publications') }}">View publications &rarr;</a></span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Projects</span>
+      <span class="v">Coming in Milestone 3</span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Conferences</span>
+      <span class="v"><a href="{{ url_for('conferences') }}">View conferences &rarr;</a></span>
+    </div>
+    <div class="profile-field">
+      <span class="k">Collaborators</span>
+      <span class="v">Coming in Milestone 3</span>
+    </div>
+
+    <a class="muted-link" href="{{ url_for('profile') }}">Go to your researcher profile &rarr;</a>
+  {% endif %}
+</div>
+{% endblock %}

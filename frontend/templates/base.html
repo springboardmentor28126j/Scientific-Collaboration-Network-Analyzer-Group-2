@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Scientific Collaboration Network Analyzer{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="navbar">
+    <div>
+      <span class="brand">SCNA</span>
+      {% if session.get('token') %}
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('conferences') }}">Conferences</a>
+        <a href="{{ url_for('conference_history') }}">My Conferences</a>
+        <a href="{{ url_for('publications') }}" class="nav-purple">Publications</a>
+        <a href="{{ url_for('institution') }}">Institutions</a>
+        <a href="{{ url_for('profile') }}">Profile</a>
+        {% if current_role in ('reviewer', 'system_admin') %}
+          <a href="{{ url_for('review_queue') }}">Review Queue</a>
+        {% endif %}
+        {% if current_role == 'system_admin' %}
+          <a href="{{ url_for('admin_users') }}" class="nav-purple">Manage Users</a>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div>
+      {% if session.get('token') %}
+        <a href="{{ url_for('logout') }}">Logout</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Register</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container" style="margin-bottom:0; padding-bottom:0;">
+          {% for category, message in messages %}
+            <div class="flash {{ 'error' if category == 'error' else 'success' }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

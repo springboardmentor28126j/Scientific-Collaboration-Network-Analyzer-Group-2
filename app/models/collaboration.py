@@ -1,8 +1,10 @@
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, String, DateTime
+from sqlalchemy.sql import func
 from app.database.database import Base
 
 
 class Collaboration(Base):
+
     __tablename__ = "collaborations"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -26,3 +28,25 @@ class Collaboration(Base):
     )
 
     collaboration_year = Column(Integer, nullable=False)
+
+    status = Column(
+        String,
+        default="Pending"
+    )
+
+    requested_by = Column(
+        Integer,
+        ForeignKey("researchers.id"),
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
+    )

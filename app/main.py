@@ -14,7 +14,7 @@ from app.routers import auth
 from app.routers import conferences
 from app.routers import dashboard
 
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Scientific Collaboration Network Analyzer API"

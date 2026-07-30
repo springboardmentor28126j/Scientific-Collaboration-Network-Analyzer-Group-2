@@ -349,3 +349,39 @@ def get_dashboard_stats(db, researcher_id):
         "collaborations": collaborations
 
     }
+# -----------------------------
+# Collaboration Tracking
+# -----------------------------
+
+def get_my_collaborations(db: Session, researcher_id: int):
+
+    return (
+        db.query(Collaboration)
+        .filter(
+            (Collaboration.researcher_1_id == researcher_id) |
+            (Collaboration.researcher_2_id == researcher_id)
+        )
+        .all()
+    )
+
+
+def accept_collaboration(db: Session, collaboration: Collaboration):
+
+    collaboration.status = "Accepted"
+
+    db.commit()
+
+    db.refresh(collaboration)
+
+    return collaboration
+
+
+def reject_collaboration(db: Session, collaboration: Collaboration):
+
+    collaboration.status = "Rejected"
+
+    db.commit()
+
+    db.refresh(collaboration)
+
+    return collaboration

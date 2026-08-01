@@ -3,3 +3,10 @@ from .researcher import Researcher
 from .research_paper import ResearchPaper
 from .institution import Institution
 from .collaboration import Collaboration
+from .citation import Citation
+from .project import Project
+from .project_member import ProjectMember
+from .project_milestone import ProjectMilestone
+from .project_task import ProjectTask
+from .activity_log import ActivityLog
+from .project_comment import ProjectComment

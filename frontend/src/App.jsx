@@ -19,7 +19,14 @@ import MyConferences from "./pages/MyConferences";
 import EditConference from "./pages/EditConference";
 import ConferenceDetails from "./pages/ConferenceDetails";
 import InstitutionManagement from "./pages/InstitutionManagement";
-
+import Projects from "./pages/Projects";
+import CollaborationDashboard from "./pages/CollaborationDashboard";
+import CollaborationRequests from "./pages/CollaborationRequests";
+import InstitutionRequests from "./pages/InstitutionRequests";
+import SharedFiles from "./pages/SharedFiles";
+import ProgressUpdates from "./pages/ProgressUpdates";
+import Notifications from "./pages/Notifications";
+import Timeline from "./pages/Timeline";
 function App() {
   return (
     <BrowserRouter>
@@ -99,7 +106,35 @@ function App() {
     path="/institution-management"
     element={<InstitutionManagement />}
 />
-
+<Route path="/projects" element={<Projects />} />
+<Route
+    path="/collaboration-dashboard"
+    element={<CollaborationDashboard />}
+/>
+<Route
+    path="/collaboration-requests"
+    element={<CollaborationRequests />}
+/>
+<Route
+    path="/institution-requests"
+    element={<InstitutionRequests />}
+/>
+<Route
+    path="/shared-files"
+    element={<SharedFiles />}
+/>
+<Route
+    path="/progress-updates"
+    element={<ProgressUpdates />}
+/>
+<Route
+    path="/notifications"
+    element={<Notifications />}
+/>
+<Route
+    path="/timeline"
+    element={<Timeline />}
+/>
 
       </Routes>
 

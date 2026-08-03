@@ -16,3 +16,22 @@ body {
   background: #f4f7fc;
   color: #222;
 }
+.custom-card{
+
+    transition:.3s;
+
+}
+
+.custom-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 12px 30px rgba(0,0,0,.18)!important;
+
+}
+
+body{
+
+    background:#f5f7fb;
+
+}

@@ -1,0 +1,12 @@
+.card:hover{
+    transform:translateY(-8px);
+    transition:.3s;
+}
+
+.card img{
+    transition:.3s;
+}
+
+.card:hover img{
+    transform:scale(1.08);
+}

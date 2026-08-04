@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>
+Researchers | Scientific Collaboration Network Analyzer
+</title>
+
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+
+<link rel="stylesheet" href="../css/main.css">
+
+<link rel="stylesheet" href="../css/components.css">
+
+<link rel="stylesheet" href="../css/dashboard.css">
+
+
+</head>
+
+
+<body>
+
+
+
+<nav class="navbar app-navbar navbar-dark">
+
+
+<div class="container-fluid">
+
+
+<span class="navbar-brand fw-bold">
+
+<i class="bi bi-diagram-3-fill"></i>
+
+Scientific Collaboration Network Analyzer
+
+</span>
+
+
+
+<div>
+
+
+<button
+class="btn btn-light btn-sm"
+onclick="logoutUser()">
+
+<i class="bi bi-box-arrow-right"></i>
+
+Logout
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</nav>
+
+
+
+
+
+<div class="d-flex">
+
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+
+<h5 class="text-center mt-4 mb-4">
+
+Research Portal
+
+</h5>
+
+
+<a href="../dashboard.html">
+
+<i class="bi bi-speedometer2"></i>
+
+Dashboard
+
+</a>
+
+
+<a class="active">
+
+<i class="bi bi-people"></i>
+
+Researchers
+
+</a>
+
+
+<a href="institutions.html">
+
+<i class="bi bi-building"></i>
+
+Institutions
+
+</a>
+
+
+<a href="publications.html">
+
+<i class="bi bi-journal-text"></i>
+
+Publications
+
+</a>
+
+
+<a href="conferences.html">
+
+<i class="bi bi-calendar-event"></i>
+
+Conferences
+
+</a>
+
+
+<a href="report.html">
+
+<i class="bi bi-file-earmark-bar-graph"></i>
+
+Reports
+
+</a>
+
+
+</div>
+
+
+
+
+
+<!-- CONTENT -->
+
+
+<div class="flex-grow-1 page-container">
+
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+<div>
+
+<h2 class="fw-bold">
+
+Researchers
+
+</h2>
+
+
+<p class="text-muted">
+
+Manage research profiles and expertise.
+
+</p>
+
+</div>
+
+
+
+<button
+
+class="btn btn-primary"
+
+data-bs-toggle="modal"
+
+data-bs-target="#researcherModal">
+
+
+<i class="bi bi-plus-circle"></i>
+
+Add Researcher
+
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+<div class="custom-card p-4">
+
+
+
+<div class="mb-3">
+
+
+<input
+
+type="text"
+
+id="searchResearcher"
+
+class="form-control"
+
+placeholder="Search researcher...">
+
+
+</div>
+
+
+
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover">
+
+
+<thead>
+
+
+<tr>
+
+<th>ID</th>
+
+<th>Name</th>
+
+<th>Department</th>
+
+<th>Designation</th>
+
+<th>Skills</th>
+
+<th>Research Interest</th>
+
+<th>Institution</th>
+
+<th>Action</th>
+
+
+</tr>
+
+
+</thead>
+
+
+<tbody id="researcherTable">
+
+
+<tr>
+
+<td colspan="8" class="text-center">
+
+Loading researchers...
+
+</td>
+
+
+</tr>
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- MODAL -->
+
+
+<div class="modal fade" id="researcherModal">
+
+
+<div class="modal-dialog modal-lg">
+
+
+<div class="modal-content">
+
+
+<div class="modal-header">
+
+
+<h5 class="modal-title">
+
+Researcher Details
+
+</h5>
+
+
+<button
+
+class="btn-close"
+
+data-bs-dismiss="modal">
+
+</button>
+
+
+</div>
+
+
+
+
+
+<div class="modal-body">
+
+
+<form id="researcherForm">
+
+
+<input type="hidden" id="researcherId">
+
+
+
+<div class="row">
+
+
+
+<div class="col-md-6 mb-3">
+
+<label>
+
+Full Name
+
+</label>
+
+
+<input
+
+id="full_name"
+
+class="form-control"
+
+required>
+
+
+</div>
+
+
+
+<div class="col-md-6 mb-3">
+
+<label>
+
+Department
+
+</label>
+
+
+<input
+
+id="department"
+
+class="form-control"
+
+required>
+
+
+</div>
+
+
+
+
+<div class="col-md-6 mb-3">
+
+<label>
+
+Designation
+
+</label>
+
+
+<input
+
+id="designation"
+
+class="form-control"
+
+required>
+
+
+</div>
+
+
+
+
+<div class="col-md-6 mb-3">
+
+<label>
+
+Institution ID
+
+</label>
+
+
+<input
+
+type="number"
+
+id="institution_id"
+
+class="form-control"
+
+required>
+
+
+</div>
+
+
+
+
+<div class="col-md-6 mb-3">
+
+<label>
+
+Skills
+
+</label>
+
+
+<input
+
+id="skills"
+
+class="form-control">
+
+
+</div>
+
+
+
+
+<div class="col-md-6 mb-3">
+
+<label>
+
+Research Interest
+
+</label>
+
+
+<input
+
+id="research_interest"
+
+class="form-control">
+
+
+</div>
+
+
+
+</div>
+
+
+
+<button class="btn btn-success">
+
+Save Researcher
+
+</button>
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script src="../js/layout.js"></script>
+
+
+<script src="../js/api.js"></script>
+
+
+<script src="../js/pages/researchers.js"></script>
+
+
+
+</body>
+
+
+</html>

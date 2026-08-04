@@ -33,6 +33,7 @@ ENV/
 # ==============================
 
 research_network.db
+*.db
 *.sqlite
 *.sqlite3
 
@@ -93,6 +94,8 @@ wheels/
 
 tempCodeRunnerFile.py
 *.tmp
+.temp_patch_*.py
+*.zip
 
 
 # ==============================

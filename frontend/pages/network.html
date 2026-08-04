@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaboration Network | Scientific Collaboration Network Analyzer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    #networkGraph { width: 100%; height: 500px; border: 1px solid #d9e2ec; border-radius: 12px; background: #fbfdff; }
+    .network-node { stroke: #fff; stroke-width: 2; }
+    .network-label { font: 12px sans-serif; fill: #1f2937; pointer-events: none; }
+  </style>
+</head>
+<body class="dashboard-body">
+  <nav class="navbar navbar-dark bg-primary"><div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="../dashboard.html"><i class="bi bi-diagram-3-fill"></i> Scientific Collaboration Network Analyzer</a>
+    <a href="../dashboard.html" class="btn btn-light">Dashboard</a>
+  </div></nav>
+  <main class="container mt-4">
+    <div class="mb-4"><h2 class="fw-bold">Collaboration Network</h2><p class="text-muted">Nodes are researchers. Links represent co-authorship on a publication.</p></div>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><small>Researchers</small><h3 id="researcherCount">0</h3></div></div></div>
+      <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><small>Collaboration links</small><h3 id="collaborationCount">0</h3></div></div></div>
+      <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><small>Highest degree</small><h3 id="maxDegree">0</h3></div></div></div>
+    </div>
+    <div class="card shadow-sm"><div class="card-body"><div id="networkMessage" class="text-muted mb-2">Loading network…</div><svg id="networkGraph" viewBox="0 0 900 500"></svg></div></div>
+  </main>
+  <script>
+    const svg = document.getElementById("networkGraph");
+    const colors = ["#0d6efd", "#198754", "#fd7e14", "#6f42c1", "#dc3545"];
+    async function loadNetwork() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/collaborations/network/advanced");
+        if (!response.ok) throw new Error("Unable to load the collaboration network.");
+        const {nodes, edges, stats} = await response.json();
+        researcherCount.textContent = stats.total_researchers;
+        collaborationCount.textContent = stats.total_collaborations;
+        maxDegree.textContent = stats.max_collaborations;
+        if (!nodes.length) { networkMessage.textContent = "Add researchers and create a publication with at least two authors to see the graph."; return; }
+        networkMessage.textContent = "Node size increases with publications and collaborations.";
+        const centerX = 450, centerY = 250, radius = Math.min(175, 35 + nodes.length * 18);
+        const positions = new Map(nodes.map((node, index) => [node.id, {x: centerX + radius * Math.cos((2 * Math.PI * index / nodes.length) - Math.PI / 2), y: centerY + radius * Math.sin((2 * Math.PI * index / nodes.length) - Math.PI / 2), node, index}]));
+        edges.forEach(edge => { const source = positions.get(edge.source), target = positions.get(edge.target); if (!source || !target) return; const line = document.createElementNS("http://www.w3.org/2000/svg", "line"); line.setAttribute("x1", source.x); line.setAttribute("y1", source.y); line.setAttribute("x2", target.x); line.setAttribute("y2", target.y); line.setAttribute("stroke", "#9aa5b1"); line.setAttribute("stroke-width", Math.min(1 + edge.weight, 6)); svg.appendChild(line); });
+        positions.forEach(({x, y, node, index}) => { const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle"); circle.setAttribute("cx", x); circle.setAttribute("cy", y); circle.setAttribute("r", Math.min(26, 11 + node.importance * 2)); circle.setAttribute("fill", colors[index % colors.length]); circle.setAttribute("class", "network-node"); circle.innerHTML = `<title>${node.label}: ${node.publications} publications, ${node.collaborations} collaborators</title>`; svg.appendChild(circle); const label = document.createElementNS("http://www.w3.org/2000/svg", "text"); label.setAttribute("x", x); label.setAttribute("y", y + 40); label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "network-label"); label.textContent = node.label; svg.appendChild(label); });
+      } catch (error) { networkMessage.textContent = error.message; }
+    }
+    loadNetwork();
+  </script>
+</body>
+</html>

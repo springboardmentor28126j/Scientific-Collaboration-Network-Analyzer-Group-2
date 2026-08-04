@@ -106,14 +106,45 @@ class ConferenceParticipationResponse(BaseModel):
 class CollaborationCreate(BaseModel):
     researcher1_id: int
     researcher2_id: int
-    publication_id: int
+    project: Optional[str] = None
+    publication_id: Optional[int] = None
 
 
 class CollaborationResponse(BaseModel):
     id: int
     researcher1_id: int
     researcher2_id: int
-    publication_id: int
+    project: Optional[str] = None
+    publication_id: Optional[int] = None
 
     class Config:
         from_attributes = True
+
+
+class CitationCreate(BaseModel):
+    citing_publication_id: int
+    cited_publication_id: int
+
+
+class CitationResponse(BaseModel):
+    id: int
+    citing_publication_id: int
+    cited_publication_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    funding_agency: Optional[str] = None
+    status: str = "planned"
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    institution_id: Optional[int] = None
+
+
+class ProjectAssignmentCreate(BaseModel):
+    researcher_id: int
+    role: str = "Member"

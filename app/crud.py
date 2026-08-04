@@ -57,6 +57,10 @@ def get_researchers(db: Session):
     return db.query(models.Researcher).all()
 
 
+def count_projects(db: Session):
+    return db.query(models.Project).count()
+
+
 
 def get_researcher_by_id(db: Session, id: int):
     return db.query(models.Researcher).filter(
@@ -448,6 +452,126 @@ def get_conferences_by_researcher(
     ).filter(
         models.ConferenceParticipation.researcher_id == researcher_id
     ).all()
+
+
+# ---------------- COLLABORATIONS ----------------
+
+def create_collaboration(
+    db: Session,
+    collaboration: schemas.CollaborationCreate
+):
+
+    db_collaboration = models.Collaboration(
+        researcher1_id=collaboration.researcher1_id,
+        researcher2_id=collaboration.researcher2_id,
+        project=collaboration.project,
+        publication_id=collaboration.publication_id
+    )
+
+    db.add(db_collaboration)
+    db.commit()
+    db.refresh(db_collaboration)
+
+    return db_collaboration
+
+
+def get_collaborations(db: Session):
+    return db.query(models.Collaboration).all()
+
+
+def get_collaboration_by_id(db: Session, collaboration_id: int):
+    return db.query(models.Collaboration).filter(
+        models.Collaboration.id == collaboration_id
+    ).first()
+
+
+def update_collaboration(
+    db: Session,
+    collaboration_id: int,
+    collaboration: schemas.CollaborationCreate
+):
+    record = get_collaboration_by_id(db, collaboration_id)
+    if not record:
+        return None
+    record.researcher1_id = collaboration.researcher1_id
+    record.researcher2_id = collaboration.researcher2_id
+    record.project = collaboration.project
+    record.publication_id = collaboration.publication_id
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+def delete_collaboration(db: Session, collaboration_id: int):
+    record = get_collaboration_by_id(db, collaboration_id)
+    if not record:
+        return None
+    db.delete(record)
+    db.commit()
+    return record
+
+
+def create_citation(
+    db: Session,
+    citation: schemas.CitationCreate
+):
+    db_citation = models.Citation(
+        citing_publication_id=citation.citing_publication_id,
+        cited_publication_id=citation.cited_publication_id
+    )
+    db.add(db_citation)
+    db.commit()
+    db.refresh(db_citation)
+    return db_citation
+
+
+def get_citations(db: Session):
+    return db.query(models.Citation).all()
+
+
+# ---------------- PROJECTS ----------------
+def create_project(db: Session, project: schemas.ProjectCreate):
+    db_project = models.Project(**project.model_dump())
+    db.add(db_project)
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+
+def get_projects(db: Session):
+    return db.query(models.Project).all()
+
+
+def get_project_by_id(db: Session, project_id: int):
+    return db.query(models.Project).filter(models.Project.id == project_id).first()
+
+
+def add_project_assignment(db: Session, project_id: int, assignment: schemas.ProjectAssignmentCreate):
+    db_assignment = models.ProjectAssignment(project_id=project_id, **assignment.model_dump())
+    db.add(db_assignment)
+    db.commit()
+    db.refresh(db_assignment)
+    return db_assignment
+
+
+def count_researchers(db: Session):
+    return db.query(models.Researcher).count()
+
+
+def count_publications(db: Session):
+    return db.query(models.Publication).count()
+
+
+def count_collaborations(db: Session):
+    return db.query(models.Collaboration).count()
+
+
+def count_institutions(db: Session):
+    return db.query(models.Institution).count()
+
+
+def count_citations(db: Session):
+    return db.query(models.Citation).count()
 
 
 

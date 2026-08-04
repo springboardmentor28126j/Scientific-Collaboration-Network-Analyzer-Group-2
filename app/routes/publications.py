@@ -1,377 +1,125 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-from sqlalchemy.orm import Session
-import os
+from pathlib import Path
 import shutil
 import uuid
 
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from sqlalchemy.orm import Session
+
 from app import crud, models, schemas
 from app.database import get_db
-from app.models import Publication, Researcher
 
-router = APIRouter(
-    prefix="/publications",
-    tags=["Publications"]
-)
+router = APIRouter(prefix="/publications", tags=["Publications"])
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-# ============================
-# CREATE PUBLICATION
-# ============================
-
-@router.post("/", status_code=status.HTTP_201_CREATED)
-def create_publication(
-    publication: schemas.PublicationCreate,
-    db: Session = Depends(get_db)
-):
-
-    # Check duplicate DOI
-    if publication.doi:
-        existing = db.query(models.Publication).filter(
-            models.Publication.doi == publication.doi
-        ).first()
-
-        if existing:
-            raise HTTPException(
-                status_code=400,
-                detail="A publication with this DOI already exists"
-            )
-
-
-    # Create publication
-    new_publication = crud.create_publication(
-        db,
-        publication
-    )
-
-
-    # ==============================
-    # CREATE COLLABORATIONS
-    # ==============================
-
-    researchers = db.query(Researcher).filter(
-        Researcher.id.in_(publication.researcher_ids)
-    ).all()
-
-
-    if len(researchers) > 1:
-
-        for i in range(len(researchers)):
-
-            for j in range(i + 1, len(researchers)):
-
-                collaboration = models.Collaboration(
-                    researcher1_id=researchers[i].id,
-                    researcher2_id=researchers[j].id,
-                    publication_id=new_publication.id
-                )
-
-                db.add(collaboration)
-
-
-        db.commit()
-
-
-    return new_publication
-
-
-
-# ============================
-# GET ALL PUBLICATIONS
-# ============================
-
-@router.get("/")
-def get_publications(
-    db: Session = Depends(get_db)
-):
-    return crud.get_publications(db)
-
-
-
-# ============================
-# GET SINGLE PUBLICATION
-# ============================
-
-@router.get("/{publication_id}",
-response_model=schemas.PublicationWithAuthors)
-def get_publication(
-    publication_id: int,
-    db: Session = Depends(get_db)
-):
-
-    publication = db.query(Publication).filter(
-        Publication.id == publication_id
-    ).first()
-
-
+def _get_publication_or_404(db: Session, publication_id: int):
+    publication = crud.get_publication_by_id(db, publication_id)
     if not publication:
-        raise HTTPException(
-            status_code=404,
-            detail="Publication not found"
-        )
-
-
-    authors = []
-
-    for link in publication.authors:
-
-        authors.append(
-            {
-                "id": link.researcher.id,
-                "full_name": link.researcher.full_name
-            }
-        )
-
-
-    return {
-        "id": publication.id,
-        "title": publication.title,
-        "authors": authors
-    }
-
-
-
-# ============================
-# UPDATE PUBLICATION
-# ============================
-
-@router.put("/{publication_id}")
-def update_publication(
-    publication_id: int,
-    updated_publication: schemas.PublicationCreate,
-    db: Session = Depends(get_db)
-):
-
-    publication = crud.update_publication(
-        db,
-        publication_id,
-        updated_publication
-    )
-
-
-    if not publication:
-        raise HTTPException(
-            status_code=404,
-            detail="Publication not found"
-        )
-
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Publication not found")
     return publication
 
 
-
-# ============================
-# DELETE PUBLICATION
-# ============================
-
-@router.delete("/{publication_id}")
-def delete_publication(
-    publication_id: int,
-    db: Session = Depends(get_db)
-):
-
-    publication = crud.delete_publication(
-        db,
-        publication_id
-    )
-
-
-    if not publication:
-        raise HTTPException(
-            status_code=404,
-            detail="Publication not found"
-        )
-
-
+def _publication_detail(publication: models.Publication) -> dict:
     return {
-        "message": "Publication deleted successfully",
-        "publication_id": publication_id
+        "id": publication.id,
+        "title": publication.title,
+        "abstract": publication.abstract,
+        "publication_type": publication.publication_type,
+        "status": publication.status,
+        "doi": publication.doi,
+        "publication_date": publication.publication_date,
+        "journal_or_venue": publication.journal_or_venue,
+        "institution_id": publication.institution_id,
+        "file_path": publication.file_path,
+        "created_at": publication.created_at,
+        "authors": [{"id": author.id, "full_name": author.full_name} for author in publication.authors],
     }
 
 
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_publication(publication: schemas.PublicationCreate, db: Session = Depends(get_db)):
+    if publication.doi and db.query(models.Publication).filter(models.Publication.doi == publication.doi).first():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A publication with this DOI already exists")
+    requested_ids = set(publication.researcher_ids)
+    if requested_ids:
+        found_ids = {row.id for row in db.query(models.Researcher).filter(models.Researcher.id.in_(requested_ids)).all()}
+        if found_ids != requested_ids:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One or more author researcher IDs do not exist")
+    return crud.create_publication(db, publication)
 
-# ============================
-# ASSIGN AUTHORS
-# ============================
+
+@router.get("/")
+def get_publications(db: Session = Depends(get_db)):
+    return crud.get_publications(db)
+
+
+@router.get("/status/{publication_status}", response_model=list[schemas.PublicationResponse])
+def get_publications_by_status(publication_status: str, db: Session = Depends(get_db)):
+    return crud.get_publications_by_status(db, publication_status)
+
+
+@router.get("/institution/{institution_id}", response_model=list[schemas.PublicationResponse])
+def get_publications_by_institution(institution_id: int, db: Session = Depends(get_db)):
+    return crud.get_publications_by_institution(db, institution_id)
+
 
 @router.post("/assign-authors")
-def assign_authors(
-    data: schemas.PublicationAuthorAssign,
-    db: Session = Depends(get_db)
-):
-
-    publication = db.query(Publication).filter(
-        Publication.id == data.publication_id
-    ).first()
-
-
-    if not publication:
-        raise HTTPException(
-            status_code=404,
-            detail="Publication not found"
-        )
-
-
-    researchers = db.query(Researcher).filter(
-        Researcher.id.in_(data.researcher_ids)
-    ).all()
-
-
-    if not researchers:
-        raise HTTPException(
-            status_code=404,
-            detail="Researchers not found"
-        )
-
-
-    for researcher in researchers:
-
-        if researcher not in publication.authors:
-            publication.authors.append(researcher)
-
-
+def assign_authors(data: schemas.PublicationAuthorAssign, db: Session = Depends(get_db)):
+    publication = _get_publication_or_404(db, data.publication_id)
+    authors = db.query(models.Researcher).filter(models.Researcher.id.in_(set(data.researcher_ids))).all()
+    if len(authors) != len(set(data.researcher_ids)):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One or more researchers were not found")
+    existing_ids = {author.id for author in publication.authors}
+    publication.authors.extend(author for author in authors if author.id not in existing_ids)
     db.commit()
+    db.refresh(publication)
+    return _publication_detail(publication)
 
 
-    return {
-        "publication_id": publication.id,
-        "authors": [
-            {
-                "id": r.id,
-                "name": r.full_name
-            }
-            for r in publication.authors
-        ]
-    }
-
-
-
-# ============================
-# REMOVE AUTHORS
-# ============================
-
-@router.delete("/remove-author")
-def remove_author(
-    data: schemas.PublicationAuthorAssign,
-    db: Session = Depends(get_db)
-):
-
-    for researcher_id in data.researcher_ids:
-
-        link = db.query(models.PublicationAuthor).filter(
-            models.PublicationAuthor.publication_id == data.publication_id,
-            models.PublicationAuthor.researcher_id == researcher_id
-        ).first()
-
-
-        if link:
-            db.delete(link)
-
-
+@router.delete("/remove-authors")
+def remove_authors(data: schemas.PublicationAuthorAssign, db: Session = Depends(get_db)):
+    publication = _get_publication_or_404(db, data.publication_id)
+    requested_ids = set(data.researcher_ids)
+    removed_ids = [author.id for author in publication.authors if author.id in requested_ids]
+    publication.authors[:] = [author for author in publication.authors if author.id not in requested_ids]
     db.commit()
+    return {"message": "Authors removed successfully", "removed_author_ids": removed_ids}
 
-
-    return {
-        "message": "Authors removed successfully"
-    }
-
-
-
-# ============================
-# UPLOAD PDF
-# ============================
 
 @router.post("/upload/")
-def upload_pdf(
-    publication_id: int = Form(...),
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-
-    publication = db.query(Publication).filter(
-        Publication.id == publication_id
-    ).first()
-
-
-    if not publication:
-        raise HTTPException(
-            status_code=404,
-            detail="Publication not found"
-        )
-
-
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(
-            status_code=400,
-            detail="Only PDF files allowed"
-        )
-
-
+def upload_pdf(publication_id: int = Form(...), file: UploadFile = File(...), db: Session = Depends(get_db)):
+    publication = _get_publication_or_404(db, publication_id)
+    if not file.filename or Path(file.filename).suffix.lower() != ".pdf":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF files are allowed")
     filename = f"{uuid.uuid4()}.pdf"
-
-    file_path = os.path.join(
-        UPLOAD_DIR,
-        filename
-    )
-
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(
-            file.file,
-            buffer
-        )
-
-
-    publication.file_path = file_path
-
-
+    destination = UPLOAD_DIR / filename
+    with destination.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    publication.file_path = f"uploads/{filename}"
     db.commit()
+    return {"message": "PDF uploaded successfully", "file_url": f"/files/{filename}"}
 
 
-    return {
-        "message": "PDF uploaded successfully",
-        "file_url": f"http://127.0.0.1:8000/files/{filename}"
-    }
+@router.get("/{publication_id}")
+def get_publication(publication_id: int, db: Session = Depends(get_db)):
+    return _publication_detail(_get_publication_or_404(db, publication_id))
 
 
-
-# ============================
-# FILTER BY STATUS
-# ============================
-
-@router.get(
-    "/status/{status}",
-    response_model=list[schemas.PublicationResponse]
-)
-def get_publications_by_status(
-    status: str,
-    db: Session = Depends(get_db)
-):
-
-    return crud.get_publications_by_status(
-        db,
-        status
-    )
+@router.put("/{publication_id}")
+def update_publication(publication_id: int, updated_publication: schemas.PublicationCreate, db: Session = Depends(get_db)):
+    publication = _get_publication_or_404(db, publication_id)
+    if updated_publication.doi:
+        duplicate = db.query(models.Publication).filter(models.Publication.doi == updated_publication.doi, models.Publication.id != publication_id).first()
+        if duplicate:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A publication with this DOI already exists")
+    return _publication_detail(crud.update_publication(db, publication_id, updated_publication))
 
 
-
-# ============================
-# FILTER BY INSTITUTION
-# ============================
-
-@router.get(
-    "/institution/{institution_id}",
-    response_model=list[schemas.PublicationResponse]
-)
-def get_publications_by_institution(
-    institution_id: int,
-    db: Session = Depends(get_db)
-):
-
-    return crud.get_publications_by_institution(
-        db,
-        institution_id
-    )
+@router.delete("/{publication_id}")
+def delete_publication(publication_id: int, db: Session = Depends(get_db)):
+    publication = _get_publication_or_404(db, publication_id)
+    db.query(models.Collaboration).filter(models.Collaboration.publication_id == publication_id).delete()
+    db.delete(publication)
+    db.commit()
+    return {"message": "Publication deleted successfully", "publication_id": publication_id}

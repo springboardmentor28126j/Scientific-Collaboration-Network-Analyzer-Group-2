@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Notifications from "./pages/Notifications";
 // Dashboard
 import Dashboard from "./pages/Dashboard";
+import Reports from "./pages/Reports";
 
 // Navbar & Protection
 import Navbar from "./components/Navbar";
@@ -79,7 +80,7 @@ function App() {
           path="/resend-verification"
           element={<ResendVerification />}
         />
-          
+
 
         <Route
           path="/forgot-password"
@@ -112,14 +113,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-	<Route
-	  path="/researchers/:id"
-	  element={
-	    <ProtectedRoute>
-		<ResearcherDetails />
-	    </ProtectedRoute>
-	  }
-	/>
+        
 
         <Route
           path="/researchers/create"
@@ -130,13 +124,13 @@ function App() {
           }
         />
         <Route
-  path="/researchers/:id"
-  element={
-    <ProtectedRoute>
-      <ResearcherDetails />
-    </ProtectedRoute>
-  }
-/>
+          path="/researchers/:id"
+          element={
+            <ProtectedRoute>
+              <ResearcherDetails />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/researchers/edit/:id"
           element={
@@ -189,7 +183,7 @@ function App() {
           path="/citations"
           element={
             <ProtectedRoute>
-               <Citations />
+              <Citations />
             </ProtectedRoute>
           }
         />
@@ -200,8 +194,8 @@ function App() {
             <ProtectedRoute>
               <CreateCitation />
             </ProtectedRoute>
-        }
-       />
+          }
+        />
 
         <Route
           path="/citations/edit/:id"
@@ -209,16 +203,16 @@ function App() {
             <ProtectedRoute>
               <EditCitation />
             </ProtectedRoute>
-        }
-       />
+          }
+        />
 
         <Route
-           path="/citations/:id"
-           element={
-             <ProtectedRoute>
-                <CitationDetails />
-             </ProtectedRoute>
-           }
+          path="/citations/:id"
+          element={
+            <ProtectedRoute>
+              <CitationDetails />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -313,11 +307,11 @@ function App() {
           path="/collaborations"
           element={
             <ProtectedRoute>
-            <Collaboration />
+              <Collaboration />
             </ProtectedRoute>
           }
         />
-       {/* ================= Search ================= */}
+        {/* ================= Search ================= */}
 
         <Route
           path="/search"
@@ -331,24 +325,33 @@ function App() {
         {/* ================= User Management ================= */}
 
         <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <AdminRoute>
-                  <UserManagement />
-                </AdminRoute>
-              </ProtectedRoute>
-            }
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <AdminRoute>
+                <UserManagement />
+              </AdminRoute>
+            </ProtectedRoute>
+          }
         />
 
-        <Route 
-            path="/notifications" 
-            element={ 
-              <ProtectedRoute>
-                <Notifications />
-              </ProtectedRoute>
-            } 
-          />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
     </BrowserRouter>

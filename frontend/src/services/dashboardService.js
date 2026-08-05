@@ -1,16 +1,14 @@
-import api from "../api/api";
+// src/services/dashboardService.js
 
-export const getDashboardStats = async () => {
-  const response = await api.get("/dashboard/stats");
-  return response.data;
-};
-
-export const getPublicationsPerYear = async () => {
-  const response = await api.get("/dashboard/publications-per-year");
-  return response.data;
-};
-
-export const getPublicationTypes = async () => {
-  const response = await api.get("/dashboard/publication-types");
-  return response.data;
+export const getDashboardData = async() => {
+    try {
+        const response = await fetch("http://127.0.0.1:8000/api/v1/network/stats");
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        return {};
+    }
 };

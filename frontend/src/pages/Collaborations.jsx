@@ -30,7 +30,7 @@ function Collaborations() {
 
                 axios.get("http://127.0.0.1:8000/researchers/"),
 
-                axios.get("http://127.0.0.1:8000/research-papers/")
+               axios.get("http://127.0.0.1:8000/papers/")
 
             ]);
 

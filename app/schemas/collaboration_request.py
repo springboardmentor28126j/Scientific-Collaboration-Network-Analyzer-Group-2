@@ -18,10 +18,15 @@ class CollaborationRequestUpdate(BaseModel):
 
     status: str
 
-
 class CollaborationRequestResponse(CollaborationRequestBase):
 
     id: int
+
+    sender_name: str
+    receiver_name: str
+
+    paper_title: str
+
     status: str
     created_at: datetime
 

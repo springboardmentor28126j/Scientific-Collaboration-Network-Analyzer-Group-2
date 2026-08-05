@@ -78,23 +78,17 @@ function CollaborationRequests() {
                                             fontSize: "24px"
                                         }}
                                     >
-
                                         <i className="bi bi-people-fill"></i>
-
                                     </div>
 
                                     <div className="ms-3">
 
                                         <h5 className="fw-bold mb-1">
-
                                             Research Collaboration
-
                                         </h5>
 
                                         <small className="text-muted">
-
                                             Request #{request.id}
-
                                         </small>
 
                                     </div>
@@ -118,68 +112,60 @@ function CollaborationRequests() {
                             <hr />
 
                             <p>
-
                                 <strong>
                                     <i className="bi bi-person-fill me-2"></i>
                                     Sender :
-                                </strong>
-
-                                {" "}Researcher #{request.sender_id}
-
+                                </strong>{" "}
+                                {request.sender_name}
                             </p>
 
                             <p>
-
                                 <strong>
                                     <i className="bi bi-person-check-fill me-2"></i>
                                     Receiver :
-                                </strong>
+                                </strong>{" "}
+                                {request.receiver_name}
+                            </p>
 
-                                {" "}Researcher #{request.receiver_id}
-
+                            <p>
+                                <strong>
+                                    <i className="bi bi-file-earmark-text me-2"></i>
+                                    Paper :
+                                </strong>{" "}
+                                {request.paper_title}
                             </p>
 
                             <div className="alert alert-light border">
-
                                 {request.message}
-
                             </div>
 
-                            <div className="d-flex justify-content-end mt-3">
+                            {request.status === "Pending" && (
 
-                                <button
-                                    className="btn btn-success rounded-pill me-2"
-                                    onClick={() =>
-                                        updateStatus(
-                                            request.id,
-                                            "Accepted"
-                                        )
-                                    }
-                                >
+                                <div className="d-flex justify-content-end mt-3">
 
-                                    <i className="bi bi-check-circle me-2"></i>
+                                    <button
+                                        className="btn btn-success rounded-pill me-2"
+                                        onClick={() =>
+                                            updateStatus(request.id, "Accepted")
+                                        }
+                                    >
+                                        <i className="bi bi-check-circle me-2"></i>
+                                        Accept
+                                    </button>
 
-                                    Accept
+                                    <button
+                                        className="btn btn-danger rounded-pill"
+                                        onClick={() =>
+                                            updateStatus(request.id, "Rejected")
+                                        }
+                                    >
+                                        <i className="bi bi-x-circle me-2"></i>
+                                        Reject
+                                    </button>
 
-                                </button>
+                                </div>
 
-                                <button
-                                    className="btn btn-danger rounded-pill"
-                                    onClick={() =>
-                                        updateStatus(
-                                            request.id,
-                                            "Rejected"
-                                        )
-                                    }
-                                >
-
-                                    <i className="bi bi-x-circle me-2"></i>
-
-                                    Reject
-
-                                </button>
-
-                            </div>
+                            )}
 
                         </CustomCard>
 

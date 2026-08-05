@@ -26,6 +26,10 @@ class InstitutionCollaborationRequestResponse(
 ):
 
     id: int
+
+    sender_institution_name: str
+    receiver_institution_name: str
+
     status: str
     created_at: datetime
 

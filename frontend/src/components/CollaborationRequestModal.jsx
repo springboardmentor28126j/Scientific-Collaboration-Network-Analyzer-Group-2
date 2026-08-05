@@ -36,7 +36,7 @@ function CollaborationRequestModal({ onClose }) {
 
         try {
 
-            const res = await api.get("/research-papers/");
+            const res = await api.get("/papers/");
             setPapers(res.data);
 
         } catch (err) {

@@ -80,7 +80,34 @@ def create_paper(db: Session, paper: ResearchPaperCreate):
     db.commit()
     db.refresh(new_paper)
     return new_paper
+from sqlalchemy import func
+from app.models.user import User
+from app.models.research_paper import ResearchPaper
 
+
+def get_top_researchers(db: Session):
+
+    return (
+        db.query(
+            User.id,
+            User.full_name,
+            User.institution,
+            func.count(ResearchPaper.id).label("paper_count")
+        )
+        .outerjoin(
+            ResearchPaper,
+            User.id == ResearchPaper.researcher_id
+        )
+        .group_by(
+            User.id,
+            User.full_name,
+            User.institution
+        )
+        .order_by(
+            func.count(ResearchPaper.id).desc()
+        )
+        .all()
+    )
 
 # -----------------------------
 # Researchers CRUD
@@ -452,7 +479,60 @@ def reject_collaboration(db: Session, collaboration: Collaboration):
 
 def get_all_citations(db: Session):
 
-    return db.query(Citation).all()
+    citations = db.query(Citation).all()
+
+    result = []
+
+    for citation in citations:
+
+        paper = (
+            db.query(ResearchPaper)
+            .filter(
+                ResearchPaper.id ==
+                citation.paper_id
+            )
+            .first()
+        )
+
+        cited = (
+            db.query(ResearchPaper)
+            .filter(
+                ResearchPaper.id ==
+                citation.cited_paper_id
+            )
+            .first()
+        )
+
+        result.append({
+
+            "id": citation.id,
+
+            "paper_id": citation.paper_id,
+
+            "paper_title":
+                paper.title if paper else "Unknown",
+
+            "cited_paper_id":
+                citation.cited_paper_id,
+
+            "cited_paper_title":
+                cited.title if cited else "Unknown",
+
+            "citation_year":
+                citation.citation_year,
+
+            "citation_count":
+                citation.citation_count,
+
+            "created_at":
+                citation.created_at,
+
+            "updated_at":
+                citation.updated_at
+
+        })
+
+    return result
 
 
 def get_citation_by_id(
@@ -462,7 +542,9 @@ def get_citation_by_id(
 
     return (
         db.query(Citation)
-        .filter(Citation.id == citation_id)
+        .filter(
+            Citation.id == citation_id
+        )
         .first()
     )
 
@@ -474,7 +556,9 @@ def get_citations_by_paper(
 
     return (
         db.query(Citation)
-        .filter(Citation.paper_id == paper_id)
+        .filter(
+            Citation.paper_id == paper_id
+        )
         .all()
     )
 
@@ -483,6 +567,72 @@ def create_citation(
     db: Session,
     citation: CitationCreate
 ):
+
+    if citation.paper_id == citation.cited_paper_id:
+
+        raise Exception(
+            "A paper cannot cite itself."
+        )
+
+    existing = (
+        db.query(Citation)
+        .filter(
+            Citation.paper_id ==
+            citation.paper_id,
+            Citation.cited_paper_id ==
+            citation.cited_paper_id
+        )
+        .first()
+    )
+
+    if existing:
+
+        existing.citation_count += 1
+
+        db.commit()
+
+        db.refresh(existing)
+
+        return {
+
+            "id": existing.id,
+
+            "paper_id": existing.paper_id,
+
+            "paper_title":
+                db.query(ResearchPaper)
+                .filter(
+                    ResearchPaper.id ==
+                    existing.paper_id
+                )
+                .first()
+                .title,
+
+            "cited_paper_id":
+                existing.cited_paper_id,
+
+            "cited_paper_title":
+                db.query(ResearchPaper)
+                .filter(
+                    ResearchPaper.id ==
+                    existing.cited_paper_id
+                )
+                .first()
+                .title,
+
+            "citation_year":
+                existing.citation_year,
+
+            "citation_count":
+                existing.citation_count,
+
+            "created_at":
+                existing.created_at,
+
+            "updated_at":
+                existing.updated_at
+
+        }
 
     new_citation = Citation(
         **citation.model_dump()
@@ -494,32 +644,53 @@ def create_citation(
 
     db.refresh(new_citation)
 
-    return new_citation
-
-
-def update_citation(
-    db: Session,
-    db_citation: Citation,
-    updated_data
-):
-
-    data = updated_data.model_dump(
-        exclude_unset=True
+    paper = (
+        db.query(ResearchPaper)
+        .filter(
+            ResearchPaper.id ==
+            new_citation.paper_id
+        )
+        .first()
     )
 
-    for key, value in data.items():
-
-        setattr(
-            db_citation,
-            key,
-            value
+    cited = (
+        db.query(ResearchPaper)
+        .filter(
+            ResearchPaper.id ==
+            new_citation.cited_paper_id
         )
+        .first()
+    )
 
-    db.commit()
+    return {
 
-    db.refresh(db_citation)
+        "id": new_citation.id,
 
-    return db_citation
+        "paper_id":
+            new_citation.paper_id,
+
+        "paper_title":
+            paper.title if paper else "Unknown",
+
+        "cited_paper_id":
+            new_citation.cited_paper_id,
+
+        "cited_paper_title":
+            cited.title if cited else "Unknown",
+
+        "citation_year":
+            new_citation.citation_year,
+
+        "citation_count":
+            new_citation.citation_count,
+
+        "created_at":
+            new_citation.created_at,
+
+        "updated_at":
+            new_citation.updated_at
+
+    }
 
 
 def delete_citation(
@@ -533,7 +704,8 @@ def delete_citation(
 
     return {
 
-        "message": "Citation deleted successfully"
+        "message":
+            "Citation deleted successfully"
 
     }
 # ============================
@@ -1214,9 +1386,57 @@ def delete_notification(
 # ====================================
 # COLLABORATION REQUEST CRUD
 # ====================================
-
 def get_all_collaboration_requests(db: Session):
-    return db.query(CollaborationRequest).all()
+
+    requests = (
+        db.query(
+            CollaborationRequest,
+            Researcher.full_name.label("sender_name"),
+            ResearchPaper.title.label("paper_title")
+        )
+        .join(
+            Researcher,
+            CollaborationRequest.sender_id == Researcher.id
+        )
+        .join(
+            ResearchPaper,
+            CollaborationRequest.paper_id == ResearchPaper.id
+        )
+        .all()
+    )
+
+    result = []
+
+    for req, sender_name, paper_title in requests:
+
+        receiver = (
+            db.query(Researcher)
+            .filter(
+                Researcher.id == req.receiver_id
+            )
+            .first()
+        )
+
+        result.append({
+
+            "id": req.id,
+
+            "sender_id": req.sender_id,
+            "receiver_id": req.receiver_id,
+
+            "sender_name": sender_name,
+            "receiver_name": receiver.full_name if receiver else "",
+
+            "paper_id": req.paper_id,
+            "paper_title": paper_title,
+
+            "message": req.message,
+            "status": req.status,
+            "created_at": req.created_at
+
+        })
+
+    return result
 
 
 def get_collaboration_request_by_id(
@@ -1621,5 +1841,215 @@ def update_collaboration_request(
         db.add(notification)
 
         db.commit()
+
+    return db_request
+def create_institution_collaboration_request(
+    db: Session,
+    request: InstitutionCollaborationRequestCreate
+):
+
+    db_request = InstitutionCollaborationRequest(
+        **request.model_dump()
+    )
+
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+
+    sender = (
+        db.query(Institution)
+        .filter(
+            Institution.id ==
+            db_request.sender_institution_id
+        )
+        .first()
+    )
+
+    receiver = (
+        db.query(Institution)
+        .filter(
+            Institution.id ==
+            db_request.receiver_institution_id
+        )
+        .first()
+    )
+
+    return {
+
+        "id": db_request.id,
+
+        "sender_institution_id":
+            db_request.sender_institution_id,
+
+        "receiver_institution_id":
+            db_request.receiver_institution_id,
+
+        "sender_institution_name":
+            sender.institution_name if sender else "Unknown",
+
+        "receiver_institution_name":
+            receiver.institution_name if receiver else "Unknown",
+
+        "project_title":
+            db_request.project_title,
+
+        "purpose":
+            db_request.purpose,
+
+        "status":
+            db_request.status,
+
+        "created_at":
+            db_request.created_at
+
+    }
+def get_all_institution_collaboration_requests(db: Session):
+
+    requests = db.query(
+        InstitutionCollaborationRequest
+    ).all()
+
+    result = []
+
+    for req in requests:
+
+        sender = (
+            db.query(Institution)
+            .filter(
+                Institution.id == req.sender_institution_id
+            )
+            .first()
+        )
+
+        receiver = (
+            db.query(Institution)
+            .filter(
+                Institution.id == req.receiver_institution_id
+            )
+            .first()
+        )
+
+        result.append({
+
+            "id": req.id,
+
+            "sender_institution_id":
+                req.sender_institution_id,
+
+            "receiver_institution_id":
+                req.receiver_institution_id,
+
+            # ✅ names should match schema
+            "sender_institution_name":
+                sender.institution_name if sender else "Unknown",
+
+            "receiver_institution_name":
+                receiver.institution_name if receiver else "Unknown",
+
+            "project_title":
+                req.project_title,
+
+            "purpose":
+                req.purpose,
+
+            "status":
+                req.status,
+
+            "created_at":
+                req.created_at
+
+        })
+
+    return result
+def get_accepted_institution_collaboration_requests(db: Session):
+
+    requests = (
+        db.query(InstitutionCollaborationRequest)
+        .filter(
+            InstitutionCollaborationRequest.status == "Accepted"
+        )
+        .all()
+    )
+
+    result = []
+
+    for req in requests:
+
+        sender = (
+            db.query(Institution)
+            .filter(
+                Institution.id == req.sender_institution_id
+            )
+            .first()
+        )
+
+        receiver = (
+            db.query(Institution)
+            .filter(
+                Institution.id == req.receiver_institution_id
+            )
+            .first()
+        )
+
+        result.append({
+
+            "id": req.id,
+
+            "sender_institution_id":
+                req.sender_institution_id,
+
+            "receiver_institution_id":
+                req.receiver_institution_id,
+
+            "sender_institution_name":
+                sender.institution_name if sender else "Unknown",
+
+            "receiver_institution_name":
+                receiver.institution_name if receiver else "Unknown",
+
+            "project_title":
+                req.project_title,
+
+            "purpose":
+                req.purpose,
+
+            "status":
+                req.status,
+
+            "created_at":
+                req.created_at
+
+        })
+
+    return result
+def get_institution_collaboration_request_by_id(
+    db: Session,
+    request_id: int
+):
+
+    return (
+
+        db.query(
+            InstitutionCollaborationRequest
+        )
+
+        .filter(
+            InstitutionCollaborationRequest.id ==
+            request_id
+        )
+
+        .first()
+
+    )
+def update_institution_collaboration_request(
+    db: Session,
+    db_request: InstitutionCollaborationRequest,
+    request: InstitutionCollaborationRequestUpdate
+):
+
+    db_request.status = request.status
+
+    db.commit()
+    db.refresh(db_request)
 
     return db_request

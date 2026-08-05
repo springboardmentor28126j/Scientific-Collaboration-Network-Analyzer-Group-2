@@ -17,6 +17,10 @@ class CitationCreate(CitationBase):
 class CitationResponse(CitationBase):
 
     id: int
+
+    paper_title: str
+    cited_paper_title: str
+
     created_at: datetime
     updated_at: datetime
 

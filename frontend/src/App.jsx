@@ -27,6 +27,8 @@ import SharedFiles from "./pages/SharedFiles";
 import ProgressUpdates from "./pages/ProgressUpdates";
 import Notifications from "./pages/Notifications";
 import Timeline from "./pages/Timeline";
+import Citation from "./pages/Citation";
+import InstitutionCollaboration from "./pages/InstitutionCollaboration";
 function App() {
   return (
     <BrowserRouter>
@@ -134,6 +136,14 @@ function App() {
 <Route
     path="/timeline"
     element={<Timeline />}
+/>
+<Route
+    path="/citations"
+    element={<Citation />}
+/>
+<Route
+    path="/institution-collaboration"
+    element={<InstitutionCollaboration />}
 />
 
       </Routes>

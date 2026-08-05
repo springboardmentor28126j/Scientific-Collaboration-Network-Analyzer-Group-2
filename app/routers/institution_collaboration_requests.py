@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import traceback
 
 from app.database.database import SessionLocal
 from app.schemas.institution_collaboration_request import (
@@ -30,35 +31,32 @@ def get_db():
 def get_all_requests(
     db: Session = Depends(get_db)
 ):
-    return crud.get_all_institution_requests(db)
 
+    try:
 
+        data = crud.get_all_institution_collaboration_requests(db)
+
+        print("GET RESPONSE =", data)
+
+        return data
+
+    except Exception as e:
+
+        traceback.print_exc()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 @router.get(
-    "/sender/{institution_id}",
+    "/accepted",
     response_model=list[InstitutionCollaborationRequestResponse]
 )
-def get_sender_requests(
-    institution_id: int,
+def get_accepted_requests(
     db: Session = Depends(get_db)
 ):
-    return crud.get_requests_by_sender_institution(
-        db,
-        institution_id
-    )
 
-
-@router.get(
-    "/receiver/{institution_id}",
-    response_model=list[InstitutionCollaborationRequestResponse]
-)
-def get_receiver_requests(
-    institution_id: int,
-    db: Session = Depends(get_db)
-):
-    return crud.get_requests_by_receiver_institution(
-        db,
-        institution_id
-    )
+    return crud.get_accepted_institution_collaboration_requests(db)
 
 
 @router.post(
@@ -69,10 +67,28 @@ def create_request(
     request: InstitutionCollaborationRequestCreate,
     db: Session = Depends(get_db)
 ):
-    return crud.create_institution_request(
-        db,
-        request
-    )
+
+    try:
+
+        print("REQUEST BODY =", request.model_dump())
+
+        data = crud.create_institution_collaboration_request(
+            db,
+            request
+        )
+
+        print("CREATED =", data)
+
+        return data
+
+    except Exception as e:
+
+        traceback.print_exc()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
 
 @router.put(
@@ -85,42 +101,32 @@ def update_request(
     db: Session = Depends(get_db)
 ):
 
-    db_request = crud.get_institution_request_by_id(
-        db,
-        request_id
-    )
 
-    if not db_request:
-        raise HTTPException(
-            status_code=404,
-            detail="Institution collaboration request not found"
+    try:
+
+        db_request = crud.get_institution_collaboration_request_by_id(
+            db,
+            request_id
         )
 
-    return crud.update_institution_request(
-        db,
-        db_request,
-        request
-    )
+        if not db_request:
 
+            raise HTTPException(
+                status_code=404,
+                detail="Institution Collaboration Request Not Found"
+            )
 
-@router.delete("/{request_id}")
-def delete_request(
-    request_id: int,
-    db: Session = Depends(get_db)
-):
-
-    db_request = crud.get_institution_request_by_id(
-        db,
-        request_id
-    )
-
-    if not db_request:
-        raise HTTPException(
-            status_code=404,
-            detail="Institution collaboration request not found"
+        return crud.update_institution_collaboration_request(
+            db,
+            db_request,
+            request
         )
 
-    return crud.delete_institution_request(
-        db,
-        db_request
-    )
+    except Exception as e:
+
+        traceback.print_exc()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

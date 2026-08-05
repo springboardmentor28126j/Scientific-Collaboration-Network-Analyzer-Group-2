@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
 import ResearcherSidebar from "../components/ResearcherSidebar";
 import EditProfileModal from "../components/EditProfileModal";
+import CollaborationRequestModal from "../components/CollaborationRequestModal";
 import Footer from "../components/Footer";
 
 import api from "../services/api";
@@ -13,7 +14,10 @@ import "../styles/profile.css";
 function ResearcherProfile() {
 
     const [user, setUser] = useState(null);
+
     const [showModal, setShowModal] = useState(false);
+
+    const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 
     useEffect(() => {
 
@@ -67,7 +71,85 @@ function ResearcherProfile() {
 
                 <div className="dashboard-content">
 
-                    <h2>👤 My Profile</h2>
+                    <h2 className="fw-bold mb-4">
+
+                        👤 My Profile
+
+                    </h2>
+
+                    {/* Statistics */}
+
+                    <div className="row mb-4">
+
+                        <div className="col-md-4 mb-3">
+
+                            <div className="card border-0 shadow rounded-4">
+
+                                <div className="card-body text-center">
+
+                                    <i className="bi bi-file-earmark-text-fill text-primary fs-1"></i>
+
+                                    <h2 className="mt-3">12</h2>
+
+                                    <p className="text-muted mb-0">
+
+                                        Total Papers
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div className="col-md-4 mb-3">
+
+                            <div className="card border-0 shadow rounded-4">
+
+                                <div className="card-body text-center">
+
+                                    <i className="bi bi-people-fill text-success fs-1"></i>
+
+                                    <h2 className="mt-3">5</h2>
+
+                                    <p className="text-muted mb-0">
+
+                                        Collaborations
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div className="col-md-4 mb-3">
+
+                            <div className="card border-0 shadow rounded-4">
+
+                                <div className="card-body text-center">
+
+                                    <i className="bi bi-folder-fill text-warning fs-1"></i>
+
+                                    <h2 className="mt-3">3</h2>
+
+                                    <p className="text-muted mb-0">
+
+                                        Projects
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {/* Profile */}
 
                     <div className="profile-card">
 
@@ -91,56 +173,173 @@ function ResearcherProfile() {
 
                         <div className="profile-grid">
 
-                            <div><strong>Email</strong><span>{user.email}</span></div>
+                            <div>
 
-                            <div><strong>Phone</strong><span>{user.phone_number || "-"}</span></div>
+                                <strong>Email</strong>
 
-                            <div><strong>Institution</strong><span>{user.institution}</span></div>
+                                <span>{user.email}</span>
 
-                            <div><strong>Department</strong><span>{user.department}</span></div>
+                            </div>
 
-                            <div><strong>Designation</strong><span>{user.designation}</span></div>
+                            <div>
 
-                            <div><strong>Specialization</strong><span>{user.specialization}</span></div>
+                                <strong>Phone</strong>
 
-                            <div><strong>Research Interests</strong><span>{user.research_interests}</span></div>
+                                <span>{user.phone_number || "-"}</span>
 
-                            <div><strong>Country</strong><span>{user.country}</span></div>
+                            </div>
 
-                            <div><strong>State</strong><span>{user.state}</span></div>
+                            <div>
 
-                            <div><strong>City</strong><span>{user.city}</span></div>
+                                <strong>Institution</strong>
 
-                            <div><strong>Website</strong><span>{user.website || "-"}</span></div>
+                                <span>{user.institution}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>Department</strong>
+
+                                <span>{user.department}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>Designation</strong>
+
+                                <span>{user.designation}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>Specialization</strong>
+
+                                <span>{user.specialization}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>Research Interests</strong>
+
+                                <span>{user.research_interests}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>Country</strong>
+
+                                <span>{user.country}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>State</strong>
+
+                                <span>{user.state}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>City</strong>
+
+                                <span>{user.city}</span>
+
+                            </div>
+
+                            <div>
+
+                                <strong>Website</strong>
+
+                                <span>{user.website || "-"}</span>
+
+                            </div>
 
                         </div>
 
-                        <button
-    className="edit-profile-btn"
-    onClick={() => setShowModal(true)}
->
-    ✏ Edit Profile
-</button>
+                        <div
+                            style={{
+                                display: "flex",
+                                gap: "15px",
+                                marginTop: "25px"
+                            }}
+                        >
+
+                            <button
+
+                                className="edit-profile-btn"
+
+                                onClick={() => setShowModal(true)}
+
+                            >
+
+                                ✏ Edit Profile
+
+                            </button>
+
+                            <button
+
+                                className="btn btn-primary rounded-pill px-4"
+
+                                onClick={() =>
+                                    setShowCollaborationModal(true)
+                                }
+
+                            >
+
+                                🤝 Collaborate
+
+                            </button>
+
+                        </div>
+
                     </div>
 
                 </div>
 
             </div>
+
             {
-    showModal && (
 
-        <EditProfileModal
+                showModal && (
 
-            user={user}
+                    <EditProfileModal
 
-            onClose={() => setShowModal(false)}
+                        user={user}
 
-            onUpdate={(updatedUser) => setUser(updatedUser)}
+                        onClose={() => setShowModal(false)}
 
-        />
+                        onUpdate={(updatedUser) =>
+                            setUser(updatedUser)
+                        }
 
-    )
-}
+                    />
+
+                )
+
+            }
+
+            {
+
+                showCollaborationModal && (
+
+                    <CollaborationRequestModal
+
+                        onClose={() =>
+                            setShowCollaborationModal(false)
+                        }
+
+                    />
+
+                )
+
+            }
 
             <Footer />
 

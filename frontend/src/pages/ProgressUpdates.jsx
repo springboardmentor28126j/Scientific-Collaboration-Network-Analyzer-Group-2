@@ -16,7 +16,6 @@ function ProgressUpdates() {
         try {
 
             const res = await api.get("/project-comments/");
-
             setUpdates(res.data);
 
         } catch (err) {
@@ -49,40 +48,57 @@ function ProgressUpdates() {
 
                         <CustomCard>
 
-                            <div className="d-flex align-items-center mb-3">
+                            <div className="d-flex justify-content-between align-items-center">
 
-                                <div
-                                    className="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center"
-                                    style={{
-                                        width: 55,
-                                        height: 55,
-                                        fontSize: "22px"
-                                    }}
-                                >
+                                <div className="d-flex align-items-center">
 
-                                    <i className="bi bi-person-fill"></i>
+                                    <div
+                                        className="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center"
+                                        style={{
+                                            width: 60,
+                                            height: 60,
+                                            fontSize: "24px"
+                                        }}
+                                    >
+
+                                        <i className="bi bi-person-fill"></i>
+
+                                    </div>
+
+                                    <div className="ms-3">
+
+                                        <h5 className="fw-bold mb-1">
+
+                                            Researcher #{update.researcher_id}
+
+                                        </h5>
+
+                                        <span className="badge bg-info">
+
+                                            Project #{update.project_id}
+
+                                        </span>
+
+                                    </div>
 
                                 </div>
 
-                                <div className="ms-3">
+                                <span className="badge bg-success">
 
-                                    <h5 className="mb-0">
+                                    Updated
 
-                                        Researcher #{update.researcher_id}
-
-                                    </h5>
-
-                                    <small className="text-muted">
-
-                                        Project #{update.project_id}
-
-                                    </small>
-
-                                </div>
+                                </span>
 
                             </div>
 
-                            <p className="mt-3">
+                            <hr />
+
+                            <p
+                                style={{
+                                    lineHeight: "28px",
+                                    fontSize: "16px"
+                                }}
+                            >
 
                                 {update.comment}
 
@@ -90,13 +106,25 @@ function ProgressUpdates() {
 
                             <hr />
 
-                            <small className="text-muted">
+                            <div className="d-flex justify-content-between">
 
-                                <i className="bi bi-clock me-2"></i>
+                                <small className="text-muted">
 
-                                {new Date(update.created_at).toLocaleString()}
+                                    <i className="bi bi-calendar-event me-2"></i>
 
-                            </small>
+                                    {new Date(update.created_at).toLocaleDateString()}
+
+                                </small>
+
+                                <small className="text-muted">
+
+                                    <i className="bi bi-clock me-2"></i>
+
+                                    {new Date(update.created_at).toLocaleTimeString()}
+
+                                </small>
+
+                            </div>
 
                         </CustomCard>
 

@@ -16,7 +16,6 @@ function Notifications() {
         try {
 
             const res = await api.get("/notifications/");
-
             setNotifications(res.data);
 
         } catch (err) {
@@ -51,29 +50,61 @@ function Notifications() {
 
                             <div className="d-flex justify-content-between align-items-center">
 
-                                <h5 className="fw-bold mb-0">
+                                <div className="d-flex align-items-center">
 
-                                    {notification.title}
+                                    <div
+                                        className="bg-warning rounded-circle d-flex justify-content-center align-items-center"
+                                        style={{
+                                            width: 60,
+                                            height: 60,
+                                            fontSize: "25px",
+                                            color: "white"
+                                        }}
+                                    >
 
-                                </h5>
+                                        <i className="bi bi-bell-fill"></i>
+
+                                    </div>
+
+                                    <div className="ms-3">
+
+                                        <h5 className="fw-bold mb-1">
+
+                                            {notification.title}
+
+                                        </h5>
+
+                                        <small className="text-muted">
+
+                                            Researcher #{notification.researcher_id}
+
+                                        </small>
+
+                                    </div>
+
+                                </div>
 
                                 {
 
                                     notification.is_read ?
 
-                                    <span className="badge bg-success">
+                                        <span className="badge bg-success px-3 py-2">
 
-                                        Read
+                                            <i className="bi bi-check-circle me-1"></i>
 
-                                    </span>
+                                            Read
 
-                                    :
+                                        </span>
 
-                                    <span className="badge bg-danger">
+                                        :
 
-                                        Unread
+                                        <span className="badge bg-danger px-3 py-2">
 
-                                    </span>
+                                            <i className="bi bi-exclamation-circle me-1"></i>
+
+                                            Unread
+
+                                        </span>
 
                                 }
 
@@ -81,25 +112,34 @@ function Notifications() {
 
                             <hr />
 
-                            <p>
+                            <p
+                                style={{
+                                    fontSize: "16px",
+                                    lineHeight: "28px"
+                                }}
+                            >
 
                                 {notification.message}
 
                             </p>
 
+                            <hr />
+
                             <div className="d-flex justify-content-between">
 
                                 <small className="text-muted">
 
-                                    <i className="bi bi-person me-1"></i>
+                                    <i className="bi bi-calendar-event me-2"></i>
 
-                                    Researcher #{notification.researcher_id}
+                                    {new Date(notification.created_at).toLocaleDateString()}
 
                                 </small>
 
                                 <small className="text-muted">
 
-                                    {new Date(notification.created_at).toLocaleString()}
+                                    <i className="bi bi-clock me-2"></i>
+
+                                    {new Date(notification.created_at).toLocaleTimeString()}
 
                                 </small>
 

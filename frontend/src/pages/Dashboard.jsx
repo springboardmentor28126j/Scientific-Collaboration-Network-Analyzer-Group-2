@@ -1,109 +1,221 @@
 import { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
 import api from "../services/api";
 
-import "../styles/dashboard.css";
+import MainLayout from "../components/MainLayout";
+import CustomCard from "../components/CustomCard";
 
 function Dashboard() {
 
-  const [dashboard, setDashboard] = useState({
-    total_papers: 0,
-    total_researchers: 0,
-    total_institutions: 0,
-    total_collaborations: 0,
-  });
+    const [dashboard, setDashboard] = useState({
+        total_papers: 0,
+        total_researchers: 0,
+        total_institutions: 0,
+        total_collaborations: 0,
+    });
 
-  useEffect(() => {
-    api
-      .get("/analytics/dashboard")
-      .then((res) => {
-        setDashboard(res.data);
-      })
-      .catch((err) => {
-        console.error("Dashboard Error:", err);
-      });
-  }, []);
+    useEffect(() => {
 
-  return (
-    <div>
+        api
+            .get("/analytics/dashboard")
+            .then((res) => {
 
-      <Navbar />
+                setDashboard(res.data);
 
-      <div className="dashboard-container">
+            })
+            .catch((err) => {
 
-        <Sidebar />
+                console.log(err);
 
-        <div className="dashboard-content">
+            });
 
-          <h2>📊 Dashboard Overview</h2>
+    }, []);
 
-          <div className="cards">
+    return (
 
-            <div className="card researchers-card">
-              <h3>👨‍🔬 Researchers</h3>
-              <h1>{dashboard.total_researchers}</h1>
+        <MainLayout>
+
+            <h2 className="fw-bold mb-4">
+
+                <i className="bi bi-speedometer2 text-primary me-2"></i>
+
+                Dashboard Overview
+
+            </h2>
+
+            <div className="row">
+
+                <div className="col-lg-3 col-md-6 mb-4">
+
+                    <CustomCard>
+
+                        <div className="text-center">
+
+                            <i className="bi bi-people-fill text-primary fs-1"></i>
+
+                            <h5 className="mt-3">
+
+                                Researchers
+
+                            </h5>
+
+                            <h2>
+
+                                {dashboard.total_researchers}
+
+                            </h2>
+
+                        </div>
+
+                    </CustomCard>
+
+                </div>
+
+                <div className="col-lg-3 col-md-6 mb-4">
+
+                    <CustomCard>
+
+                        <div className="text-center">
+
+                            <i className="bi bi-file-earmark-text-fill text-success fs-1"></i>
+
+                            <h5 className="mt-3">
+
+                                Papers
+
+                            </h5>
+
+                            <h2>
+
+                                {dashboard.total_papers}
+
+                            </h2>
+
+                        </div>
+
+                    </CustomCard>
+
+                </div>
+
+                <div className="col-lg-3 col-md-6 mb-4">
+
+                    <CustomCard>
+
+                        <div className="text-center">
+
+                            <i className="bi bi-building text-warning fs-1"></i>
+
+                            <h5 className="mt-3">
+
+                                Institutions
+
+                            </h5>
+
+                            <h2>
+
+                                {dashboard.total_institutions}
+
+                            </h2>
+
+                        </div>
+
+                    </CustomCard>
+
+                </div>
+
+                <div className="col-lg-3 col-md-6 mb-4">
+
+                    <CustomCard>
+
+                        <div className="text-center">
+
+                            <i className="bi bi-diagram-3-fill text-danger fs-1"></i>
+
+                            <h5 className="mt-3">
+
+                                Collaborations
+
+                            </h5>
+
+                            <h2>
+
+                                {dashboard.total_collaborations}
+
+                            </h2>
+
+                        </div>
+
+                    </CustomCard>
+
+                </div>
+
             </div>
 
-            <div className="card papers-card">
-              <h3>📄 Research Papers</h3>
-              <h1>{dashboard.total_papers}</h1>
+            <div className="row">
+
+                <div className="col-lg-8">
+
+                    <CustomCard>
+
+                        <h4>
+
+                            🚀 Welcome
+
+                        </h4>
+
+                        <hr />
+
+                        <p>
+
+                            Welcome to the Scientific Collaboration Network Analyzer.
+
+                            Manage Researchers, Institutions, Research Papers,
+
+                            Collaborations and Analytics from one centralized dashboard.
+
+                        </p>
+
+                    </CustomCard>
+
+                </div>
+
+                <div className="col-lg-4">
+
+                    <CustomCard>
+
+                        <h4>
+
+                            ⭐ Platform Highlights
+
+                        </h4>
+
+                        <hr />
+
+                        <ul>
+
+                            <li>Research Management</li>
+
+                            <li>Institution Collaboration</li>
+
+                            <li>Project Management</li>
+
+                            <li>Timeline Tracking</li>
+
+                            <li>Notifications</li>
+
+                            <li>Analytics</li>
+
+                        </ul>
+
+                    </CustomCard>
+
+                </div>
+
             </div>
 
-            <div className="card institutions-card">
-              <h3>🏫 Institutions</h3>
-              <h1>{dashboard.total_institutions}</h1>
-            </div>
+        </MainLayout>
 
-            <div className="card collaborations-card">
-              <h3>🤝 Collaborations</h3>
-              <h1>{dashboard.total_collaborations}</h1>
-            </div>
+    );
 
-          </div>
-
-          <div className="welcome-box">
-
-            <h3>
-              🚀 Welcome to the Scientific Collaboration Network Analyzer
-            </h3>
-
-            <p>
-              Explore researcher profiles, discover research publications,
-              analyze institutional collaborations, and gain valuable insights
-              through an intelligent research analytics platform.
-            </p>
-
-          </div>
-
-          <div className="info-box">
-
-            <h3>Platform Highlights</h3>
-
-            <ul>
-
-              <li>✅ Search researchers quickly using smart filtering.</li>
-
-              <li>✅ Explore research papers with detailed publication information.</li>
-
-              <li>✅ Browse institutions and their research profiles.</li>
-
-              <li>✅ View collaboration statistics from the dashboard.</li>
-
-              <li>✅ Secure login with JWT authentication.</li>
-
-              <li>✅ Simple, responsive and user-friendly interface.</li>
-
-            </ul>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  );
 }
 
 export default Dashboard;

@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.models.research_paper import ResearchPaper
 from app.models.researcher import Researcher
@@ -184,7 +185,6 @@ def search_institutions_by_country(db: Session, country: str):
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
-
 def create_user(db: Session, user: UserCreate):
 
     new_user = User(
@@ -210,7 +210,6 @@ def create_user(db: Session, user: UserCreate):
         research_interests=user.research_interests,
 
         # Location
-        # Location
         country=user.country,
         state=user.state,
         city=user.city,
@@ -221,7 +220,7 @@ def create_user(db: Session, user: UserCreate):
         institution_type=user.institution_type,
 
         # Role
-            role=user.role
+        role=user.role
 
     )
 
@@ -229,12 +228,35 @@ def create_user(db: Session, user: UserCreate):
     db.commit()
     db.refresh(new_user)
 
-    return new_user
-# -----------------------------
-# Update User Profile
-# -----------------------------
+    # ----------------------------------------
+    # Automatically create Researcher Profile
+    # ----------------------------------------
 
-from app.schemas.user import UserUpdate
+    if new_user.role.lower() == "researcher":
+
+        existing = db.query(Researcher).filter(
+            Researcher.email == new_user.email
+        ).first()
+
+        if not existing:
+
+            researcher = Researcher(
+
+                full_name=new_user.full_name,
+                email=new_user.email,
+                institution=new_user.institution,
+                department=new_user.department,
+                specialization=new_user.specialization,
+
+                h_index=0,
+                total_publications=0
+
+            )
+
+            db.add(researcher)
+            db.commit()
+
+    return new_user
 
 
 def update_user(
@@ -1233,66 +1255,75 @@ def get_requests_by_sender(
         .all()
     )
 
-
 def create_collaboration_request(
     db: Session,
     request: CollaborationRequestCreate
 ):
 
+    print("========== FUNCTION CALLED ==========")
+    print(request)
+
+    # Check duplicate pending request
     existing_request = (
         db.query(CollaborationRequest)
         .filter(
             CollaborationRequest.sender_id == request.sender_id,
             CollaborationRequest.receiver_id == request.receiver_id,
+            CollaborationRequest.paper_id == request.paper_id,
             CollaborationRequest.status == "Pending"
         )
         .first()
     )
 
     if existing_request:
+        print("Pending request already exists")
         return existing_request
 
+    # Create Collaboration Request
     db_request = CollaborationRequest(
-        **request.model_dump()
+
+        sender_id=request.sender_id,
+        receiver_id=request.receiver_id,
+        paper_id=request.paper_id,
+        message=request.message,
+        status="Pending"
+
     )
 
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
 
+    print("Collaboration Request Created")
+
+    # Create Notification
+    try:
+
+        notification = Notification(
+
+            researcher_id=request.receiver_id,
+
+            title="New Collaboration Request",
+
+            message=f"Researcher #{request.sender_id} invited you to collaborate on Paper #{request.paper_id}.",
+
+            is_read=False
+
+        )
+
+        db.add(notification)
+        db.commit()
+
+        print("Notification Saved")
+
+    except Exception as e:
+
+        db.rollback()
+        print("Notification Error :", e)
+
+    print("========== FUNCTION FINISHED ==========")
+
     return db_request
-
-
-def update_collaboration_request(
-    db: Session,
-    db_request: CollaborationRequest,
-    request: CollaborationRequestUpdate
-):
-
-    update_data = request.model_dump(
-        exclude_unset=True
-    )
-
-    for key, value in update_data.items():
-        setattr(db_request, key, value)
-
-    db.commit()
-    db.refresh(db_request)
-
-    return db_request
-
-
-def delete_collaboration_request(
-    db: Session,
-    db_request: CollaborationRequest
-):
-
-    db.delete(db_request)
-    db.commit()
-
-    return {
-        "message": "Collaboration request deleted successfully"
-    }
 # ============================================
 # INSTITUTION COLLABORATION REQUEST CRUD
 # ============================================
@@ -1506,3 +1537,89 @@ def delete_project_timeline(
     return {
         "message": "Project timeline deleted successfully"
     }
+def update_collaboration_request(
+    db: Session,
+    db_request: CollaborationRequest,
+    request: CollaborationRequestUpdate
+):
+
+    # Update status
+    db_request.status = request.status
+
+    db.commit()
+    db.refresh(db_request)
+
+    # -----------------------------------
+    # ACCEPT REQUEST
+    # -----------------------------------
+    if db_request.status == "Accepted":
+
+        existing = (
+            db.query(Collaboration)
+            .filter(
+                Collaboration.researcher_1_id == db_request.sender_id,
+                Collaboration.researcher_2_id == db_request.receiver_id,
+                Collaboration.paper_id == db_request.paper_id
+            )
+            .first()
+        )
+
+        if existing is None:
+
+            new_collaboration = Collaboration(
+
+                researcher_1_id=db_request.sender_id,
+                researcher_2_id=db_request.receiver_id,
+
+                paper_id=db_request.paper_id,
+
+                collaboration_year=datetime.now().year,
+
+                status="Active",
+
+                requested_by=db_request.sender_id
+
+            )
+
+            db.add(new_collaboration)
+
+            notification = Notification(
+
+                researcher_id=db_request.sender_id,
+
+                title="Collaboration Accepted",
+
+                message=f"Researcher #{db_request.receiver_id} accepted your collaboration request.",
+
+                is_read=False
+
+            )
+
+            db.add(notification)
+
+            db.commit()
+
+            db.refresh(new_collaboration)
+
+    # -----------------------------------
+    # REJECT REQUEST
+    # -----------------------------------
+    elif db_request.status == "Rejected":
+
+        notification = Notification(
+
+            researcher_id=db_request.sender_id,
+
+            title="Collaboration Rejected",
+
+            message=f"Researcher #{db_request.receiver_id} rejected your collaboration request.",
+
+            is_read=False
+
+        )
+
+        db.add(notification)
+
+        db.commit()
+
+    return db_request

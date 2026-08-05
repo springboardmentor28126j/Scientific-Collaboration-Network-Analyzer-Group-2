@@ -6,6 +6,7 @@ class CollaborationRequestBase(BaseModel):
 
     sender_id: int
     receiver_id: int
+    paper_id: int
     message: str | None = None
 
 

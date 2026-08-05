@@ -8,21 +8,35 @@ import CollaborationTable from "../components/CollaborationTable";
 function Collaborations() {
 
     const [collaborations, setCollaborations] = useState([]);
+    const [researchers, setResearchers] = useState([]);
+    const [papers, setPapers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchCollaborations();
+        loadData();
     }, []);
 
-    const fetchCollaborations = async () => {
+    const loadData = async () => {
 
         try {
 
-            const res = await axios.get(
-                "http://127.0.0.1:8000/collaborations/"
-            );
+            const [
+                collaborationsRes,
+                researchersRes,
+                papersRes
+            ] = await Promise.all([
 
-            setCollaborations(res.data);
+                axios.get("http://127.0.0.1:8000/collaborations/"),
+
+                axios.get("http://127.0.0.1:8000/researchers/"),
+
+                axios.get("http://127.0.0.1:8000/research-papers/")
+
+            ]);
+
+            setCollaborations(collaborationsRes.data);
+            setResearchers(researchersRes.data);
+            setPapers(papersRes.data);
 
         } catch (err) {
 
@@ -55,6 +69,8 @@ function Collaborations() {
 
             <CollaborationTable
                 collaborations={collaborations}
+                researchers={researchers}
+                papers={papers}
                 loading={loading}
             />
 
@@ -65,3 +81,21 @@ function Collaborations() {
 }
 
 export default Collaborations;
+const fetchCollaborations = async () => {
+    try {
+        console.log("Fetching collaborations...");
+
+        const res = await axios.get(
+            "http://127.0.0.1:8000/collaborations/"
+        );
+
+        console.log("Response:", res.data);
+
+        setCollaborations(res.data);
+
+    } catch (err) {
+        console.error("Error:", err);
+    } finally {
+        setLoading(false);
+    }
+};

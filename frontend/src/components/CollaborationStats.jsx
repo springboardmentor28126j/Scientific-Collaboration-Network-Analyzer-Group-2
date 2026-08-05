@@ -13,8 +13,8 @@ function CollaborationStats({ collaborations = [] }) {
     c => c.status === "Pending"
   ).length;
 
-  const accepted = collaborations.filter(
-    c => c.status === "Accepted"
+  const active = collaborations.filter(
+    c => c.status === "Active"
   ).length;
 
   const rejected = collaborations.filter(
@@ -33,8 +33,8 @@ function CollaborationStats({ collaborations = [] }) {
       color: "#f9a825"
     },
     {
-      title: "Accepted",
-      value: accepted,
+      title: "Active",
+      value: active,
       color: "#2e7d32"
     },
     {
@@ -45,13 +45,9 @@ function CollaborationStats({ collaborations = [] }) {
   ];
 
   return (
-
     <Grid container spacing={3} mb={4}>
-
       {cards.map((card) => (
-
         <Grid item xs={12} sm={6} md={3} key={card.title}>
-
           <Card
             elevation={6}
             sx={{
@@ -59,9 +55,7 @@ function CollaborationStats({ collaborations = [] }) {
               borderRadius: 3
             }}
           >
-
             <CardContent>
-
               <Typography
                 variant="h4"
                 fontWeight="bold"
@@ -77,17 +71,11 @@ function CollaborationStats({ collaborations = [] }) {
               >
                 {card.title}
               </Typography>
-
             </CardContent>
-
           </Card>
-
         </Grid>
-
       ))}
-
     </Grid>
-
   );
 }
 

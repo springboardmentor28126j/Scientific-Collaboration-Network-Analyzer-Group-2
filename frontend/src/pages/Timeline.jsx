@@ -16,7 +16,6 @@ function Timeline() {
         try {
 
             const res = await api.get("/project-timelines/");
-
             setEvents(res.data);
 
         } catch (err) {
@@ -52,26 +51,33 @@ function Timeline() {
                             <div className="d-flex">
 
                                 <div
-                                    className="bg-primary rounded-circle"
+                                    className="bg-primary rounded-circle d-flex justify-content-center align-items-center"
                                     style={{
-                                        width:18,
-                                        height:18,
-                                        marginTop:8,
-                                        marginRight:20
+                                        width: 55,
+                                        height: 55,
+                                        minWidth: 55,
+                                        marginRight: 20
                                     }}
-                                ></div>
+                                >
+
+                                    <i
+                                        className="bi bi-calendar-event text-white"
+                                        style={{ fontSize: "22px" }}
+                                    ></i>
+
+                                </div>
 
                                 <div className="w-100">
 
-                                    <div className="d-flex justify-content-between">
+                                    <div className="d-flex justify-content-between align-items-center">
 
-                                        <h4 className="fw-bold">
+                                        <h5 className="fw-bold mb-0">
 
                                             {event.event_title}
 
-                                        </h4>
+                                        </h5>
 
-                                        <span className="badge bg-success">
+                                        <span className="badge bg-success px-3 py-2">
 
                                             {event.event_type}
 
@@ -79,7 +85,15 @@ function Timeline() {
 
                                     </div>
 
-                                    <p className="mt-3 text-muted">
+                                    <hr />
+
+                                    <p
+                                        className="text-muted"
+                                        style={{
+                                            lineHeight: "28px",
+                                            fontSize: "16px"
+                                        }}
+                                    >
 
                                         {event.description}
 
@@ -89,7 +103,7 @@ function Timeline() {
 
                                     <div className="d-flex justify-content-between">
 
-                                        <small>
+                                        <small className="text-secondary">
 
                                             <i className="bi bi-folder2-open me-2"></i>
 
@@ -97,7 +111,7 @@ function Timeline() {
 
                                         </small>
 
-                                        <small>
+                                        <small className="text-secondary">
 
                                             <i className="bi bi-calendar3 me-2"></i>
 

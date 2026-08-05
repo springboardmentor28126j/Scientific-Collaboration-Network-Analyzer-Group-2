@@ -1,0 +1,17 @@
+.page-card{
+    border: none !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,.08);
+    transition: all .3s ease;
+}
+
+.page-card:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,.12);
+}
+
+.page-title{
+    color:#1e293b;
+    font-weight:700;
+    margin-bottom:25px;
+}

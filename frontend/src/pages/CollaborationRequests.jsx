@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import PageHeader from "../components/PageHeader";
+import CustomCard from "../components/CustomCard";
 
 function CollaborationRequests() {
 
@@ -14,7 +16,6 @@ function CollaborationRequests() {
         try {
 
             const res = await api.get("/collaboration-requests/");
-
             setRequests(res.data);
 
         } catch (err) {
@@ -47,112 +48,140 @@ function CollaborationRequests() {
 
         <div className="container-fluid">
 
-            <div className="d-flex justify-content-between align-items-center mb-4">
-
-                <h2 className="fw-bold">
-
-                    <i className="bi bi-people-fill text-primary me-2"></i>
-
-                    Collaboration Requests
-
-                </h2>
-
-                <button className="btn btn-primary rounded-pill">
-
-                    <i className="bi bi-person-plus me-2"></i>
-
-                    New Request
-
-                </button>
-
-            </div>
+            <PageHeader
+                title="Collaboration Requests"
+                icon="bi-people-fill"
+                buttonText="New Request"
+                buttonIcon="bi-person-plus"
+            />
 
             <div className="row">
 
-                {requests.map(request => (
+                {requests.map((request) => (
 
                     <div
                         className="col-lg-6 mb-4"
                         key={request.id}
                     >
 
-                        <div className="card border-0 shadow rounded-4">
+                        <CustomCard>
 
-                            <div className="card-body">
+                            <div className="d-flex justify-content-between align-items-center">
 
-                                <h5>
+                                <div className="d-flex align-items-center">
 
-                                    Research Collaboration
+                                    <div
+                                        className="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center"
+                                        style={{
+                                            width: 60,
+                                            height: 60,
+                                            fontSize: "24px"
+                                        }}
+                                    >
 
-                                </h5>
+                                        <i className="bi bi-people-fill"></i>
 
-                                <hr/>
+                                    </div>
 
-                                <p>
+                                    <div className="ms-3">
 
-                                    <strong>Sender :</strong>
+                                        <h5 className="fw-bold mb-1">
 
-                                    {request.sender_id}
+                                            Research Collaboration
 
-                                </p>
+                                        </h5>
 
-                                <p>
+                                        <small className="text-muted">
 
-                                    <strong>Receiver :</strong>
+                                            Request #{request.id}
 
-                                    {request.receiver_id}
+                                        </small>
 
-                                </p>
+                                    </div>
 
-                                <p>
-
-                                    {request.message}
-
-                                </p>
+                                </div>
 
                                 <span
                                     className={
-                                        request.status==="Accepted"
-                                        ? "badge bg-success"
-                                        : request.status==="Rejected"
-                                        ? "badge bg-danger"
-                                        : "badge bg-warning text-dark"
+                                        request.status === "Accepted"
+                                            ? "badge bg-success px-3 py-2"
+                                            : request.status === "Rejected"
+                                            ? "badge bg-danger px-3 py-2"
+                                            : "badge bg-warning text-dark px-3 py-2"
                                     }
                                 >
                                     {request.status}
                                 </span>
 
-                                <div className="mt-4">
+                            </div>
 
-                                    <button
-                                        className="btn btn-success me-2"
-                                        onClick={() =>
-                                            updateStatus(
-                                                request.id,
-                                                "Accepted"
-                                            )
-                                        }
-                                    >
-                                        Accept
-                                    </button>
+                            <hr />
 
-                                    <button
-                                        className="btn btn-danger"
-                                        onClick={() =>
-                                            updateStatus(
-                                                request.id,
-                                                "Rejected"
-                                            )
-                                        }
-                                    >
-                                        Reject
-                                    </button>
+                            <p>
 
-                                </div>
+                                <strong>
+                                    <i className="bi bi-person-fill me-2"></i>
+                                    Sender :
+                                </strong>
+
+                                {" "}Researcher #{request.sender_id}
+
+                            </p>
+
+                            <p>
+
+                                <strong>
+                                    <i className="bi bi-person-check-fill me-2"></i>
+                                    Receiver :
+                                </strong>
+
+                                {" "}Researcher #{request.receiver_id}
+
+                            </p>
+
+                            <div className="alert alert-light border">
+
+                                {request.message}
 
                             </div>
 
-                        </div>
+                            <div className="d-flex justify-content-end mt-3">
+
+                                <button
+                                    className="btn btn-success rounded-pill me-2"
+                                    onClick={() =>
+                                        updateStatus(
+                                            request.id,
+                                            "Accepted"
+                                        )
+                                    }
+                                >
+
+                                    <i className="bi bi-check-circle me-2"></i>
+
+                                    Accept
+
+                                </button>
+
+                                <button
+                                    className="btn btn-danger rounded-pill"
+                                    onClick={() =>
+                                        updateStatus(
+                                            request.id,
+                                            "Rejected"
+                                        )
+                                    }
+                                >
+
+                                    <i className="bi bi-x-circle me-2"></i>
+
+                                    Reject
+
+                                </button>
+
+                            </div>
+
+                        </CustomCard>
 
                     </div>
 

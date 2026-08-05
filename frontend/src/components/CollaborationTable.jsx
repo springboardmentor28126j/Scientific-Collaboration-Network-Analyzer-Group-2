@@ -16,6 +16,8 @@ import StatusBadge from "./StatusBadge";
 function CollaborationTable({
 
     collaborations = [],
+    researchers = [],
+    papers = [],
     loading = false
 
 }) {
@@ -59,6 +61,26 @@ function CollaborationTable({
         );
 
     }
+
+    const getResearcherName = (id) => {
+
+        const researcher = researchers.find(r => r.id === id);
+
+        return researcher
+            ? researcher.full_name
+            : `Researcher #${id}`;
+
+    };
+
+    const getPaperTitle = (id) => {
+
+        const paper = papers.find(p => p.id === id);
+
+        return paper
+            ? paper.title
+            : `Paper #${id}`;
+
+    };
 
     return (
 
@@ -116,13 +138,21 @@ function CollaborationTable({
 
                             <TableCell>{item.id}</TableCell>
 
-                            <TableCell>{item.researcher_1_id}</TableCell>
+                            <TableCell>
+                                {getResearcherName(item.researcher_1_id)}
+                            </TableCell>
 
-                            <TableCell>{item.researcher_2_id}</TableCell>
+                            <TableCell>
+                                {getResearcherName(item.researcher_2_id)}
+                            </TableCell>
 
-                            <TableCell>{item.paper_id}</TableCell>
+                            <TableCell>
+                                {getPaperTitle(item.paper_id)}
+                            </TableCell>
 
-                            <TableCell>{item.collaboration_year}</TableCell>
+                            <TableCell>
+                                {item.collaboration_year}
+                            </TableCell>
 
                             <TableCell>
 

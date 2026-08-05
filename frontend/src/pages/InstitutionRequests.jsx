@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import PageHeader from "../components/PageHeader";
+import CustomCard from "../components/CustomCard";
 
 function InstitutionRequests() {
 
@@ -11,139 +13,211 @@ function InstitutionRequests() {
 
     const loadRequests = async () => {
         try {
+
             const res = await api.get("/institution-collaboration-requests/");
             setRequests(res.data);
+
         } catch (err) {
+
             console.log(err);
+
         }
     };
 
     const updateStatus = async (id, status) => {
+
         try {
 
             await api.put(
                 `/institution-collaboration-requests/${id}`,
                 {
-                    status: status
+                    status
                 }
             );
 
             loadRequests();
 
         } catch (err) {
+
             console.log(err);
+
         }
+
     };
 
     return (
 
-        <div className="container mt-4">
+        <div className="container-fluid">
 
-            <h2>Institution Collaboration Requests</h2>
+            <PageHeader
+                title="Institution Collaboration Requests"
+                icon="bi-building"
+                buttonText="New Request"
+                buttonIcon="bi-building-add"
+            />
 
-            <table className="table table-bordered mt-3">
+            <div className="row">
 
-                <thead>
+                {requests.map((request) => (
 
-                    <tr>
+                    <div
+                        className="col-lg-6 mb-4"
+                        key={request.id}
+                    >
 
-                        <th>ID</th>
-                        <th>Sender Institution</th>
-                        <th>Receiver Institution</th>
-                        <th>Project</th>
-                        <th>Purpose</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <CustomCard>
 
-                    </tr>
+                            <div className="d-flex justify-content-between align-items-center">
 
-                </thead>
+                                <div className="d-flex align-items-center">
 
-                <tbody>
+                                    <div
+                                        className="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center"
+                                        style={{
+                                            width: 60,
+                                            height: 60,
+                                            fontSize: "24px"
+                                        }}
+                                    >
 
-                    {requests.map((request) => (
+                                        <i className="bi bi-building"></i>
 
-                        <tr key={request.id}>
+                                    </div>
 
-                            <td>{request.id}</td>
+                                    <div className="ms-3">
 
-                            <td>{request.sender_institution_id}</td>
+                                        <h5 className="fw-bold mb-1">
 
-                            <td>{request.receiver_institution_id}</td>
+                                            {request.project_title}
 
-                            <td>{request.project_title}</td>
+                                        </h5>
 
-                            <td>{request.purpose}</td>
+                                        <small className="text-muted">
 
-                            <td>
+                                            Request #{request.id}
 
-                                {request.status === "Pending" && (
-                                    <span className="badge bg-warning text-dark">
-                                        Pending
-                                    </span>
-                                )}
+                                        </small>
 
-                                {request.status === "Accepted" && (
-                                    <span className="badge bg-success">
-                                        Accepted
-                                    </span>
-                                )}
+                                    </div>
 
-                                {request.status === "Rejected" && (
-                                    <span className="badge bg-danger">
-                                        Rejected
-                                    </span>
-                                )}
+                                </div>
 
-                            </td>
+                                <span
+                                    className={
+                                        request.status === "Accepted"
+                                            ? "badge bg-success px-3 py-2"
+                                            : request.status === "Rejected"
+                                            ? "badge bg-danger px-3 py-2"
+                                            : "badge bg-warning text-dark px-3 py-2"
+                                    }
+                                >
+                                    {request.status}
+                                </span>
 
-                            <td>
+                            </div>
 
-                                {request.status === "Pending" ? (
+                            <hr />
 
-                                    <>
+                            <p>
+
+                                <strong>
+                                    <i className="bi bi-send me-2"></i>
+
+                                    Sender Institution :
+                                </strong>
+
+                                {" "}#{request.sender_institution_id}
+
+                            </p>
+
+                            <p>
+
+                                <strong>
+                                    <i className="bi bi-reception-4 me-2"></i>
+
+                                    Receiver Institution :
+                                </strong>
+
+                                {" "}#{request.receiver_institution_id}
+
+                            </p>
+
+                            <div className="alert alert-light border">
+
+                                <strong>Purpose</strong>
+
+                                <br />
+
+                                {request.purpose}
+
+                            </div>
+
+                            <div className="d-flex justify-content-end mt-3">
+
+                                {
+
+                                    request.status === "Pending" ? (
+
+                                        <>
+
+                                            <button
+                                                className="btn btn-success rounded-pill me-2"
+                                                onClick={() =>
+                                                    updateStatus(
+                                                        request.id,
+                                                        "Accepted"
+                                                    )
+                                                }
+                                            >
+
+                                                <i className="bi bi-check-circle me-2"></i>
+
+                                                Accept
+
+                                            </button>
+
+                                            <button
+                                                className="btn btn-danger rounded-pill"
+                                                onClick={() =>
+                                                    updateStatus(
+                                                        request.id,
+                                                        "Rejected"
+                                                    )
+                                                }
+                                            >
+
+                                                <i className="bi bi-x-circle me-2"></i>
+
+                                                Reject
+
+                                            </button>
+
+                                        </>
+
+                                    ) : (
 
                                         <button
-                                            className="btn btn-success btn-sm me-2"
-                                            onClick={() =>
-                                                updateStatus(
-                                                    request.id,
-                                                    "Accepted"
-                                                )
-                                            }
+                                            className="btn btn-secondary rounded-pill"
+                                            disabled
                                         >
-                                            Accept
+
+                                            Completed
+
                                         </button>
 
-                                        <button
-                                            className="btn btn-danger btn-sm"
-                                            onClick={() =>
-                                                updateStatus(
-                                                    request.id,
-                                                    "Rejected"
-                                                )
-                                            }
-                                        >
-                                            Reject
-                                        </button>
+                                    )
 
-                                    </>
+                                }
 
-                                ) : (
+                            </div>
 
-                                    <span>-</span>
+                        </CustomCard>
 
-                                )}
+                    </div>
 
-                            </td>
+                ))}
 
-                        </tr>
-
-                    ))}
-
-                </tbody>
-
-            </table>
+            </div>
 
         </div>
 

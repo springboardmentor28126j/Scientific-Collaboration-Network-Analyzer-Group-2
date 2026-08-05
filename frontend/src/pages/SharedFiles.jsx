@@ -16,7 +16,6 @@ function SharedFiles() {
         try {
 
             const res = await api.get("/project-documents/");
-
             setFiles(res.data);
 
         } catch (err) {
@@ -53,20 +52,16 @@ function SharedFiles() {
 
                                 <i
                                     className="bi bi-file-earmark-pdf-fill text-danger"
-                                    style={{ fontSize: "60px" }}
+                                    style={{ fontSize: "70px" }}
                                 ></i>
 
-                            </div>
+                                <h5 className="mt-3 fw-bold">
 
-                            <h5 className="text-center mt-3">
+                                    {file.file_name}
 
-                                {file.file_name}
+                                </h5>
 
-                            </h5>
-
-                            <div className="text-center">
-
-                                <span className="badge bg-primary">
+                                <span className="badge bg-primary rounded-pill px-3 py-2">
 
                                     {file.file_type}
 
@@ -76,35 +71,41 @@ function SharedFiles() {
 
                             <hr />
 
-                            <p>
+                            <div className="mb-2">
 
-                                <strong>Description</strong>
+                                <small className="text-muted">
+                                    Description
+                                </small>
 
-                                <br />
+                                <p className="mb-2">
+                                    {file.description}
+                                </p>
 
-                                {file.description}
+                            </div>
 
-                            </p>
+                            <div className="d-flex justify-content-between">
 
-                            <p>
+                                <span className="text-secondary">
 
-                                <strong>Project :</strong>
+                                    <i className="bi bi-folder me-1"></i>
 
-                                {" "}
+                                    Project #{file.project_id}
 
-                                {file.project_id}
+                                </span>
 
-                            </p>
+                            </div>
 
-                            <p>
+                            <div className="mt-2 mb-3">
 
-                                <strong>Uploaded By :</strong>
+                                <span className="text-secondary">
 
-                                {" "}
+                                    <i className="bi bi-person-circle me-1"></i>
 
-                                {file.uploaded_by}
+                                    Researcher #{file.uploaded_by}
 
-                            </p>
+                                </span>
+
+                            </div>
 
                             <a
                                 href={file.file_url}
@@ -115,7 +116,7 @@ function SharedFiles() {
 
                                 <i className="bi bi-download me-2"></i>
 
-                                Download
+                                Download File
 
                             </a>
 

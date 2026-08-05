@@ -22,6 +22,13 @@ class CollaborationRequest(Base):
         nullable=False
     )
 
+    # Selected paper for collaboration
+    paper_id = Column(
+        Integer,
+        ForeignKey("research_papers.id"),
+        nullable=False
+    )
+
     message = Column(
         String(500)
     )

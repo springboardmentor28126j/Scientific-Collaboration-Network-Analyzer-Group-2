@@ -37,12 +37,36 @@ def create_researcher(
         )
 
 
+    user = db.query(User).filter(
+        User.email == researcher.email
+    ).first()
+
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User account not found"
+        )
+
+
+    # CHECK EXISTING RESEARCHER PROFILE
+    existing_researcher = db.query(Researcher).filter(
+        Researcher.user_id == user.id
+    ).first()
+
+
+    if existing_researcher:
+        raise HTTPException(
+            status_code=400,
+            detail="Researcher profile already exists for this user"
+        )
+
+
     return crud.create_researcher(
         db,
         researcher,
-        current_user.id
+        user.id
     )
-
 @router.post("/profile", response_model=schemas.ResearcherResponse)
 def create_researcher_profile(
     profile: schemas.ResearcherProfileCreate,

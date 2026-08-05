@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime, date
 from .database import Base
@@ -86,8 +86,112 @@ class Publication(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    researcher = relationship(
+        "Researcher",
+         back_populates="publications"
+    )
 
-    researcher = relationship("Researcher")
+class Citation(Base):
+
+    __tablename__ = "citations"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+
+    # Publication creating the citation
+    publication_id = Column(
+        Integer,
+        ForeignKey(
+            "publications.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+
+    # Publication being cited
+    cited_publication_id = Column(
+        Integer,
+        ForeignKey(
+            "publications.id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+
+    publication = relationship(
+        "Publication",
+        foreign_keys=[publication_id]
+    )
+
+
+    cited_publication = relationship(
+        "Publication",
+        foreign_keys=[cited_publication_id]
+    )
+    
+class Reference(Base):
+
+    __tablename__ = "references"
+
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+
+    # Publication which contains this reference
+    publication_id = Column(
+        Integer,
+        ForeignKey("publications.id"),
+        nullable=False
+    )
+
+
+    reference_title = Column(
+        String(255),
+        nullable=False
+    )
+
+
+    author = Column(
+        String(255)
+    )
+
+
+    publication_year = Column(
+        Integer
+    )
+
+
+    doi = Column(
+        String(100)
+    )
+
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+
+    publication = relationship(
+        "Publication"
+    )
+    
 class Institution(Base):
 
     __tablename__ = "institutions"
@@ -244,3 +348,162 @@ class ConferenceRegistration(Base):
     conference = relationship(
         "Conference"
     )
+class Project(Base):
+
+    __tablename__ = "projects"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    project_name = Column(
+        String(255),
+        nullable=False
+    )
+
+    description = Column(
+        Text,
+        nullable=True
+    )
+
+    start_date = Column(
+        Date,
+        nullable=False
+    )
+
+    end_date = Column(
+        Date,
+        nullable=True
+    )
+
+    status = Column(
+        String(50),
+        default="Planned"
+    )
+
+    institution_id = Column(
+        Integer,
+        ForeignKey("institutions.id"),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+
+    institution = relationship(
+        "Institution"
+    )
+class ProjectMember(Base):
+
+    __tablename__ = "project_members"
+
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+
+    project_id = Column(
+        Integer,
+        ForeignKey("projects.id"),
+        nullable=False
+    )
+
+
+    researcher_id = Column(
+        Integer,
+        ForeignKey("researchers.id"),
+        nullable=False
+    )
+
+
+    role = Column(
+        String(100),
+        default="Team Member"
+    )
+
+
+    assigned_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+
+    project = relationship(
+        "Project"
+    )
+
+
+    researcher = relationship(
+        "Researcher"
+    )
+class InstitutionCollaboration(Base):
+
+    __tablename__ = "institution_collaborations"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    project_id = Column(
+        Integer,
+        ForeignKey("projects.id"),
+        nullable=False
+    )
+
+    collaborating_institution_id = Column(
+        Integer,
+        ForeignKey("institutions.id"),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    project = relationship("Project")
+
+    collaborating_institution = relationship("Institution")
+
+class ActivityLog(Base):
+
+    __tablename__ = "activity_logs"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    action = Column(
+        String(100),
+        nullable=False
+    )
+
+    description = Column(
+        Text,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    user = relationship("User")

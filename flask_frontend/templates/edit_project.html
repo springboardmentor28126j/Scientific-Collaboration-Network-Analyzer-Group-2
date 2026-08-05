@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/form.css') }}">
+
+
+{% endblock %}
+{% block content %}
+
+
+
+<!-- ================= MAIN ================= -->
+
+<div class="main" id="main">
+
+<div class="edit-container">
+
+<h1>
+Edit Project
+</h1>
+
+<form method="POST">
+
+<label>Project Name</label>
+
+<input
+type="text"
+name="project_name"
+value="{{ project.project_name }}"
+required>
+
+
+<label>Description</label>
+
+<textarea
+name="description"
+rows="4">{{ project.description }}</textarea>
+
+
+<label>Start Date</label>
+
+<input
+type="date"
+name="start_date"
+value="{{ project.start_date }}"
+required>
+
+
+<label>End Date</label>
+
+<input
+type="date"
+name="end_date"
+value="{{ project.end_date or '' }}">
+
+
+<label>Status</label>
+
+<select name="status">
+
+<option value="Planned"
+{% if project.status=="Planned" %}selected{% endif %}>
+Planned
+</option>
+
+<option value="Ongoing"
+{% if project.status=="Ongoing" %}selected{% endif %}>
+Ongoing
+</option>
+
+<option value="Completed"
+{% if project.status=="Completed" %}selected{% endif %}>
+Completed
+</option>
+
+</select>
+
+
+<label>Institution</label>
+
+<select name="institution_id" required>
+
+{% for institution in institutions %}
+
+<option value="{{ institution.id }}"
+{% if institution.id == project.institution_id %}selected{% endif %}>
+
+{{ institution.name }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+
+<button class="update-btn">
+
+Update Project
+
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+{% endblock %}

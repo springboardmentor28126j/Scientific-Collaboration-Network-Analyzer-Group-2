@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<!-- ================= MAIN ================= -->
+
+
+<div class="main" id="main">
+
+
+
+<div class="top-section">
+
+
+<h1>
+Collaboration Management
+</h1>
+
+<div class="search-box">
+
+<input
+type="text"
+id="collaborationSearch"
+placeholder="Search by Project Name or Status"
+onkeyup="searchCollaboration()">
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ================= TABLE ================= -->
+
+
+
+<table>
+
+
+<thead>
+
+
+<tr>
+
+
+<th>
+ID
+</th>
+
+
+
+<th>
+Project Name
+</th>
+
+
+
+<th>
+Institution
+</th>
+
+
+
+<th>
+Status
+</th>
+<th>Team Members</th>
+<th>Collaborations</th>
+<th>Action</th>
+
+</tr>
+
+
+</thead>
+
+
+<tbody>
+
+
+
+{% if projects %}
+
+
+
+{% for project in projects %}
+
+
+
+<tr>
+
+
+
+<td>
+{{ loop.index }}
+</td>
+
+
+
+
+<td>
+{{ project.project_name }}
+</td>
+
+
+
+
+
+<td>
+{{ project.institution_name }}
+</td>
+
+
+
+
+
+<td>
+{{ project.status }}
+</td>
+
+
+
+
+
+<td>
+{{ project.team_count }}
+</td>
+
+<td>
+    {{ project.collaboration_count }}
+</td>
+
+
+
+<td>
+
+<div class="action-buttons">
+
+
+{% if project.status == "Planned" %}
+
+<a href="{{ url_for('manage_team', project_id=project.id) }}">
+<button class="action-btn assign-btn">
+Assign Team
+</button>
+</a>
+
+
+<a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
+<button class="action-btn collab-btn">
+Add Collaboration
+</button>
+</a>
+
+
+{% elif project.status == "Ongoing" %}
+
+<a href="{{ url_for('manage_team', project_id=project.id) }}">
+    <button class="action-btn assign-btn">
+        Manage Team
+    </button>
+</a>
+
+<a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
+    <button class="action-btn collab-btn">
+        Manage Collaboration
+    </button>
+</a>
+
+
+{% elif project.status == "Completed" %}
+
+
+<a href="{{ url_for('manage_team', project_id=project.id) }}">
+<button class="action-btn assign-btn">
+View Team
+</button>
+</a>
+
+
+<a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
+<button class="action-btn collab-btn">
+View Collaboration
+</button>
+</a>
+
+
+{% endif %}
+
+
+</div>
+
+</td>
+
+
+
+</tr>
+
+
+
+
+{% endfor %}
+
+
+
+
+
+{% else %}
+
+
+
+
+<tr>
+
+
+<td colspan="6" class="empty">
+
+No Projects Found
+
+</td>
+
+
+</tr>
+
+
+
+
+
+{% endif %}
+
+
+
+
+
+</tbody>
+
+
+</table>
+
+
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ================= SCRIPT ================= -->
+
+
+<script>
+
+function searchCollaboration(){
+
+let input = document.getElementById("collaborationSearch");
+
+let filter = input.value.toLowerCase();
+
+let rows = document.querySelector("table").getElementsByTagName("tr");
+
+for(let i = 1; i < rows.length; i++){
+
+    let cells = rows[i].getElementsByTagName("td");
+
+    if(cells.length > 0){
+
+        let project = cells[1].textContent.toLowerCase();
+
+        let status = cells[3].textContent.toLowerCase();
+
+        if(project.includes(filter) || status.includes(filter)){
+
+            rows[i].style.display = "";
+
+        }else{
+
+            rows[i].style.display = "none";
+
+        }
+    }
+}
+}
+
+
+</script>
+
+{% endblock %}

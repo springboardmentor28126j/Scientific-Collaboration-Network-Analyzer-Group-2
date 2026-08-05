@@ -5,7 +5,13 @@ __pycache__/
 
 # C extensions
 *.so
+*.pdf
+*.xlsx
+*.png
 
+__pycache__/
+venv/
+.env
 # Distribution / packaging
 .Python
 build/

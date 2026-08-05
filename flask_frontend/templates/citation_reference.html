@@ -1,0 +1,755 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/citation_reference.css') }}">
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="main" id="main">
+
+
+<!-- ================= TOP SECTION ================= -->
+
+<div class="top-section">
+
+    <div>
+        <h1>
+            Citation & Reference Management
+        </h1>
+
+        <p>
+            Manage publication citations and reference lists
+        </p>
+    </div>
+
+
+</div>
+
+
+
+<!-- ================= COUNT CARDS ================= -->
+
+
+<div class="stats-container">
+
+
+    <div class="stat-card">
+
+        <h3>
+            Total Citations
+        </h3>
+
+        <h2>
+            {{ citation_count }}
+        </h2>
+
+    </div>
+
+
+
+    <div class="stat-card">
+
+        <h3>
+            Total References
+        </h3>
+
+        <h2>
+            {{ reference_count }}
+        </h2>
+
+    </div>
+
+
+
+</div>
+
+
+
+
+
+<!-- ================= TABS ================= -->
+
+
+<div class="tab-container">
+
+
+<button class="tab-btn active"
+onclick="showSection('citationSection')">
+
+Citation Records
+
+</button>
+
+
+
+<button class="tab-btn"
+onclick="showSection('referenceSection')">
+
+Reference Lists
+
+</button>
+
+
+</div>
+
+
+
+
+
+<!-- ================= CITATION SECTION ================= -->
+
+
+<div id="citationSection"
+class="content-section">
+
+
+<div class="section-header">
+
+<h2>
+Citation Records
+</h2>
+
+<div class="header-actions">
+
+<input
+type="text"
+id="citationSearch"
+class="search-box"
+placeholder="Search citations..."
+onkeyup="searchCitation()">
+
+{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+<button class="add-btn"
+onclick="openCitationModal()">
+
++ Add Citation
+
+</button>
+
+{% endif %}
+
+</div>
+
+</div>
+
+
+
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>
+Cited Publication
+</th>
+
+
+<th>
+Citing Publication
+</th>
+
+
+<th>
+Action
+</th>
+
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for citation in citations %}
+
+
+<tr>
+
+
+<td>
+{{ citation.cited_publication_title }}
+</td>
+
+
+<td>
+{{ citation.publication_title }}
+</td>
+
+
+
+<td>
+
+
+{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+<a href="{{ url_for('delete_citation', citation_id=citation.id) }}"
+   onclick="return confirm('Are you sure you want to delete this citation?')">
+
+    <button class="delete-btn" type="button">
+        Delete
+    </button>
+
+</a>
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+{% if citations|length == 0 %}
+
+<tr>
+<td colspan="3" class="empty-message">
+No citation records found
+</td>
+</tr>
+
+{% endif %}
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= REFERENCE SECTION ================= -->
+
+
+<div id="referenceSection"
+class="content-section"
+style="display:none;">
+
+<div class="section-header">
+
+    <h2>Reference Lists</h2>
+
+    <div class="header-actions">
+
+        <input
+        type="text"
+        id="referenceSearch"
+        class="search-box"
+        placeholder="Search references..."
+        onkeyup="searchReference()">
+
+        {% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+        <button
+        class="add-btn"
+        onclick="openReferenceModal()">
+
+            + Add Reference
+
+        </button>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<table>
+<thead>
+
+
+<tr>
+
+<th>
+Publication
+</th>
+
+
+<th>
+Referenced Paper
+</th>
+
+<th>
+Author(s)
+</th>
+
+<th>
+Year
+</th>
+
+
+<th>
+DOI
+</th>
+
+
+<th>
+Action
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+
+{% for reference in references %}
+
+
+<tr>
+
+
+<td>
+{{ reference.publication_title }}
+</td>
+
+
+<td>
+{{ reference.reference_title }}
+</td>
+
+<td>
+{{ reference.author }}
+</td>
+
+<td>
+{{ reference.publication_year }}
+</td>
+
+
+<td>
+<a href="https://doi.org/{{ reference.doi }}"
+   target="_blank"
+   class="doi-link">
+
+{{ reference.doi }}
+
+</a>
+</td>
+
+
+
+<td>
+
+
+{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+<a href="{{ url_for('delete_reference', reference_id=reference.id) }}"
+   onclick="return confirm('Are you sure you want to delete this reference?')">
+
+    <button class="delete-btn" type="button">
+        Delete
+    </button>
+
+</a>
+
+{% endif %}
+
+
+</td>
+
+
+
+</tr>
+
+
+{% endfor %}
+
+{% if references|length == 0 %}
+
+<tr>
+<td colspan="6" class="empty-message">
+No reference records found
+</td>
+</tr>
+
+{% endif %}
+
+</tbody>
+
+
+</table>
+
+</div>
+
+
+</div>
+
+<!-- ================= ADD CITATION MODAL ================= -->
+
+<div id="citationModal" class="modal">
+
+
+<div class="modal-content">
+
+
+<span class="close" onclick="closeCitationModal()">
+&times;
+</span>
+
+
+<h2>
+Add Citation
+</h2>
+
+
+<form action="{{ url_for('add_citation') }}" method="POST">
+
+
+<label>
+Citing Publication
+</label>
+
+
+<select 
+    name="publication_id" 
+    id="citingPublication"
+    onchange="removeSelfCitation()"
+    required>
+
+<option value="">
+Select Publication
+</option>
+
+
+{% for publication in publications %}
+
+<option value="{{ publication.id }}">
+
+{{ publication.title }}
+
+</option>
+
+{% endfor %}
+
+
+</select>
+
+
+
+<label>
+Cited Publication
+</label>
+
+
+<select 
+    name="cited_publication_id"
+    id="citedPublication"
+    required>
+
+<option value="">
+Select Publication
+</option>
+
+
+{% for publication in cited_publications %}
+
+<option value="{{ publication.id }}">
+
+{{ publication.title }}
+
+</option>
+
+{% endfor %}
+
+
+</select>
+
+
+
+<button class="add-btn" type="submit">
+
+Add Citation
+
+</button>
+
+
+</form>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<!-- ================= ADD REFERENCE MODAL ================= -->
+
+
+<div id="referenceModal" class="modal">
+
+
+<div class="modal-content">
+
+
+<span class="close" onclick="closeReferenceModal()">
+&times;
+</span>
+
+
+<h2>
+Add Reference
+</h2>
+
+
+
+<form action="{{ url_for('add_reference') }}" method="POST">
+
+
+<label>
+Publication
+</label>
+
+
+<select name="publication_id" required>
+
+<option value="">
+Select Publication
+</option>
+
+
+{% for publication in publications %}
+
+<option value="{{ publication.id }}">
+
+{{ publication.title }}
+
+</option>
+
+{% endfor %}
+
+
+</select>
+
+
+
+<label>
+Reference Title
+</label>
+
+
+<input type="text" name="reference_title" required>
+
+
+
+<label>
+Author(s)
+</label>
+
+
+<input
+type="text"
+name="author"
+placeholder="Example: John Smith, Alice Brown"
+required>
+
+
+<label>
+Publication Year
+</label>
+
+
+<input type="number" name="publication_year" required>
+
+
+
+<label>
+DOI
+</label>
+
+
+<input type="text" name="doi" required>
+
+
+
+<button class="add-btn" type="submit">
+
+Add Reference
+
+</button>
+
+
+</form>
+
+
+</div>
+
+</div>
+
+<script>
+
+
+function showSection(section) {
+
+    document.getElementById("citationSection").style.display = "none";
+    document.getElementById("referenceSection").style.display = "none";
+
+    document.getElementById(section).style.display = "block";
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+    });
+
+    if(section === "citationSection"){
+        document.querySelectorAll(".tab-btn")[0].classList.add("active");
+    } else {
+        document.querySelectorAll(".tab-btn")[1].classList.add("active");
+    }
+}
+
+function openCitationModal(){
+
+document.getElementById("citationModal").style.display="block";
+
+}
+
+
+
+function closeCitationModal(){
+
+document.getElementById("citationModal").style.display="none";
+
+}
+
+
+
+function openReferenceModal(){
+
+document.getElementById("referenceModal").style.display="block";
+
+}
+
+
+
+function closeReferenceModal(){
+
+document.getElementById("referenceModal").style.display="none";
+
+}
+
+function searchCitation(){
+
+    let input = document.getElementById("citationSearch");
+    let filter = input.value.toLowerCase();
+
+    let table = document.querySelector("#citationSection table");
+    let rows = table.getElementsByTagName("tr");
+
+
+    for(let i = 1; i < rows.length; i++){
+
+        let text = rows[i].innerText.toLowerCase();
+
+        if(text.includes(filter)){
+            rows[i].style.display = "";
+        }
+        else{
+            rows[i].style.display = "none";
+        }
+
+    }
+
+}
+
+
+
+function searchReference(){
+
+    let input = document.getElementById("referenceSearch");
+    let filter = input.value.toLowerCase();
+
+    let table = document.querySelector("#referenceSection table");
+    let rows = table.getElementsByTagName("tr");
+
+
+    for(let i = 1; i < rows.length; i++){
+
+        let text = rows[i].innerText.toLowerCase();
+
+        if(text.includes(filter)){
+            rows[i].style.display = "";
+        }
+        else{
+            rows[i].style.display = "none";
+        }
+
+    }
+
+}
+function removeSelfCitation(){
+
+    let citing = document.getElementById(
+        "citingPublication"
+    );
+
+    let cited = document.getElementById(
+        "citedPublication"
+    );
+
+
+    let selectedValue = citing.value;
+
+
+    for(let i = 0; i < cited.options.length; i++){
+
+        let option = cited.options[i];
+
+
+        if(option.value === selectedValue){
+
+            option.style.display = "none";
+
+            if(cited.value === selectedValue){
+
+                cited.value = "";
+
+            }
+
+        }
+
+        else{
+
+            option.style.display = "block";
+
+        }
+
+    }
+
+}
+</script>
+
+
+
+{% endblock %}

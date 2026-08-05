@@ -105,15 +105,27 @@
 
 <div id="institutionField" style="display:none;">
 
-    <label for="institution_name">
-        Institution Name
+    <label for="institution_id">
+        Institution
     </label>
 
-    <input
-        type="text"
-        id="institution_name"
-        name="institution_name"
-        placeholder="Enter Institution Name">
+    <select
+        id="institution_id"
+        name="institution_id">
+
+        <option value="">
+            Select Institution
+        </option>
+
+        {% for institution in institutions %}
+
+        <option value="{{ institution.id }}">
+            {{ institution.name }}
+        </option>
+
+        {% endfor %}
+
+    </select>
 
 </div>
         <button type="submit">

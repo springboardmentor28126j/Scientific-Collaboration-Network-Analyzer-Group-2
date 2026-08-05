@@ -1,0 +1,407 @@
+.main{
+    padding:30px;
+}
+
+/* ================= TOP ================= */
+
+.top-section{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.top-section h1{
+    color:#1e3a8a;
+}
+
+.search-box input{
+    width:260px;
+    padding:10px 15px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    outline:none;
+    font-size:15px;
+}
+
+/* ================= GRID ================= */
+
+.project-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:25px;
+}
+
+/* ================= CARD ================= */
+
+.project-card{
+    background:#fff;
+    border-radius:12px;
+    padding:22px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+    transition:.3s;
+}
+
+.project-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+}
+
+.project-card h2{
+    color:#1e3a8a;
+    margin-bottom:18px;
+    font-size:22px;
+}
+
+.project-card p{
+    margin:10px 0;
+    font-size:15px;
+}
+
+/* ================= STATUS ================= */
+
+.status{
+    padding:5px 12px;
+    border-radius:20px;
+    color:white;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.status.planned{
+    background:#f59e0b;
+}
+
+.status.ongoing{
+    background:#2563eb;
+}
+
+.status.completed{
+    background:#16a34a;
+}
+
+/* ================= BUTTON ================= */
+
+.view-btn{
+    width:100%;
+    margin-top:18px;
+    padding:11px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:15px;
+    transition:.3s;
+}
+
+.view-btn:hover{
+    background:#1d4ed8;
+}
+
+/* ================= EMPTY ================= */
+
+.empty-card{
+    background:white;
+    padding:40px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow:0 4px 15px rgba(0,0,0,.08);
+}
+
+.empty-card h2{
+    color:#1e3a8a;
+    margin-bottom:10px;
+}
+/* ================================================= */
+/*                DETAILS DASHBOARD                  */
+/* ================================================= */
+
+
+.details-card{
+
+    margin-top:30px;
+    background:#ffffff;
+    padding:35px;
+    border-radius:18px;
+    box-shadow:0 6px 25px rgba(0,0,0,0.08);
+
+}
+
+
+/* HEADER */
+
+.details-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-bottom:25px;
+    border-bottom:1px solid #e5e7eb;
+
+}
+
+
+.details-header h1{
+
+    color:#1e3a8a;
+    font-size:30px;
+    margin:0;
+
+}
+
+
+
+
+/* SECTION TITLES */
+
+.section-title{
+
+    margin-top:30px;
+    margin-bottom:15px;
+
+    font-size:20px;
+    font-weight:700;
+    color:#1e293b;
+
+}
+
+
+
+
+
+/* PROJECT INFORMATION */
+
+
+.info-card{
+
+    background:#f8fafc;
+    padding:25px;
+    border-radius:15px;
+
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+
+}
+
+
+
+.info-card label{
+
+    color:#64748b;
+    font-size:13px;
+    font-weight:600;
+
+}
+
+
+.info-card p{
+
+    margin:5px 0;
+    font-size:17px;
+    color:#0f172a;
+
+}
+
+
+
+.date-row{
+
+    display:flex;
+    gap:100px;
+
+}
+
+
+
+
+
+
+
+/* DESCRIPTION */
+
+
+.description-card{
+
+    background:#f8fafc;
+    padding:22px;
+    border-radius:15px;
+
+    color:#475569;
+    line-height:1.7;
+
+}
+
+
+
+
+
+
+/* TEAM CARDS */
+
+
+.team-grid{
+
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+
+}
+
+
+
+.team-card{
+
+    background:white;
+    border:1px solid #e2e8f0;
+
+    padding:22px;
+    border-radius:15px;
+
+    text-align:center;
+
+    transition:.3s;
+
+}
+
+
+
+.team-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+
+
+.member-icon{
+
+    font-size:35px;
+    margin-bottom:10px;
+
+}
+
+
+
+.team-card h3{
+
+    margin:8px 0;
+    color:#1e3a8a;
+
+}
+
+
+
+.team-card span{
+
+    display:inline-block;
+
+    padding:6px 14px;
+
+    border-radius:20px;
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+    font-size:13px;
+    font-weight:600;
+
+}
+
+
+
+
+
+/* INSTITUTION CARDS */
+
+
+.institution-grid{
+
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+
+}
+
+
+
+.institution-card{
+
+    width:260px;
+
+    background:#f8fafc;
+
+    padding:22px;
+
+    border-radius:15px;
+
+    text-align:center;
+
+    border:1px solid #e2e8f0;
+
+}
+
+
+
+.institution-card:hover{
+
+    box-shadow:0 6px 15px rgba(0,0,0,.08);
+
+}
+
+
+
+.building{
+
+    font-size:35px;
+    margin-bottom:10px;
+
+}
+
+
+
+.institution-card h3{
+
+    color:#334155;
+    font-size:16px;
+
+}
+
+
+
+
+
+
+/* RESPONSIVE */
+
+
+@media(max-width:900px){
+
+
+.project-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.team-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.date-row{
+
+    flex-direction:column;
+    gap:10px;
+
+}
+
+
+}

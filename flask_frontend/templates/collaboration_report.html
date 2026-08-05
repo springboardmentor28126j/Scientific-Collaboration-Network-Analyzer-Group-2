@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/reports.css') }}">
+
+{% endblock %}
+
+
+
+
+{% block content %}
+
+
+
+<div class="main" id="main">
+
+
+
+<!-- ================= TOP SECTION ================= -->
+
+
+<div class="top-section">
+
+
+    <div>
+
+        <h1>
+            Collaboration Report
+        </h1>
+
+
+        <p>
+            Analyze project collaborations and researcher participation.
+        </p>
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+<!-- ================= COLLABORATION REPORT ================= -->
+
+
+
+<div class="report-section">
+
+
+
+<h2>
+    Project Collaboration Overview
+</h2>
+
+
+
+
+
+<!-- Chart -->
+
+
+<div class="chart-box">
+
+
+<canvas id="collaborationChart"></canvas>
+
+
+</div>
+
+
+
+
+
+
+<!-- Table -->
+
+
+<h3>
+    Collaboration Summary
+</h3>
+
+
+
+
+<table>
+
+
+
+<thead>
+
+
+<tr>
+
+
+<th>
+Project Name
+</th>
+
+<th>
+Institution
+</th>
+
+
+<th>
+Researchers
+</th>
+
+
+</tr>
+
+
+
+</thead>
+
+
+
+
+
+<tbody>
+
+
+
+
+{% for report in collaboration_report %}
+
+
+
+<tr>
+
+
+
+<td class="project-name">
+
+{{ report.project }}
+
+</td>
+
+
+
+<td>
+
+{{ report.institution }}
+
+</td>
+
+
+
+<td>
+
+{{ report.researchers }}
+
+</td>
+
+
+
+</tr>
+
+
+
+
+{% endfor %}
+
+
+
+
+</tbody>
+
+
+
+</table>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= EXPORT ================= -->
+
+
+
+<div class="export-section">
+
+
+<h2>
+Export Report
+</h2>
+
+
+
+<p>
+Download collaboration analytics report.
+</p>
+
+
+
+<a href="{{ url_for('collaboration_report_pdf') }}"
+class="export-btn">
+Export PDF
+</a>
+
+
+<a href="{{ url_for('collaboration_report_excel') }}"
+class="export-btn">
+Export Excel
+</a>
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+{% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const projects = [
+
+{% for report in collaboration_report %}
+
+"{{ report.project }}",
+
+{% endfor %}
+
+];
+
+
+const researcherCount = [
+
+{% for report in collaboration_report %}
+
+{{ report.researchers }},
+
+{% endfor %}
+
+];
+
+
+// Remove projects with no researchers
+const filteredProjects = projects
+.map((project,index)=>({
+    project: project,
+    researchers: researcherCount[index]
+}))
+.filter(item => item.researchers > 0);
+
+
+const chartProjects = filteredProjects.map(item => item.project);
+
+const chartResearchers = filteredProjects.map(item => item.researchers);
+
+
+
+
+// Chart
+const collaborationChart = new Chart(
+
+document.getElementById("collaborationChart"),
+
+{
+
+type:"bar",
+
+
+data:{
+
+labels: chartProjects,
+
+
+datasets:[
+
+{
+
+label:"Researchers",
+
+data: chartResearchers,
+
+backgroundColor:"#2563EB"
+
+}
+
+]
+
+},
+
+
+
+options:{
+
+responsive:true,
+
+maintainAspectRatio:false,
+
+
+plugins:{
+
+
+legend:{
+
+display:false
+
+},
+
+
+title:{
+
+
+display:true,
+
+text:"Researchers per Project"
+
+}
+
+
+},
+
+
+
+scales:{
+
+
+
+y:{
+
+
+beginAtZero:true,
+
+
+ticks:{
+
+
+precision:0
+
+
+},
+
+
+title:{
+
+
+display:true,
+
+
+text:"Number of Researchers"
+
+
+}
+
+
+},
+
+
+
+
+x:{
+
+
+title:{
+
+
+display:true,
+
+
+text:"Project Name"
+
+
+},
+
+
+
+ticks:{
+
+
+maxRotation:0,
+
+minRotation:0,
+
+
+callback:function(value){
+
+
+let name=this.getLabelForValue(value);
+
+
+
+if(name.length > 15){
+
+
+return [
+
+name.substring(0,15),
+
+name.substring(15)
+
+];
+
+
+}
+
+
+return name;
+
+
+}
+
+
+}
+
+
+}
+
+
+
+}
+
+
+}
+
+
+
+}
+
+);
+setTimeout(() => {
+    collaborationChart.resize();
+}, 300);
+
+</script>
+
+{% endblock %}

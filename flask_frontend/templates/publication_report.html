@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/reports.css') }}">
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="main" id="main">
+
+
+<!-- ================= TOP SECTION ================= -->
+
+<div class="top-section">
+
+    <div>
+
+        <h1>
+            Publication Report
+        </h1>
+
+        <p>
+            Analyze publication statistics by year and publication status.
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- ================= PUBLICATION REPORT ================= -->
+
+<div class="report-section">
+
+    <h2>
+        Publication Status Analysis
+    </h2>
+
+
+    <!-- Chart -->
+
+    <div class="chart-box">
+
+        <canvas id="publicationChart"></canvas>
+
+    </div>
+
+
+
+    <!-- Table -->
+
+    <h3>
+        Publication Summary
+    </h3>
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>Year</th>
+
+                <th>Total Publications</th>
+
+                <th>Published</th>
+
+                <th>Submitted</th>
+
+                <th>Draft</th>
+
+                <th>Archived</th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+        {% for report in publication_report %}
+
+            <tr>
+
+                <td>{{ report.year }}</td>
+
+                <td>{{ report.total_publications }}</td>
+
+                <td>{{ report.published }}</td>
+
+                <td>{{ report.submitted }}</td>
+
+                <td>{{ report.draft }}</td>
+
+                <td>{{ report.archived }}</td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+
+<!-- ================= EXPORT ================= -->
+
+<div class="export-section">
+
+    <h2>
+        Export Report
+    </h2>
+
+    <p>
+        Download the publication report.
+    </p>
+
+<a href="{{ url_for('publication_report_pdf') }}"
+class="export-btn">
+Export PDF
+</a>
+
+
+<a href="{{ url_for('publication_report_excel') }}"
+class="export-btn">
+Export Excel
+</a>
+
+</div>
+
+
+</div>
+
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const publicationYears = [
+
+{% for report in publication_report %}
+
+"{{ report.year }}",
+
+{% endfor %}
+
+];
+
+const published = [
+
+{% for report in publication_report %}
+
+{{ report.published }},
+
+{% endfor %}
+
+];
+
+const submitted = [
+
+{% for report in publication_report %}
+
+{{ report.submitted }},
+
+{% endfor %}
+
+];
+
+const draft = [
+
+{% for report in publication_report %}
+
+{{ report.draft }},
+
+{% endfor %}
+
+];
+
+const archived = [
+
+{% for report in publication_report %}
+
+{{ report.archived }},
+
+{% endfor %}
+
+];
+
+new Chart(
+
+document.getElementById("publicationChart"),
+
+{
+
+type: "bar",
+
+data: {
+
+labels: publicationYears,
+
+datasets: [
+
+{
+
+label: "Published",
+
+data: published,
+
+backgroundColor: "#2E8B57"
+
+},
+
+{
+
+label: "Submitted",
+
+data: submitted,
+
+backgroundColor: "#1E90FF"
+
+},
+
+{
+
+label: "Draft",
+
+data: draft,
+
+backgroundColor: "#F4B400"
+
+},
+
+{
+
+label: "Archived",
+
+data: archived,
+
+backgroundColor: "#808080"
+
+}
+
+]
+
+},
+
+options: {
+
+responsive: true,
+
+plugins: {
+
+legend: {
+
+position: "top"
+
+},
+
+title: {
+
+display: true,
+
+text: "Publication Status by Year"
+
+}
+
+},
+
+scales: {
+
+x: {
+
+title: {
+
+display: true,
+
+text: "Publication Year"
+
+}
+
+},
+
+y: {
+
+beginAtZero: true,
+
+ticks: {
+
+precision: 0,
+
+stepSize: 1
+
+},
+
+title: {
+
+display: true,
+
+text: "Number of Publications"
+
+}
+
+}
+
+}
+
+}
+
+}
+
+);
+
+</script>
+
+{% endblock %}

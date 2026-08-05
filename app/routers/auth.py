@@ -23,6 +23,14 @@ def get_db():
 @router.post("/register", response_model=UserResponse)
 def register(user: UserRegister, db: Session = Depends(get_db)):
 
+    # Check empty password
+    if not user.password or user.password.strip() == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Password is required"
+        )
+
+
     # Check if email already exists
     existing_user = db.query(User).filter(
         User.email == user.email
@@ -33,6 +41,7 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
             status_code=400,
             detail="Email already registered"
         )
+
 
     # Allowed roles
     allowed_roles = [
@@ -47,26 +56,41 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
             detail="Invalid role selected."
         )
 
-    # Institution Admin validation
+
+    # ---------------- Institution Admin Validation ----------------
+
+    institution = None
+
     if user.role == "institution_admin":
 
-        if not user.institution_name or user.institution_name.strip() == "":
+        if not user.institution_id:
             raise HTTPException(
                 status_code=400,
-                detail="Institution Name is required."
+                detail="Institution selection is required."
             )
 
-        existing_institution = db.query(Institution).filter(
-            Institution.name == user.institution_name.strip()
+
+        institution = db.query(Institution).filter(
+            Institution.id == user.institution_id
         ).first()
 
-        if existing_institution:
+
+        if not institution:
+            raise HTTPException(
+                status_code=400,
+                detail="Institution not found. Please contact the System Admin."
+            )
+
+
+        if institution.user_id is not None:
             raise HTTPException(
                 status_code=400,
                 detail="This institution already has an Institution Admin."
             )
 
-    # Create User
+
+    # ---------------- Create User ----------------
+
     new_user = User(
         full_name=user.full_name,
         email=user.email,
@@ -75,24 +99,41 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     )
 
     db.add(new_user)
+
     db.commit()
+
     db.refresh(new_user)
 
-    # Automatically create Institution
+
+
+    # ---------------- Link Researcher ----------------
+
+    if user.role == "researcher":
+
+        existing_researcher = db.query(Researcher).filter(
+            Researcher.email == user.email
+        ).first()
+
+
+        if existing_researcher:
+
+            existing_researcher.user_id = new_user.id
+
+            db.commit()
+
+
+
+    # ---------------- Link Institution Admin ----------------
+
     if user.role == "institution_admin":
 
-        institution = Institution(
-            user_id=new_user.id,
-            name=user.institution_name.strip(),
-            institution_type="",
-            location="",
-            website="",
-            phone=""
-        )
+        institution.user_id = new_user.id
 
-        db.add(institution)
         db.commit()
+
         db.refresh(institution)
+
+
 
     return new_user
     
@@ -124,7 +165,6 @@ def login(
         )
 
 
-
     access_token = create_access_token(
         data={
             "sub": db_user.email,
@@ -134,9 +174,9 @@ def login(
     )
 
 
-
     researcher_id = None
     institution_name = None
+    institution_id = None
 
 
 
@@ -170,6 +210,8 @@ def login(
 
             institution_name = institution.name
 
+            institution_id = institution.id
+
 
 
     return {
@@ -186,6 +228,14 @@ def login(
 
         "researcher_id": researcher_id,
 
-        "institution": institution_name
+        "institution": institution_name,
+
+        "institution_id": institution_id
 
     }
+@router.get("/users", response_model=list[UserResponse])
+def get_all_users(
+    db: Session = Depends(get_db)
+):
+
+    return db.query(User).all()

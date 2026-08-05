@@ -1,0 +1,425 @@
+/* =====================================
+   REPORTS PAGE
+===================================== */
+
+.report-section,
+.export-section{
+
+    background:#fff;
+    padding:25px;
+    margin-top:25px;
+
+    border-radius:16px;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+
+}
+
+.report-section h2,
+.export-section h2{
+
+    color:#1E3C72;
+    margin-bottom:15px;
+
+}
+
+.chart-description{
+
+    color:#64748B;
+    font-size:15px;
+    line-height:1.6;
+    margin-bottom:20px;
+
+}
+
+
+/* =====================================
+   CHART
+===================================== */
+.chart-box{
+
+    width:50%;
+
+    height:400px;
+
+    background:#fff;
+
+    border:1px solid #E5E7EB;
+
+    border-radius:16px;
+
+    padding:24px;
+
+    margin:25px auto;
+
+}
+.chart-container{
+
+    position:relative;
+
+    width:100%;
+
+    max-height:700px;
+
+    overflow-y:auto;
+
+}
+
+.chart-container canvas{
+
+    width:100% !important;
+
+    height:100% !important;
+
+}
+
+
+/* =====================================
+   TABLE
+===================================== */
+
+.report-section table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin-top:25px;
+
+    min-width:700px;
+
+}
+
+.report-section th{
+
+    background:#1E3C72;
+
+    color:#fff;
+
+    padding:14px;
+
+    text-align:center;
+
+}
+
+.report-section td{
+
+    padding:14px;
+
+    text-align:center;
+
+    border-bottom:1px solid #E5E7EB;
+
+}
+
+.report-section tr:hover{
+
+    background:#F8FAFC;
+
+}
+
+table{
+
+    overflow-x:auto;
+
+}
+
+
+/* =====================================
+   SUMMARY CARDS
+===================================== */
+
+.summary-box{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:18px;
+
+    margin-top:30px;
+
+}
+
+.summary-card{
+
+    background:white;
+
+    border:1px solid #E2E8F0;
+
+    border-radius:14px;
+
+    padding:22px;
+
+    text-align:center;
+
+    box-shadow:
+    0 4px 12px rgba(0,0,0,0.05);
+
+    transition:.3s;
+
+}
+
+
+.summary-card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+.summary-card span{
+
+    display:block;
+
+    color:#64748B;
+
+    margin-bottom:8px;
+
+}
+
+.summary-card strong{
+
+    font-size:28px;
+
+    color:#0F172A;
+
+}
+
+
+/* =====================================
+   EXPORT
+===================================== */
+
+.export-section{
+
+    text-align:center;
+
+}
+
+.export-section p{
+
+    color:#666;
+
+    margin-bottom:20px;
+
+}
+
+.export-btn{
+
+    background:#1E3C72;
+
+    color:#fff;
+
+    border:none;
+
+    padding:12px 28px;
+
+    margin:8px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+.export-btn:hover{
+
+    background:#2A5298;
+
+}
+
+
+/* =====================================
+   REPORT DASHBOARD
+===================================== */
+
+/* ================= REPORT GRID ================= */
+
+
+.reports-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(280px,1fr));
+
+    gap:30px;
+
+    margin-top:35px;
+
+}
+
+
+
+/* ================= REPORT CARD ================= */
+
+
+.report-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:30px;
+
+    min-height:220px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:space-between;
+
+
+    box-shadow:
+
+    0 6px 18px rgba(0,0,0,0.08);
+
+
+    transition:all 0.3s ease;
+
+    border-left:5px solid #1E3C72;
+
+}
+
+
+
+.report-card:hover{
+
+
+    transform:translateY(-8px);
+
+
+    box-shadow:
+
+    0 12px 30px rgba(0,0,0,0.15);
+
+
+}
+
+
+
+/* ================= TITLE ================= */
+
+
+.report-card h2{
+
+
+    color:#1E3C72;
+
+    font-size:22px;
+
+    margin-bottom:15px;
+
+
+}
+
+
+
+/* ================= DESCRIPTION ================= */
+
+
+.report-card p{
+
+
+    color:#666;
+
+    line-height:1.6;
+
+    font-size:15px;
+
+
+    flex-grow:1;
+
+}
+
+
+
+/* ================= BUTTON ================= */
+
+
+.report-btn{
+
+
+    display:inline-block;
+
+
+    width:max-content;
+
+
+    margin-top:20px;
+
+
+    padding:10px 22px;
+
+
+    background:#1E3C72;
+
+
+    color:white;
+
+
+    text-decoration:none;
+
+
+    border-radius:8px;
+
+
+    font-size:14px;
+
+
+    transition:0.3s;
+
+
+}
+
+
+
+.report-btn:hover{
+
+
+    background:#16305c;
+
+
+}
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media(max-width:900px){
+
+    .reports-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .summary-box{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+@media(max-width:600px){
+
+    .summary-box{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+.project-name{
+
+    text-align:left !important;
+
+}
+.chart-box{
+
+    overflow-x:auto;
+
+}

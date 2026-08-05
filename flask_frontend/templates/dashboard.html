@@ -1,159 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
+{% block extra_css %}
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/dashboard.css') }}">
 
-    <title>Dashboard | Scientific Collaboration Network Analyzer</title>
+{% endblock %}
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/dashboard.css') }}">
-
-</head>
-
-
-<body>
-
-
-<!-- =================== TOP NAVBAR =================== -->
-
-<div class="navbar">
-
-    <div class="navbar-left">
-
-        <button class="menu-btn" onclick="toggleSidebar()">
-            ☰
-        </button>
-
-        <div class="project-title">
-            Scientific Collaboration Network Analyzer
-        </div>
-
-    </div>
-
-
-    <div class="navbar-right">
-
-        Welcome, {{ session["full_name"] }}
-
-    </div>
-
-</div>
-
-
-
-<!-- =================== SIDEBAR =================== -->
-
-
-<div class="sidebar" id="sidebar">
-
-
-<a href="{{ url_for('dashboard') }}">
-    Dashboard
-</a>
-
-
-<!-- Researcher Menu -->
-{% if session["role"] in ["institution_admin", "system_admin"] %}
-
-<a href="{{ url_for('researchers') }}">
-    Researchers
-</a>
-
-{% endif %}
-
-
-
-<!-- Publications -->
-{% if session["role"] in ["researcher", "institution_admin", "reviewer", "system_admin"] %}
-
-<a href="{{ url_for('publications') }}">
-    Publications
-</a>
-
-{% endif %}
-
-
-
-<!-- Institutions -->
-{% if session["role"] in ["system_admin"] %}
-
-<a href="{{ url_for('institutions') }}">
-    Institutions
-</a>
-
-{% endif %}
-
-
-
-<!-- Collaborations -->
-{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
-
-<a href="#">
-    Collaborations
-</a>
-
-{% endif %}
-
-
-
-<!-- Conferences -->
-{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
-
-<a href="{{ url_for('conferences') }}">
-    Conferences
-</a>
-
-{% endif %}
-
-
-
-
-<!-- System Admin Only -->
-
-{% if session["role"] == "system_admin" %}
-
-
-
-<a href="#">
-    Reports
-</a>
-
-{% endif %}
-
-
-
-<!-- Profile -->
-
-<!-- Profile -->
-
-{% if session["role"] == "researcher" %}
-
-<a href="{{ url_for('researcher_profile') }}">
-    Profile
-</a>
-
-{% elif session["role"] == "institution_admin" %}
-
-<a href="{{ url_for('institution_profile') }}">
-    Profile
-</a>
-
-{% endif %}
-
-<a href="{{ url_for('logout') }}">
-    Logout
-</a>
-
-
-</div>
-
-
-
-
-
+{% block content %}
 <!-- =================== MAIN CONTENT =================== -->
 
 
@@ -172,50 +26,83 @@ Dashboard
 
 {% if session["role"] == "researcher" %}
 
-
 <div class="cards">
 
+<div class="stat-card">
 
-<div class="card">
+    <div class="stat-icon">
+        📄
+    </div>
 
-<h3>
-My Publications
-</h3>
+    <div class="stat-content">
+        <h3>My Publications</h3>
 
-<h1>
-{{ publication_count|default(0) }}
-</h1>
+        <h1>
+            {{ publication_count|default(0) }}
+        </h1>
+
+        <p>Research Papers</p>
+    </div>
+
+</div>
+
+<div class="stat-card">
+
+    <div class="stat-icon">
+        📁
+    </div>
+
+    <div class="stat-content">
+
+        <h3>My Projects</h3>
+
+        <h1>
+            {{ project_count|default(0) }}
+        </h1>
+
+        <p>
+            Research Projects
+        </p>
+
+    </div>
+
+</div>
+<div class="stat-card">
+
+    <div class="stat-icon">
+        🤝
+    </div>
+
+    <div class="stat-content">
+        <h3>My Collaborations</h3>
+
+        <h1>
+            {{ collaboration_count|default(0) }}
+        </h1>
+
+        <p>Research Partners</p>
+    </div>
 
 </div>
 
 
+<div class="stat-card">
 
-<div class="card">
+    <div class="stat-icon">
+        🎤
+    </div>
 
-<h3>
-My Collaborations
-</h3>
+    <div class="stat-content">
+        <h3>My Conferences</h3>
 
-<h1>
-{{ collaboration_count|default(0) }}
-</h1>
+        <h1>
+            {{ conference_count|default(0) }}
+        </h1>
 
-</div>
-
-
-
-<div class="card">
-
-<h3>
-My Conferences
-</h3>
-
-<h1>
-{{ conference_count|default(0) }}
-</h1>
+        <p>Conference Events</p>
+    </div>
 
 </div>
-
 
 </div>
 
@@ -230,63 +117,113 @@ My Conferences
 
 <div class="cards">
 
+<div class="stat-card">
 
-<div class="card">
+<div class="stat-icon">
+👩‍🔬
+</div>
 
-<h3>
-Researchers
-</h3>
+<div class="stat-content">
+
+<h3>Researchers</h3>
 
 <h1>
 {{ researcher_count|default(0) }}
 </h1>
 
+<p>Total Researchers</p>
+
+</div>
+
 </div>
 
 
+<div class="stat-card">
 
-<div class="card">
+<div class="stat-icon">
+📚
+</div>
 
-<h3>
-Institution Publications
-</h3>
+<div class="stat-content">
+
+<h3>Publications</h3>
 
 <h1>
 {{ publication_count|default(0) }}
 </h1>
 
+<p>Published Research</p>
+
+</div>
+
 </div>
 
 
+<div class="stat-card">
 
-<div class="card">
+<div class="stat-icon">
+🏢
+</div>
 
-<h3>
-Departments
-</h3>
+<div class="stat-content">
+
+<h3>Departments</h3>
 
 <h1>
 {{ department_count|default(0) }}
 </h1>
 
+<p>Academic Departments</p>
+
 </div>
 
-<div class="card">
+</div>
 
-<h3>
-Conferences
-</h3>
+
+<div class="stat-card">
+
+    <div class="stat-icon">
+        📁
+    </div>
+
+    <div class="stat-content">
+
+        <h3>
+             Active Projects
+        </h3>
+
+        <h1>
+            {{ project_count|default(0) }}
+        </h1>
+
+        <p>
+            Research Projects
+        </p>
+
+    </div>
+
+</div>
+<div class="stat-card">
+
+<div class="stat-icon">
+🤝
+</div>
+
+<div class="stat-content">
+
+<h3>Collaboration Statistics</h3>
 
 <h1>
-{{ conference_count|default(0) }}
+{{ collaboration_count|default(0) }}
 </h1>
 
+<p>
+Research Collaborations
+</p>
+
 </div>
 
-
 </div>
-
-
 
 
 <!-- ================= REVIEWER ================= -->
@@ -295,40 +232,50 @@ Conferences
 {% elif session["role"] == "reviewer" %}
 
 
-
 <div class="cards">
 
+<div class="stat-card">
 
-<div class="card">
+<div class="stat-icon">
+⏳
+</div>
 
-<h3>
-Pending Reviews
-</h3>
+<div class="stat-content">
+
+<h3>Pending Reviews</h3>
 
 <h1>
 0
 </h1>
 
+<p>Awaiting Review</p>
+
+</div>
+
 </div>
 
 
+<div class="stat-card">
 
-<div class="card">
+<div class="stat-icon">
+✅
+</div>
 
-<h3>
-Reviewed Papers
-</h3>
+<div class="stat-content">
+
+<h3>Reviewed Papers</h3>
 
 <h1>
 0
 </h1>
 
+<p>Completed Reviews</p>
+
 </div>
 
-
 </div>
 
-
+</div>
 
 
 <!-- ================= SYSTEM ADMIN ================= -->
@@ -337,64 +284,90 @@ Reviewed Papers
 {% elif session["role"] == "system_admin" %}
 
 
-
 <div class="cards">
 
+<div class="stat-card">
+<div class="stat-icon">👥</div>
 
-<div class="card">
-
-<h3>
-Total Researchers
-</h3>
-
-<h1>
-{{ researcher_count|default(0) }}
-</h1>
+<div class="stat-content">
+<h3>Total Users</h3>
+<h1>{{ user_count|default(0) }}</h1>
+<p>Registered Users</p>
+</div>
 
 </div>
 
 
+<div class="stat-card">
+<div class="stat-icon">👩‍🔬</div>
 
-<div class="card">
-
-<h3>
-Total Publications
-</h3>
-
-<h1>
-{{ publication_count|default(0) }}
-</h1>
+<div class="stat-content">
+<h3>Total Researchers</h3>
+<h1>{{ researcher_count|default(0) }}</h1>
+<p>Active Researchers</p>
+</div>
 
 </div>
 
 
+<div class="stat-card">
+<div class="stat-icon">📄</div>
 
-<div class="card">
-
-<h3>
-Total Institutions
-</h3>
-
-<h1>
-{{ institution_count|default(0) }}
-</h1>
+<div class="stat-content">
+<h3>Total Publications</h3>
+<h1>{{ publication_count|default(0) }}</h1>
+<p>Research Papers</p>
+</div>
 
 </div>
 
 
+<div class="stat-card">
+<div class="stat-icon">🏛</div>
 
-<div class="card">
-
-<h3>
-Total Conferences
-</h3>
-
-<h1>
-{{ conference_count|default(0) }}
-</h1>
+<div class="stat-content">
+<h3>Total Institutions</h3>
+<h1>{{ institution_count|default(0) }}</h1>
+<p>Registered Institutions</p>
+</div>
 
 </div>
 
+
+<div class="stat-card">
+<div class="stat-icon">📁</div>
+
+<div class="stat-content">
+<h3>Total Projects</h3>
+<h1>{{ project_count|default(0) }}</h1>
+<p>Research Projects</p>
+</div>
+
+</div>
+
+
+<div class="stat-card">
+<div class="stat-icon">🤝</div>
+
+<div class="stat-content">
+<h3>Total Collaborations</h3>
+<h1>{{ collaboration_count|default(0) }}</h1>
+<p>Research Networks</p>
+</div>
+
+</div>
+
+
+<div class="stat-card">
+<div class="stat-icon">🎤</div>
+
+<div class="stat-content">
+<h3>Total Conferences</h3>
+<h1>{{ conference_count|default(0) }}</h1>
+<p>Academic Events</p>
+</div>
+
+</div>
 
 </div>
 
@@ -408,67 +381,82 @@ Total Conferences
 <!-- =================== ACTIVITY =================== -->
 
 
+<!-- =================== RECENT ACTIVITIES =================== -->
+
 <div class="activity">
 
-<h2>
-Recent Activities
-</h2>
+    <h2>
+        Recent Activities
+    </h2>
 
-<hr>
-
-{% if role == "researcher" %}
-
-<p>✓ Profile created successfully</p>
-<p>✓ Start adding publications and collaborations</p>
+    <hr>
 
 
-{% elif role == "institution_admin" %}
+    {% if activities %}
 
-<p>✓ Institution admin account created</p>
-<p>✓ Manage researchers and publications</p>
+    <div class="activity-list">
 
+        {% for activity in activities %}
 
-{% elif role == "reviewer" %}
-
-<p>✓ Reviewer account created</p>
-<p>✓ No publications assigned yet</p>
+        <div class="activity-item">
 
 
-{% elif role == "system_admin" %}
+            <div class="activity-icon">
 
-<p>✓ System admin logged in</p>
-<p>✓ User management is available</p>
+                {% if "publication" in activity.description.lower() %}
+                    📄
+
+                {% elif "project" in activity.description.lower() %}
+                    📁
+
+                {% elif "conference" in activity.description.lower() %}
+                    🎤
+
+                {% elif "collaboration" in activity.description.lower() %}
+                    🤝
+
+                {% else %}
+                    🔔
+
+                {% endif %}
+
+            </div>
 
 
-{% endif %}
 
+            <div class="activity-details">
+
+                <p>
+                    {{ activity.description }}
+                </p>
+
+                <small>
+                    {{ activity.created_at }}
+                </small>
+
+            </div>
+
+
+        </div>
+
+
+        {% endfor %}
+
+    </div>
+
+
+    {% else %}
+
+        <p class="no-activity">
+            No recent activities available
+        </p>
+
+
+    {% endif %}
 
 
 </div>
-
-
 </div>
 
 
-
-
-<!-- =================== JAVASCRIPT =================== -->
-
-
-<script>
-
-function toggleSidebar() {
-
-    document.getElementById("sidebar").classList.toggle("active");
-
-    document.getElementById("main").classList.toggle("shift");
-
-}
-
-</script>
-
-
-
-</body>
-
-</html>
+{% endblock %}

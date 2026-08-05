@@ -1,12 +1,13 @@
 from pydantic import BaseModel, EmailStr
-from datetime import date
+from datetime import date, datetime
+from typing import Optional
 
 class UserRegister(BaseModel):
     full_name: str
     email: EmailStr
     password: str
     role: str
-    institution_name: str | None = None
+    institution_id: int | None = None
 
 
 class UserLogin(BaseModel):
@@ -124,17 +125,15 @@ class InstitutionCreate(BaseModel):
     website: str | None = None
     phone: str | None = None
 
-
 class InstitutionUpdate(BaseModel):
     institution_type: str | None = None
-    location: str
+    location: str | None = None
     website: str | None = None
     phone: str | None = None
 
-
 class InstitutionResponse(BaseModel):
     id: int
-    user_id: int
+    user_id: int | None = None
     name: str
     institution_type: str | None = None
     location: str
@@ -240,6 +239,241 @@ class ConferenceRegistrationResponse(BaseModel):
 
     registration_date: date | None = None
 
+
+    class Config:
+        from_attributes = True
+
+# ==========================
+# Project Schemas
+# ==========================
+
+class ProjectBase(BaseModel):
+
+    project_name: str
+
+    description: Optional[str] = None
+
+    start_date: date
+
+    end_date: Optional[date] = None
+
+    status: str = "Planned"
+
+    institution_id: int
+
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+
+class ProjectUpdate(BaseModel):
+
+    project_name: Optional[str] = None
+
+    description: Optional[str] = None
+
+    start_date: Optional[date] = None
+
+    end_date: Optional[date] = None
+
+    status: Optional[str] = None
+
+    institution_id: Optional[int] = None
+
+
+
+class ProjectResponse(ProjectBase):
+
+    id: int
+
+    created_at: datetime
+
+    institution_name: Optional[str] = None
+
+
+    class Config:
+        from_attributes = True
+
+# ==========================
+# Researcher Collaboration View Schema
+# ==========================
+
+class TeamMemberDetails(BaseModel):
+
+    name: str
+
+    role: str
+
+
+class ResearcherCollaborationResponse(BaseModel):
+
+    id: int
+
+    project_name: str
+
+    institution_name: str | None = None
+
+    status: str
+
+    start_date: date
+
+    end_date: date | None = None
+
+    description: str | None = None
+
+
+    team_count: int
+
+    collaboration_count: int
+
+
+    team: list[TeamMemberDetails] = []
+
+    collaborating_institutions: list[str] = []
+
+
+    class Config:
+        from_attributes = True
+
+# ==========================
+# Project Member Schemas
+# ==========================
+
+class ProjectMemberBase(BaseModel):
+
+    project_id: int
+
+    researcher_id: int
+
+    role: str = "Team Member"
+
+
+class ProjectMemberCreate(ProjectMemberBase):
+    pass
+
+
+class ProjectMemberResponse(ProjectMemberBase):
+
+    id: int
+
+    researcher_name: str
+
+    assigned_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# ==========================
+# Institution Collaboration Schemas
+# ==========================
+
+class InstitutionCollaborationCreate(BaseModel):
+
+    project_id: int
+
+    collaborating_institution_id: int
+
+
+
+class InstitutionCollaborationResponse(BaseModel):
+
+    id: int
+
+    project_id: int
+
+    project_name: str
+
+    institution_id: int
+
+    institution_name: str
+
+    collaborating_institution_id: int
+
+    collaborating_institution_name: str
+
+    created_at: datetime
+
+
+    class Config:
+        from_attributes = True
+
+class CitationCreate(BaseModel):
+
+    publication_id: int
+
+    cited_publication_id: int
+
+
+
+class CitationResponse(BaseModel):
+
+    id: int
+
+    publication_id: int
+
+    cited_publication_id: int
+
+    created_at: datetime
+
+
+    class Config:
+        from_attributes = True
+
+class ReferenceCreate(BaseModel):
+
+    publication_id: int
+
+    reference_title: str
+
+    author: str | None = None
+
+    publication_year: int | None = None
+
+    doi: str | None = None
+
+
+
+class ReferenceResponse(BaseModel):
+
+    id: int
+
+    publication_id: int
+
+    reference_title: str
+
+    author: str | None = None
+
+    publication_year: int | None = None
+
+    doi: str | None = None
+
+    created_at: datetime
+
+
+    class Config:
+        from_attributes = True
+        
+class ActivityLogBase(BaseModel):
+
+    action: str
+
+    description: str
+
+
+class ActivityLogCreate(ActivityLogBase):
+
+    user_id: int
+
+
+class ActivityLogResponse(ActivityLogBase):
+
+    id: int
+
+    user_id: int
+
+    created_at: datetime
 
     class Config:
         from_attributes = True

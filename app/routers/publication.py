@@ -45,6 +45,7 @@ def create_publication(
     filename = None
 
     if file:
+
         filename = f"{uuid4()}_{file.filename}"
 
         file_path = os.path.join(
@@ -57,19 +58,43 @@ def create_publication(
 
 
     publication = schemas.PublicationCreate(
+
         researcher_id=researcher_id,
+
         title=title,
+
         publication_type=publication_type,
+
         journal_name=journal_name,
+
         conference_name=conference_name,
+
         publication_year=publication_year,
+
         doi=doi,
+
         status=status,
+
         publication_file=filename
+
     )
 
 
-    return crud.create_publication(db, publication)
+    new_publication = crud.create_publication(
+        db,
+        publication
+    )
+
+
+    crud.create_activity(
+        db=db,
+        user_id=current_user.id,
+        action="Publication Added",
+        description=f"Added publication '{new_publication.title}'"
+    )
+
+
+    return new_publication
 
 @router.get("/", response_model=list[schemas.PublicationResponse])
 def get_all_publications(

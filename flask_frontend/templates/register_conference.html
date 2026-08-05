@@ -1,78 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>Conference Registration</title>
-
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/common.css') }}">
-
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/form.css') }}">
-
-</head>
+{% extends "base.html" %}
 
 
-<body>
-
-
-<!-- NAVBAR -->
-
-<div class="navbar">
-
-<div class="navbar-left">
-
-<button class="menu-btn" onclick="toggleSidebar()">
-☰
-</button>
-
-
-<div class="project-title">
-Scientific Collaboration Network Analyzer
-</div>
-
-</div>
-
-
-<div class="navbar-right">
-
-Welcome, {{ session["full_name"] }}
-
-</div>
-
-</div>
-
-
-
-<!-- SIDEBAR -->
-
-<div class="sidebar" id="sidebar">
-
-
-<a href="{{ url_for('dashboard') }}">
-Dashboard
-</a>
-
-
-<a href="{{ url_for('conferences') }}" class="active">
-Conferences
-</a>
-
-
-<a href="{{ url_for('logout') }}">
-Logout
-</a>
-
-
-</div>
-
-
-
-
-
+{% block content %}
 <!-- MAIN -->
 
 <div class="main" id="main">
@@ -243,11 +172,6 @@ Register
 
 </div>
 
-
-
-
-
-
 <script>
 
 function fillPresentationTitle(){
@@ -269,17 +193,6 @@ function fillPresentationTitle(){
     ).value = title || "";
 
 }
-
-function toggleSidebar(){
-
-document.getElementById("sidebar").classList.toggle("active");
-
-document.getElementById("main").classList.toggle("shift");
-
-}
-
-
-
 
 function showPresentationFields(){
 
@@ -348,8 +261,4 @@ mode.value="";
 
 </script>
 
-
-
-</body>
-
-</html>
+{% endblock %}

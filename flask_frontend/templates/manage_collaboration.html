@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+<div class="main" id="main">
+
+
+<div class="top-section">
+
+<h1>
+Institution Collaboration
+</h1>
+
+</div>
+
+
+
+<div class="info-card">
+
+<p>
+<strong>Project:</strong> {{ project.project_name }}
+</p>
+
+
+<p>
+<strong>Main Institution:</strong> {{ project.institution_name }}
+</p>
+
+
+</div>
+
+
+
+
+<!-- ================= COLLABORATION MANAGEMENT ================= -->
+
+
+<div class="team-layout">
+
+
+
+<!-- ================= CURRENT COLLABORATIONS ================= -->
+
+
+<div class="team-card">
+
+
+<h2>
+Current Collaborations
+</h2>
+
+
+
+<div class="members-list">
+
+
+{% if collaborations %}
+
+
+
+{% for item in collaborations %}
+
+
+
+<div class="member-box">
+
+
+<div class="member-info">
+
+
+<h3>
+{{ item.collaborating_institution_name }}
+</h3>
+
+
+</div>
+
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+
+<div class="empty-team">
+
+🏢 No collaborations added yet.<br>
+Start by adding an institution collaboration.
+
+</div>
+
+
+
+{% endif %}
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================= ADD COLLABORATION ================= -->
+
+
+<div class="assign-card">
+
+
+<h2>
+
+{% if project.status == "Completed" %}
+
+View Collaboration
+
+{% else %}
+
+Add Institution Collaboration
+
+{% endif %}
+
+</h2>
+
+{% if project.status != "Completed" %}
+
+<p>
+Select another institution to collaborate on this project.
+</p>
+
+{% endif %}
+
+
+
+{% if project.status != "Completed" %}
+
+<form method="POST"
+action="{{ url_for('add_collaboration', project_id=project.id) }}">
+
+<label>
+Institution
+</label>
+
+<select name="institution_id" required>
+
+<option value="">
+Select Institution
+</option>
+
+{% for inst in institutions %}
+
+<option value="{{ inst.id }}">
+{{ inst.name }}
+</option>
+
+{% endfor %}
+
+</select>
+
+<button type="submit" class="save-btn">
+
++ Add Collaboration
+
+</button>
+
+</form>
+
+{% endif %}
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+{% endblock %}

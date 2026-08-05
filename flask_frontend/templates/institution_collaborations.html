@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/institution_collaborations.css') }}">
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="main" id="main">
+
+
+<div class="top-section">
+
+<h1>
+Institution Collaborations
+</h1>
+
+</div>
+
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+
+<th>Project</th>
+
+<th>Institution</th>
+
+<th>Collaborating Institution</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% if collaborations %}
+
+
+{% for item in collaborations %}
+
+
+<tr>
+
+
+<td>
+{{ loop.index }}
+</td>
+
+
+<td>
+{{ item.project_name }}
+</td>
+
+
+<td>
+{{ item.institution_name }}
+</td>
+
+
+<td>
+{{ item.collaborating_institution_name }}
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="4" class="empty">
+
+No Collaborations Found
+
+</td>
+
+</tr>
+
+
+{% endif %}
+
+
+</tbody>
+
+
+</table>
+
+
+
+</div>
+
+
+
+{% endblock %}

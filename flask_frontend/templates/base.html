@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>
+Scientific Collaboration Network Analyzer
+</title>
+
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/common.css') }}">
+
+{% block extra_css %}
+
+{% endblock %}
+
+</head>
+
+
+<body>
+
+
+<!-- ================= NAVBAR ================= -->
+
+
+<div class="navbar">
+
+
+<div class="navbar-left">
+
+
+<button class="menu-btn" onclick="toggleSidebar()">
+☰
+</button>
+
+
+
+<div class="project-title">
+
+Scientific Collaboration Network Analyzer
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="navbar-right">
+
+Welcome, {{ session["full_name"] }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================= SIDEBAR ================= -->
+
+
+<div class="sidebar" id="sidebar">
+
+
+
+<a href="{{ url_for('dashboard') }}">
+
+Dashboard
+
+</a>
+
+
+
+
+
+<!-- Researchers -->
+
+{% if session["role"] in ["institution_admin", "system_admin"] %}
+
+
+<a href="{{ url_for('researchers') }}">
+
+Researchers
+
+</a>
+
+
+{% endif %}
+
+
+
+
+
+<!-- Publications -->
+
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
+
+
+<a href="{{ url_for('publications') }}">
+
+Publications
+
+</a>
+
+
+{% endif %}
+
+
+
+
+
+<!-- Projects -->
+
+{% if session["role"] in ["institution_admin","system_admin"] %}
+
+<a href="{{ url_for('projects') }}">
+
+Projects
+
+</a>
+
+{% endif %}
+
+
+
+
+
+
+
+
+<!-- Institutions -->
+
+
+{% if session["role"] == "system_admin" %}
+
+
+<a href="{{ url_for('institutions') }}">
+
+Institutions
+
+</a>
+
+
+{% endif %}
+
+
+
+
+
+
+
+
+<!-- Collaborations -->
+
+{% if session["role"] == "researcher" %}
+
+<a href="{{ url_for('my_collaborations') }}">
+
+Collaborations
+
+</a>
+
+{% elif session["role"] in ["institution_admin", "system_admin"] %}
+
+<a href="{{ url_for('collaboration') }}">
+
+Collaborations
+
+</a>
+
+{% endif %}
+
+
+
+
+
+<!-- Conferences -->
+
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
+
+
+<a href="{{ url_for('conferences') }}">
+
+Conferences
+
+</a>
+
+
+{% endif %}
+
+
+
+<!-- Citation & Reference -->
+
+{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
+
+<a href="{{ url_for('citation_reference') }}">
+
+Citation & Reference
+
+</a>
+
+{% endif %}
+
+
+
+
+<!-- Profile -->
+
+
+{% if session["role"] == "researcher" %}
+
+
+<a href="{{ url_for('researcher_profile') }}">
+
+Profile
+
+</a>
+
+
+{% elif session["role"] == "institution_admin" %}
+
+
+<a href="{{ url_for('institution_profile') }}">
+
+Profile
+
+</a>
+
+
+{% endif %}
+
+
+
+
+
+
+
+
+<!-- System Admin -->
+
+
+<!-- Reports & Export -->
+
+{% if session['role'] in ['system_admin','institution_admin'] %}
+<li>
+    <a href="{{ url_for('reports') }}">
+        Reports & Export
+    </a>
+</li>
+{% endif %}
+
+
+
+
+<a href="{{ url_for('logout') }}">
+
+Logout
+
+</a>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= PAGE CONTENT ================= -->
+
+
+{% block content %}
+
+
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+{% endblock %}
+
+
+
+<script>
+
+
+function toggleSidebar(){
+
+
+document.getElementById("sidebar").classList.toggle("active");
+
+
+document.getElementById("main").classList.toggle("shift");
+
+
+}
+
+
+</script>
+
+
+
+
+
+
+
+</body>
+
+</html>

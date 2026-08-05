@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/reports.css') }}">
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+
+<div class="main" id="main">
+
+
+
+<!-- ================= TOP SECTION ================= -->
+
+
+<div class="top-section">
+
+
+<div>
+
+
+<h1>
+Institution Report
+</h1>
+
+
+<p>
+Analyze institution-wise research performance and publications.
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ================= INSTITUTION REPORT ================= -->
+
+
+<div class="report-section">
+
+
+
+<h2>
+Institution Performance Overview
+</h2>
+
+
+
+
+<div class="chart-box">
+
+
+<canvas id="institutionChart"></canvas>
+
+
+</div>
+
+
+
+
+
+
+<h3>
+Institution Summary
+</h3>
+
+
+
+
+<table>
+
+
+<thead>
+
+
+<tr>
+
+
+<th>
+Institution
+</th>
+
+
+<th>
+Researchers
+</th>
+
+
+<th>
+Publications
+</th>
+
+
+<th>
+Projects
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+
+<tbody>
+
+
+
+{% for report in institution_report %}
+
+
+
+<tr>
+
+
+<td>
+{{ report.institution }}
+</td>
+
+
+
+<td>
+{{ report.researchers }}
+</td>
+
+
+
+<td>
+{{ report.publications }}
+</td>
+
+
+
+<td>
+{{ report.projects }}
+</td>
+
+
+
+</tr>
+
+
+
+{% endfor %}
+
+
+
+
+</tbody>
+
+
+</table>
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================= EXPORT ================= -->
+
+
+<div class="export-section">
+
+
+<h2>
+Export Report
+</h2>
+
+
+<p>
+Download institution analytics report.
+</p>
+
+
+
+<a href="{{ url_for('institution_report_pdf') }}"
+class="export-btn">
+Export PDF
+</a>
+
+
+<a href="{{ url_for('institution_report_excel') }}"
+class="export-btn">
+Export Excel
+</a>
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+{% block extra_js %}
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<script>
+
+
+
+const institutions = [
+
+
+
+{% for report in institution_report %}
+
+
+
+"{{ report.institution }}",
+
+
+
+{% endfor %}
+
+
+
+];
+
+
+
+
+
+const publications = [
+
+
+
+{% for report in institution_report %}
+
+
+
+{{ report.publications }},
+
+
+
+{% endfor %}
+
+
+
+];
+
+
+
+
+
+
+
+new Chart(
+
+
+
+document.getElementById("institutionChart"),
+
+
+
+{
+
+
+type:"bar",
+
+
+
+
+data:{
+
+
+
+labels: institutions,
+
+
+
+datasets:[
+
+
+{
+
+
+label:"Publications",
+
+
+data: publications,
+
+
+backgroundColor:"#9333EA"
+
+
+
+}
+
+
+
+]
+
+
+
+},
+
+
+
+
+options:{
+
+
+
+responsive:true,
+
+
+
+plugins:{
+
+
+
+legend:{
+
+
+display:false
+
+
+},
+
+
+
+title:{
+
+
+display:true,
+
+
+text:"Publications by Institution"
+
+
+}
+
+
+
+},
+
+
+
+
+scales:{
+
+
+
+y:{
+
+
+
+beginAtZero:true,
+
+
+ticks:{
+
+
+precision:0
+
+
+},
+
+
+
+title:{
+
+
+display:true,
+
+
+text:"Number of Publications"
+
+
+}
+
+
+
+},
+
+
+
+
+x:{
+
+title:{
+
+display:true,
+
+text:"Institutions"
+
+},
+
+ticks:{
+
+maxRotation:0,
+
+minRotation:0,
+
+callback:function(value){
+
+let name = this.getLabelForValue(value);
+
+if(name.length > 15){
+
+return [
+name.substring(0,15),
+name.substring(15)
+];
+
+}
+
+return name;
+
+}
+
+}
+
+}
+
+
+
+}
+
+
+
+
+
+}
+
+
+
+}
+
+
+
+);
+
+
+
+</script>
+
+
+
+
+
+{% endblock %}

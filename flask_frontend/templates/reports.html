@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/reports.css') }}">
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="main" id="main">
+
+    <!-- ================= TOP SECTION ================= -->
+
+    <div class="top-section">
+
+        <div>
+
+            <h1>
+                 Research Analytics Reports
+            </h1>
+
+            <p>
+                   View publication, researcher, collaboration and institution analytics reports.
+            </p>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= REPORT CARDS ================= -->
+
+    <div class="reports-grid">
+
+
+        <!-- Publication -->
+
+        <div class="report-card">
+
+            <h2>
+                📄 Publication Report
+            </h2>
+
+            <p>
+                Analyze publication statistics by year and publication status.
+            </p>
+
+            <a href="{{ url_for('publication_report') }}"
+               class="report-btn">
+
+                View Report
+
+            </a>
+
+        </div>
+
+
+
+        <!-- Research -->
+
+        <div class="report-card">
+
+            <h2>
+                👨‍🔬 Research Report
+            </h2>
+
+            <p>
+                View researcher productivity, projects and collaborations.
+            </p>
+
+            <a href="{{ url_for('research_report') }}"
+               class="report-btn">
+
+                View Report
+
+            </a>
+
+        </div>
+
+
+
+        <!-- Collaboration -->
+
+        <div class="report-card">
+
+            <h2>
+                🤝 Collaboration Report
+            </h2>
+
+            <p>
+                Analyze collaborations between researchers and institutions.
+            </p>
+
+            <a href="{{ url_for('collaboration_report') }}"
+               class="report-btn">
+
+                View Report
+
+            </a>
+
+        </div>
+
+
+
+        <!-- Institution -->
+
+        <div class="report-card">
+
+            <h2>
+                🏛 Institution Report
+            </h2>
+
+            <p>
+                Compare institution-wise research performance and publications.
+            </p>
+
+            <a href="{{ url_for('institution_report') }}"
+               class="report-btn">
+
+                View Report
+
+            </a>
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+{% endblock %}

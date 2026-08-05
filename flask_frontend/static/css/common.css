@@ -552,3 +552,1069 @@ tbody tr:hover{
 td:last-child{
     white-space: nowrap;
 }
+.info-card{
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+    margin-bottom:25px;
+}
+
+table{
+    margin-bottom:30px;
+}
+
+.modal-content{
+    margin-top:20px;
+}
+.team-card{
+
+    background:white;
+    border-radius:12px;
+    padding:25px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+
+.team-card h2{
+
+    color:#1E3C72;
+    margin-top:0;
+    margin-bottom:20px;
+
+}
+
+
+
+.members-list{
+
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+
+}
+
+
+
+.member-box{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:15px;
+
+    border:1px solid #eee;
+
+    border-radius:10px;
+
+}
+
+
+
+.member-info h3{
+
+    margin:0 0 8px 0;
+    font-size:16px;
+
+}
+
+
+
+.role-badge{
+
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+
+}
+
+
+
+.role-badge.leader{
+
+    background:#DCFCE7;
+    color:#166534;
+
+}
+
+
+
+.role-badge.member{
+
+    background:#DBEAFE;
+    color:#1E40AF;
+
+}
+
+
+
+.remove-btn{
+
+    background:#EF4444;
+    color:white;
+
+    border:none;
+
+    padding:7px 14px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+}
+
+
+
+.remove-btn:hover{
+
+    background:#DC2626;
+
+}
+
+
+
+.empty-team{
+
+    text-align:center;
+    color:#777;
+    padding:40px;
+
+}
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f4f6f9;
+}
+
+
+/* ================= NAVBAR ================= */
+
+.navbar{
+
+    height:70px;
+    background:#1E3C72;
+    color:white;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:0 30px;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.2);
+
+}
+
+
+.navbar-left{
+
+    display:flex;
+    align-items:center;
+    gap:20px;
+
+}
+
+
+.project-title{
+
+    font-size:22px;
+    font-weight:bold;
+
+}
+
+
+.navbar-right{
+
+    font-size:17px;
+    font-weight:bold;
+
+}
+
+
+.menu-btn{
+
+    background:none;
+    border:none;
+
+    color:white;
+
+    font-size:28px;
+
+    cursor:pointer;
+
+}
+
+
+
+
+/* ================= SIDEBAR ================= */
+
+
+.sidebar{
+
+    position:fixed;
+
+    top:70px;
+
+    left:-250px;
+
+    width:240px;
+
+    height:100vh;
+
+    background:#1E3C72;
+
+    transition:.3s;
+
+    padding-top:20px;
+
+}
+
+
+.sidebar.active{
+
+    left:0;
+
+}
+
+
+.sidebar a{
+
+    display:block;
+
+    color:white;
+
+    text-decoration:none;
+
+    padding:15px 25px;
+
+    transition:.3s;
+
+}
+
+
+.sidebar a:hover,
+.sidebar .active{
+
+    background:#2A5298;
+
+}
+
+
+
+
+
+/* ================= MAIN ================= */
+
+
+.main{
+
+    padding:30px;
+
+    transition:.3s;
+
+}
+
+
+.main.shift{
+
+    margin-left:240px;
+
+}
+
+
+
+
+/* ================= TOP SECTION ================= */
+
+
+.top-section{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+}
+
+
+.top-section h1{
+
+    color:#1E3C72;
+
+    margin:0;
+
+}
+
+
+.add-btn{
+
+    background:#2563EB;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 22px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-size:15px;
+
+    font-weight:bold;
+
+}
+
+
+.add-btn:hover{
+
+    background:#1D4ED8;
+
+}
+
+
+
+
+
+/* ================= SEARCH ================= */
+
+
+.search-box{
+
+    margin-bottom:25px;
+
+}
+
+
+.search-box input{
+
+    width:350px;
+
+    padding:12px;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+    font-size:15px;
+
+}
+
+
+.search-box input:focus{
+
+    outline:none;
+
+    border-color:#2563EB;
+
+}
+
+
+
+
+
+/* ================= TABLE ================= */
+
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    background:white;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+thead{
+
+    background:#1E3C72;
+
+    color:white;
+
+}
+
+
+th{
+
+    padding:15px;
+
+    text-align:left;
+
+}
+
+
+td{
+
+    padding:15px;
+
+    border-bottom:1px solid #eee;
+
+}
+
+
+tbody tr:hover{
+
+    background:#f9f9f9;
+
+}
+
+
+
+
+/* ================= EMPTY ================= */
+
+
+.empty{
+
+    text-align:center;
+
+    color:#777;
+
+    padding:40px;
+
+}
+
+
+
+
+
+/* ================= BUTTONS ================= */
+
+
+.edit-btn{
+
+    background:#10B981;
+
+    color:white;
+
+    border:none;
+
+    padding:8px 12px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    margin-right:8px;
+
+}
+
+
+.delete-btn{
+
+    background:#EF4444;
+
+    color:white;
+
+    border:none;
+
+    padding:8px 12px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+}
+
+
+.edit-btn:hover{
+
+    background:#059669;
+
+}
+
+
+.delete-btn:hover{
+
+    background:#DC2626;
+
+}
+
+
+
+
+
+/* ================= MODAL ================= */
+
+
+.modal{
+
+    display:none;
+
+    position:fixed;
+
+    top:0;
+
+    left:0;
+
+    width:100%;
+
+    height:100%;
+
+    background:rgba(0,0,0,.45);
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+
+.modal-content{
+
+    width:500px;
+
+    background:white;
+
+    border-radius:12px;
+
+    padding:30px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+
+}
+
+
+
+.modal-content h2{
+
+    color:#1E3C72;
+
+    margin-top:0;
+
+    margin-bottom:25px;
+
+}
+
+
+
+.modal-content label{
+
+    display:block;
+
+    margin-top:15px;
+
+    margin-bottom:6px;
+
+    font-weight:bold;
+
+}
+
+
+
+.modal-content input{
+
+    width:100%;
+
+    padding:12px;
+
+    border:1px solid #ccc;
+
+    border-radius:8px;
+
+    box-sizing:border-box;
+
+}
+
+
+
+.modal-buttons{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:15px;
+
+    margin-top:30px;
+
+}
+
+
+
+.save-btn{
+
+    background:#2563EB;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 22px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+}
+
+
+
+.cancel-btn{
+
+    background:#DC2626;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 22px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+}
+
+
+
+.save-btn:hover{
+
+    background:#1D4ED8;
+
+}
+
+
+
+.cancel-btn:hover{
+
+    background:#B91C1C;
+
+}
+.closed-btn {
+
+    background-color: #d9534f;
+
+    color: white;
+
+    border: none;
+
+    padding: 8px 14px;
+
+    border-radius: 5px;
+
+    font-size: 14px;
+
+    cursor: not-allowed;
+
+    opacity: 1;
+
+}
+.edit-btn,
+.delete-btn,
+.view-btn,
+.save-btn {
+
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+
+}
+.view-btn{
+    background:#3498db;
+    color:white;
+    margin-right:8px;
+}
+td:last-child{
+    white-space: nowrap;
+}
+.info-card{
+    background:#fff;
+    padding:20px;
+    border-radius:8px;
+    margin-bottom:25px;
+}
+
+table{
+    margin-bottom:30px;
+}
+
+.modal-content{
+    margin-top:20px;
+}
+.team-card{
+
+    background:white;
+    border-radius:12px;
+    padding:25px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+
+.team-card h2{
+
+    color:#1E3C72;
+    margin-top:0;
+    margin-bottom:20px;
+
+}
+
+
+
+.members-list{
+
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+
+}
+
+
+
+.member-box{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:15px;
+
+    border:1px solid #eee;
+
+    border-radius:10px;
+
+}
+
+
+
+.member-info h3{
+
+    margin:0 0 8px 0;
+    font-size:16px;
+
+}
+
+
+
+.role-badge{
+
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+
+}
+
+
+
+.role-badge.leader{
+
+    background:#DCFCE7;
+    color:#166534;
+
+}
+
+
+
+.role-badge.member{
+
+    background:#DBEAFE;
+    color:#1E40AF;
+
+}
+
+
+
+.remove-btn{
+
+    background:#EF4444;
+    color:white;
+
+    border:none;
+
+    padding:7px 14px;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+}
+
+
+
+.remove-btn:hover{
+
+    background:#DC2626;
+
+}
+
+
+
+.empty-team{
+
+    text-align:center;
+    color:#777;
+    padding:40px;
+
+}
+/* ================= TEAM LAYOUT ================= */
+
+.team-layout{
+
+    display:flex;
+    flex-direction:row;
+    gap:25px;
+    width:100%;
+
+}
+
+
+.team-layout .team-card{
+
+    flex:1;
+
+}
+
+
+.team-layout .assign-card{
+
+    flex:1;
+
+}
+
+
+
+.assign-card{
+
+    background:white;
+    border-radius:12px;
+    padding:25px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+}
+
+
+
+@media(max-width:900px){
+
+    .team-layout{
+
+        flex-direction:column;
+
+    }
+
+}
+/* ================= ASSIGN TEAM FORM ================= */
+
+.assign-card form{
+
+    display:flex;
+    flex-direction:column;
+
+}
+
+
+.assign-card select{
+
+    width:100%;
+    padding:12px;
+
+    border:1px solid #ccc;
+    border-radius:8px;
+
+    font-size:15px;
+
+    margin-bottom:15px;
+
+    box-sizing:border-box;
+
+}
+
+
+
+.assign-card label{
+
+    margin-top:10px;
+    margin-bottom:8px;
+
+    font-weight:bold;
+    color:#333;
+
+}
+
+
+
+.assign-card .save-btn{
+
+    width:100%;
+
+    margin-top:20px;
+
+    padding:12px;
+
+    background:#2563EB;
+
+    color:white;
+
+    border:none;
+
+    border-radius:8px;
+
+    font-size:15px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+}
+
+
+
+.assign-card .save-btn:hover{
+
+    background:#1D4ED8;
+
+}
+.collaboration-container{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:25px;
+    margin-top:30px;
+}
+
+
+.collaboration-card{
+
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+
+}
+
+
+.collaboration-card h2{
+
+    color:#1f417c;
+    margin-bottom:20px;
+
+}
+
+
+.collaboration-card table{
+
+    width:100%;
+    border-collapse:collapse;
+
+}
+
+
+.collaboration-card th,
+.collaboration-card td{
+
+    padding:12px;
+    border-bottom:1px solid #ddd;
+    text-align:left;
+
+}
+
+
+.add-card{
+
+    height:fit-content;
+
+}
+
+
+.add-card p{
+
+    color:#666;
+    margin-bottom:20px;
+
+}
+
+
+.institution-select{
+
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    margin-bottom:15px;
+
+}
+
+
+.save-btn{
+
+    width:100%;
+
+}
+/* Collaboration Action Buttons */
+
+.action-buttons{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+}
+
+
+.action-btn{
+
+    width:130px;
+    height:38px;
+
+    border:none;
+    border-radius:8px;
+
+    font-size:14px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:0.3s ease;
+
+}
+
+
+/* Assign Team */
+
+.assign-btn{
+
+    background:#2563eb;
+    color:white;
+
+}
+
+
+/* Collaboration */
+
+.collab-btn{
+
+    background:#16a34a;
+    color:white;
+
+}
+
+
+/* Hover animation */
+
+.action-btn:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 5px 12px rgba(0,0,0,0.2);
+
+}

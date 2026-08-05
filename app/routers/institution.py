@@ -20,21 +20,60 @@ def get_db():
         db.close()
 
 
+# ---------------- Create Institution ----------------
+
 @router.post("/", response_model=schemas.InstitutionResponse)
 def create_institution(
     institution: schemas.InstitutionCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    if current_user.role != "system_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only System Admin can create institutions."
+        )
+
     return crud.create_institution(db, institution)
 
+
+# ---------------- View All Institutions ----------------
 
 @router.get("/", response_model=list[schemas.InstitutionResponse])
 def get_all_institutions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    if current_user.role not in [
+        "system_admin",
+        "institution_admin"
+    ]:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied."
+        )
+
     return crud.get_all_institutions(db)
+
+# ---------------- Public Institutions (Registration Dropdown) ----------------
+
+@router.get("/public")
+def get_public_institutions(
+    db: Session = Depends(get_db)
+):
+
+    institutions = db.query(Institution).all()
+
+    return [
+        {
+            "id": institution.id,
+            "name": institution.name
+        }
+        for institution in institutions
+    ]
+# ---------------- Institution Admin Profile ----------------
 
 @router.post("/profile", response_model=schemas.InstitutionResponse)
 def create_institution_profile(
@@ -42,6 +81,12 @@ def create_institution_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    if current_user.role != "institution_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only Institution Admin can update institution profile."
+        )
 
     existing = db.query(Institution).filter(
         Institution.user_id == current_user.id
@@ -63,16 +108,24 @@ def create_institution_profile(
 
     return existing
 
+
+# ---------------- My Institution ----------------
+
 @router.get("/profile/me", response_model=schemas.InstitutionResponse)
 def get_my_institution_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
 
+    if current_user.role != "institution_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only Institution Admin can access this profile."
+        )
+
     institution = db.query(Institution).filter(
         Institution.user_id == current_user.id
     ).first()
-
 
     if not institution:
         raise HTTPException(
@@ -80,14 +133,23 @@ def get_my_institution_profile(
             detail="Institution profile not found"
         )
 
-
     return institution
+
+
+# ---------------- Update My Institution ----------------
+
 @router.put("/profile", response_model=schemas.InstitutionResponse)
 def update_my_institution_profile(
     institution: schemas.InstitutionUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    if current_user.role != "institution_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only Institution Admin can update this profile."
+        )
 
     existing = db.query(Institution).filter(
         Institution.user_id == current_user.id
@@ -99,8 +161,6 @@ def update_my_institution_profile(
             detail="Institution profile not found"
         )
 
-    
-
     existing.institution_type = institution.institution_type
     existing.location = institution.location
     existing.website = institution.website
@@ -111,19 +171,28 @@ def update_my_institution_profile(
 
     return existing
 
+
+# ---------------- Get Institution ----------------
+
 @router.get("/{institution_id}", response_model=schemas.InstitutionResponse)
 def get_institution(
     institution_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
     institution = crud.get_institution_by_id(db, institution_id)
 
     if not institution:
-        raise HTTPException(status_code=404, detail="Institution not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Institution not found"
+        )
 
     return institution
 
+
+# ---------------- Update Institution ----------------
 
 @router.put("/{institution_id}", response_model=schemas.InstitutionResponse)
 def update_institution(
@@ -132,13 +201,29 @@ def update_institution(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    updated = crud.update_institution(db, institution_id, institution)
+
+    if current_user.role != "system_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only System Admin can update institutions."
+        )
+
+    updated = crud.update_institution(
+        db,
+        institution_id,
+        institution
+    )
 
     if not updated:
-        raise HTTPException(status_code=404, detail="Institution not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Institution not found"
+        )
 
     return updated
 
+
+# ---------------- Delete Institution ----------------
 
 @router.delete("/{institution_id}")
 def delete_institution(
@@ -146,12 +231,30 @@ def delete_institution(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    deleted = crud.delete_institution(db, institution_id)
+
+    if current_user.role != "system_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only System Admin can delete institutions."
+        )
+
+    deleted = crud.delete_institution(
+        db,
+        institution_id
+    )
 
     if not deleted:
-        raise HTTPException(status_code=404, detail="Institution not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Institution not found"
+        )
 
-    return {"message": "Institution deleted successfully"}
+    return {
+        "message": "Institution deleted successfully"
+    }
+
+
+# ---------------- Institution Conferences ----------------
 
 @router.get("/{institution_id}/conferences")
 def get_institution_conferences(
@@ -160,12 +263,10 @@ def get_institution_conferences(
     current_user: User = Depends(get_current_user)
 ):
 
-    # Get institution details
     institution = crud.get_institution_by_id(
         db,
         institution_id
     )
-
 
     if not institution:
         raise HTTPException(
@@ -173,14 +274,9 @@ def get_institution_conferences(
             detail="Institution not found"
         )
 
-
-    # Get related conferences
     conferences = crud.get_conferences_by_institution(
         db,
         institution.name
     )
 
-
     return conferences
-
-

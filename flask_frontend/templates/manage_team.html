@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<!-- ================= MAIN ================= -->
+
+
+<div class="main" id="main">
+
+
+
+<div class="top-section">
+
+
+<h1>
+
+{% if project.status == "Completed" %}
+
+View Team
+
+{% elif members %}
+
+Manage Team
+
+{% else %}
+
+Assign Team
+
+{% endif %}
+
+</h1>
+
+
+</div>
+
+<div class="info-card">
+
+<p><strong>Project:</strong> {{ project.project_name }}</p>
+
+<p><strong>Status:</strong> {{ project.status }}</p>
+
+</div>
+<!-- ================= TEAM MANAGEMENT ================= -->
+
+<div class="team-layout">
+
+<!-- ================= CURRENT TEAM ================= -->
+
+<div class="team-card">
+
+
+    <h2>
+        Current Team
+    </h2>
+
+
+    <div class="members-list">
+
+
+    {% if members %}
+
+
+
+        {% for member in members %}
+
+
+
+        <div class="member-box">
+
+
+            <div class="member-info">
+
+
+                <h3>
+                    {{ member.researcher_name }}
+                </h3>
+
+
+
+                {% if member.role == "Team Leader" %}
+
+                    <span class="role-badge leader">
+                        Team Leader
+                    </span>
+
+                {% else %}
+
+                    <span class="role-badge member">
+                        Team Member
+                    </span>
+
+                {% endif %}
+
+
+
+            </div>
+
+
+
+
+            {% if project.status != "Completed" %}
+
+
+            <a href="{{ url_for('remove_member', member_id=member.id) }}"
+               onclick="return confirm('Remove this researcher?');">
+
+
+                <button class="remove-btn">
+
+                    Remove
+
+                </button>
+
+
+            </a>
+
+
+            {% endif %}
+
+
+
+
+        </div>
+
+
+
+
+        {% endfor %}
+
+
+
+
+    {% else %}
+
+
+
+        <div class="empty-team">
+
+            👥 No team members assigned yet.<br>
+            Start by assigning a Lead Researcher or Team Member.
+
+        </div>
+
+
+
+    {% endif %}
+
+
+
+    </div>
+
+
+</div>
+
+<!-- ================= ASSIGN TEAM ================= -->
+
+
+{% if project.status != "Completed" %}
+
+
+<div class="assign-card">
+
+
+<h2>
+
+{% if members %}
+
+Add Another Team Member
+
+{% else %}
+
+Add Team Member
+
+{% endif %}
+
+</h2>
+
+
+
+<form method="POST"
+action="{{ url_for('assign_member', project_id=project.id) }}">
+
+
+
+<label>
+Researcher
+</label>
+
+
+
+<select name="researcher_id" required>
+
+
+{% if researchers %}
+
+
+<option value="">
+Select Researcher
+</option>
+
+
+
+{% set grouped_researchers = researchers | groupby('institution') %}
+
+
+
+{% for institution, institution_researchers in grouped_researchers %}
+
+
+
+<optgroup label="{{ institution }} Researchers">
+
+
+
+{% for researcher in institution_researchers %}
+
+
+
+<option value="{{ researcher.id }}">
+
+{{ researcher.full_name }}
+- {{ researcher.designation }}
+
+</option>
+
+
+
+{% endfor %}
+
+
+
+</optgroup>
+
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+<option value="">
+No Researchers Available
+</option>
+
+
+{% endif %}
+
+
+
+</select>
+
+
+
+
+
+<label>
+Role
+</label>
+
+
+
+<select name="role" required>
+
+
+<option value="Team Leader">
+Team Leader
+</option>
+
+
+<option value="Team Member">
+Team Member
+</option>
+
+
+</select>
+
+
+
+
+
+<button type="submit" class="save-btn">
+
+Assign Researcher
+
+</button>
+
+
+
+</form>
+
+
+</div>
+
+
+{% endif %}
+</div>
+
+
+
+</div>
+
+{% endblock %}

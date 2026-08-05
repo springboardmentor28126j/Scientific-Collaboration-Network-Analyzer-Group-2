@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/my_collaborations.css') }}">
+
+{% endblock %}
+
+
+
+
+{% block content %}
+
+
+<div class="main">
+
+
+
+<!-- ================= TOP ================= -->
+
+<div class="top-section" id="top-section">
+
+<h1>
+Collaborations
+</h1>
+
+
+<div class="search-box">
+
+<input 
+type="text"
+id="collaborationSearch"
+placeholder="Search collaborations..."
+onkeyup="searchCollaboration()">
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================= PROJECT CARDS ================= -->
+
+
+{% if collaborations %}
+
+
+<div class="project-grid">
+
+
+
+{% for project in collaborations %}
+
+
+
+<div class="project-card">
+
+
+
+<h2>
+{{ project.project_name }}
+</h2>
+
+
+
+
+<p>
+🏢 <b>Institution:</b>
+{{ project.institution_name }}
+</p>
+
+
+
+
+<p>
+👥 <b>Team:</b>
+{{ project.team_count }} Members
+</p>
+
+
+
+
+<p>
+🤝 <b>Collaborations:</b>
+{{ project.collaboration_count }}
+</p>
+
+
+
+
+<p>
+
+<span class="status {{ project.status|lower }}">
+
+{{ project.status }}
+
+</span>
+
+</p>
+
+
+
+
+<button class="view-btn"
+onclick="showDetails('{{ project.id }}')">
+
+View Details →
+
+</button>
+
+
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+
+
+
+<!-- ================= DETAILS SECTION ================= -->
+
+{% for project in collaborations %}
+
+<div class="details-card"
+id="details-{{ project.id }}"
+style="display:none;">
+
+
+<!-- Header -->
+
+<div class="details-header">
+
+    <h1>
+        {{ project.project_name }}
+    </h1>
+
+    <span class="status {{ project.status|lower }}">
+        {{ project.status }}
+    </span>
+
+</div>
+
+
+
+
+<!-- Project Information -->
+
+<div class="section-title">
+📌 Project Information
+</div>
+
+
+
+<div class="info-card">
+
+
+<div>
+<label>Project Name</label>
+<p>{{ project.project_name }}</p>
+</div>
+
+
+<div>
+<label>Institution</label>
+<p>{{ project.institution_name }}</p>
+</div>
+
+
+
+<div class="date-row">
+
+<div>
+<label>Start Date</label>
+<p>{{ project.start_date }}</p>
+</div>
+
+
+<div>
+<label>End Date</label>
+<p>{{ project.end_date }}</p>
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- Description -->
+
+
+<div class="section-title">
+📝 Description
+</div>
+
+
+<div class="description-card">
+
+<p>
+{{ project.description }}
+</p>
+
+</div>
+
+
+
+
+
+
+
+<!-- Team -->
+
+
+<div class="section-title">
+👥 Project Team
+</div>
+
+
+
+<div class="team-grid">
+
+
+{% for member in project.team %}
+
+
+<div class="team-card">
+
+
+<div class="member-icon">
+
+{% if member.role == "Team Leader" %}
+👑
+{% else %}
+👤
+{% endif %}
+
+</div>
+
+
+
+<h3>
+{{ member.name }}
+</h3>
+
+
+<span>
+
+{% if member.role == "Team Leader" %}
+
+Team Leader
+
+{% else %}
+
+Team Member
+
+{% endif %}
+
+
+</span>
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- Collaborating Institutions -->
+
+
+<div class="section-title">
+
+🤝 Collaborating Institutions
+
+</div>
+
+
+
+
+<div class="institution-grid">
+
+
+{% for institution in project.collaborating_institutions %}
+
+
+<div class="institution-card">
+
+
+<div class="building">
+🏢
+</div>
+
+
+<h3>
+{{ institution }}
+</h3>
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+<script>
+
+
+function showDetails(id){
+
+    // Hide title + search box
+    document.getElementById("top-section").style.display = "none";
+
+    // Hide project cards
+    document.querySelector(".project-grid").style.display = "none";
+
+    // Hide all detail cards (safety)
+    document.querySelectorAll(".details-card").forEach(card => {
+        card.style.display = "none";
+    });
+
+    // Show only the selected project details
+    document.getElementById("details-" + id).style.display = "block";
+
+}
+function searchCollaboration(){
+
+    let input = document.getElementById("collaborationSearch");
+
+    let filter = input.value.toLowerCase();
+
+
+    let cards = document.querySelectorAll(".project-card");
+
+
+    cards.forEach(card => {
+
+        let text = card.textContent.toLowerCase();
+
+
+        if(text.includes(filter)){
+
+            card.style.display = "";
+
+        }
+        else{
+
+            card.style.display = "none";
+
+        }
+
+    });
+
+}
+</script>
+
+
+
+{% endblock %}

@@ -1,186 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Publications | Scientific Collaboration Network Analyzer</title>
-
-
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/common.css') }}">
-
+{% block extra_css %}
 
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/publications.css') }}">
 
-</head>
+{% endblock %}
 
 
-<body>
 
-
-<!-- NAVBAR -->
-
-<div class="navbar">
-
-
-<div class="navbar-left">
-
-
-<button class="menu-btn" onclick="toggleSidebar()">
-☰
-</button>
-
-
-<div class="project-title">
-Scientific Collaboration Network Analyzer
-</div>
-
-
-</div>
-
-
-
-<div class="navbar-right">
-
-Welcome, {{ session["full_name"] }}
-
-</div>
-
-
-</div>
-
-
-
-
-
-<!-- SIDEBAR -->
-
-
-<div class="sidebar" id="sidebar">
-
-
-<a href="{{ url_for('dashboard') }}">
-    Dashboard
-</a>
-
-
-
-<!-- Researchers -->
-
-{% if session["role"] in ["institution_admin", "system_admin"] %}
-
-<a href="{{ url_for('researchers') }}">
-    Researchers
-</a>
-
-{% endif %}
-
-
-
-
-<!-- Publications -->
-
-{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
-
-<a href="{{ url_for('publications') }}" class="active">
-    Publications
-</a>
-
-{% endif %}
-
-
-
-
-<!-- Institutions -->
-
-{% if session["role"] == "system_admin" %}
-
-<a href="#">
-    Institutions
-</a>
-
-{% endif %}
-
-
-
-
-<!-- Collaborations -->
-
-{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
-
-<a href="#">
-    Collaborations
-</a>
-
-{% endif %}
-
-
-
-
-<!-- Conferences -->
-
-{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
-
-<a href="{{ url_for('conferences') }}">
-    Conferences
-</a>
-
-{% endif %}
-
-
-
-
-<!-- Profile -->
-
-{% if session["role"] == "researcher" %}
-
-<a href="{{ url_for('researcher_profile') }}">
-    Profile
-</a>
-
-
-{% elif session["role"] == "institution_admin" %}
-
-<a href="{{ url_for('institution_profile') }}">
-    Profile
-</a>
-
-
-{% endif %}
-
-
-
-
-<!-- System Admin -->
-
-{% if session["role"] == "system_admin" %}
-
-
-
-<a href="#">
-    Reports
-</a>
-
-{% endif %}
-
-
-
-<a href="{{ url_for('logout') }}">
-    Logout
-</a>
-
-
-</div>
-
-
-
-
-
-
+{% block content %}
 <!-- MAIN -->
 
 
@@ -450,16 +279,16 @@ action="{{ url_for('add_publication') }}">
 Researcher
 </label>
 
-<input 
-type="hidden"
-name="researcher_id"
-value="{{ session['researcher_id'] }}">
 
 <input
 type="text"
 value="{{ session['full_name'] }}"
 readonly>
 
+<input
+type="hidden"
+name="researcher_id"
+value="{{ session['researcher_id'] }}">
 
 {% else %}
 
@@ -565,17 +394,23 @@ name="conference_name">
 DOI
 </label>
 
-
 <input
 type="text"
-name="doi">
+id="doi"
+name="doi"
+placeholder="Available only for Published papers"
+disabled>
 
 <label>
 Status
 </label>
 
 
-<select name="status" required>
+<select 
+name="status" 
+id="status"
+onchange="checkDOI()"
+required>
 
 <option value="Draft">
 Draft
@@ -647,14 +482,6 @@ Cancel
 
 <script>
 
-function toggleSidebar(){
-
-    document.getElementById("sidebar").classList.toggle("active");
-
-    document.getElementById("main").classList.toggle("shift");
-
-}
-
 
 function openModal(){
 
@@ -707,10 +534,32 @@ function searchPublication(){
     }
 
 }
+function checkDOI(){
+
+    let status = document.getElementById("status").value;
+
+    let doi = document.getElementById("doi");
+
+
+    if(status === "Published"){
+
+        doi.disabled = false;
+
+        doi.placeholder = "Enter DOI";
+
+    }
+    else{
+
+        doi.disabled = true;
+
+        doi.value = "";
+
+        doi.placeholder = "Available only for Published papers";
+
+    }
+
+}
 
 </script>
 
-</body>
-
-</html>
-
+{% endblock %}

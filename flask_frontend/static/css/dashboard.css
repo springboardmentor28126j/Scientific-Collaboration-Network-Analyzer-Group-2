@@ -145,7 +145,7 @@ body{
 
 
 
-.main h1{
+.main > h1{
 
     color:#1E3C72;
 
@@ -155,64 +155,114 @@ body{
 
 
 
-/* CARDS */
+/* STATISTICS CARDS */
 
 
 .cards{
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
 
     gap:25px;
 
+    margin-top:20px;
+
 }
 
 
 
-.card{
+.stat-card{
 
     background:white;
 
-    border-radius:15px;
+    border-radius:18px;
 
-    padding:30px;
+    padding:25px;
 
-    text-align:center;
+    display:flex;
 
-    box-shadow:0 5px 15px rgba(0,0,0,.1);
+    align-items:center;
+
+    gap:20px;
+
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
 
     transition:.3s;
 
-}
-
-
-
-.card:hover{
-
-    transform:translateY(-5px);
+    border:1px solid #eee;
 
 }
 
 
 
-.card h3{
+.stat-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:0 12px 25px rgba(0,0,0,.15);
+
+}
+
+
+
+
+.stat-icon{
+
+    width:65px;
+
+    height:65px;
+
+    border-radius:50%;
+
+    background:#eaf2ff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:32px;
+
+}
+
+
+
+
+.stat-content h3{
+
+    margin:0;
 
     color:#555;
 
-    margin-bottom:15px;
+    font-size:16px;
+
+    font-weight:600;
 
 }
 
 
 
-.card h1{
+.stat-content h1{
+
+    margin:8px 0;
 
     color:#1E3C72;
 
-    font-size:42px;
+    font-size:36px;
+
+}
+
+
+
+.stat-content p{
 
     margin:0;
+
+    color:#888;
+
+    font-size:13px;
 
 }
 
@@ -250,5 +300,128 @@ body{
     border:none;
 
     border-top:1px solid #ddd;
+
+}
+/* ================= RECENT ACTIVITIES ================= */
+
+
+.activity {
+
+    background: white;
+
+    padding: 25px;
+
+    margin-top: 30px;
+
+    border-radius: 15px;
+
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+
+}
+
+
+.activity h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+}
+
+
+
+.activity-list {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+
+}
+
+
+
+.activity-item {
+
+    display: flex;
+
+    align-items: center;
+
+    padding: 15px;
+
+    background: #f8f9fc;
+
+    border-radius: 12px;
+
+    transition: 0.3s ease;
+
+}
+
+
+
+.activity-item:hover {
+
+    transform: translateX(5px);
+
+}
+
+
+
+.activity-icon {
+
+    width: 45px;
+
+    height: 45px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 22px;
+
+    margin-right: 15px;
+
+}
+
+
+
+.activity-details p {
+
+    margin: 0;
+
+    font-size: 15px;
+
+    font-weight: 500;
+
+}
+
+
+
+.activity-details small {
+
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 12px;
+
+    color: #777;
+
+}
+
+
+
+.no-activity {
+
+    text-align: center;
+
+    padding: 20px;
+
+    color: #777;
 
 }

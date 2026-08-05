@@ -6,6 +6,15 @@ app.secret_key = "your-secret-key-change-this"
 
 API_URL = "http://127.0.0.1:8000"
 
+def get_unread_count():
+    try:
+        response = requests.get(f"{API_URL}/notifications/unread-count")
+        if response.status_code == 200:
+            return response.json().get("unread_count", 0)
+    except requests.exceptions.ConnectionError:
+        pass
+    return 0
+
 
 @app.route("/")
 def home():
@@ -155,8 +164,28 @@ def dashboard():
             display_name=display_name,
             pub_count=pub_count,
             conf_count=conf_count,
-            recent_pubs=recent_pubs
-        )  
+            recent_pubs=recent_pubs,
+            unread_count=get_unread_count()
+        ) 
+
+@app.route("/notifications")
+def notifications_page():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    try:
+        response = requests.get(f"{API_URL}/notifications/")
+        notifs = response.json() if response.status_code == 200 else []
+    except requests.exceptions.ConnectionError:
+        notifs = []
+
+    try:
+        requests.put(f"{API_URL}/notifications/mark-all-read")
+    except requests.exceptions.ConnectionError:
+        pass
+
+    return render_template("notifications.html", notifications=notifs)
+     
 @app.route("/publications")
 def publications():
     if "token" not in session:
@@ -179,8 +208,17 @@ def publications():
     for pub in pubs:
         pub["author_name"] = researcher_map.get(pub.get("author_id"), "Unknown")
 
-    return render_template("publications.html", publications=pubs)
+        # Citation count fetch karo har publication ke liye
+        try:
+            c_response = requests.get(f"{API_URL}/citations/publication/{pub['id']}")
+            if c_response.status_code == 200:
+                pub["cited_count"] = c_response.json().get("cited_by_count", 0)
+            else:
+                pub["cited_count"] = 0
+        except requests.exceptions.ConnectionError:
+            pub["cited_count"] = 0
 
+    return render_template("publications.html", publications=pubs)
 @app.route("/publications/add", methods=["GET", "POST"])
 def add_publication():
     if "token" not in session:
@@ -322,6 +360,78 @@ def add_institution():
 
     return render_template("add_institution.html")
 
+@app.route("/collaborations")
+def collaborations():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    try:
+        response = requests.get(f"{API_URL}/collaborations/")
+        collabs = response.json() if response.status_code == 200 else []
+    except requests.exceptions.ConnectionError:
+        collabs = []
+
+    return render_template("collaborations.html", collaborations=collabs)
+
+
+@app.route("/collaborations/add", methods=["GET", "POST"])
+def add_collaboration():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        project_name = request.form.get("project_name")
+        institution_a = request.form.get("institution_a")
+        institution_b = request.form.get("institution_b")
+        description = request.form.get("description")
+
+        try:
+            response = requests.post(
+                f"{API_URL}/collaborations/",
+                json={
+                    "project_name": project_name,
+                    "institution_a": institution_a,
+                    "institution_b": institution_b,
+                    "description": description
+                }
+            )
+            if response.status_code == 200:
+                return redirect(url_for("collaborations"))
+            else:
+                return render_template("add_collaboration.html", error="Something went wrong")
+        except requests.exceptions.ConnectionError:
+            return render_template("add_collaboration.html", error="Cannot connect to server")
+
+    return render_template("add_collaboration.html")
+@app.route("/reports")
+def reports():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    try:
+        response = requests.get(f"{API_URL}/reports/summary")
+        summary = response.json() if response.status_code == 200 else {}
+    except requests.exceptions.ConnectionError:
+        summary = {}
+
+    return render_template("reports.html", summary=summary)
+
+
+@app.route("/reports/export/publications")
+def export_publications():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    try:
+        response = requests.get(f"{API_URL}/reports/publications/export/csv")
+        from flask import Response
+        return Response(
+            response.content,
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment; filename=publications_report.csv"}
+        )
+    except requests.exceptions.ConnectionError:
+        return redirect(url_for("reports"))
 @app.route("/logout")
 def logout():
     session.clear()

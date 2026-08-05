@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Conferences - Scientific Collaboration Network Analyzer</title>
+    <title>Collaborations - Scientific Collaboration Network Analyzer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -17,21 +17,18 @@
                     <span class="sidebar-icon">🏠</span> Dashboard
                 </a>
                 <a href="{{ url_for('institutions') }}" class="sidebar-link">
-    <span class="sidebar-icon">🏢</span> Institutions
-</a>
+                    <span class="sidebar-icon">🏢</span> Institutions
+                </a>
                 <a href="{{ url_for('publications') }}" class="sidebar-link">
                     <span class="sidebar-icon">📄</span> Publications
                 </a>
-                <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">📁</span> Projects
-                </a>
-                <a href="{{ url_for('conferences') }}" class="sidebar-link active">
+                <a href="{{ url_for('conferences') }}" class="sidebar-link">
                     <span class="sidebar-icon">🎓</span> Conferences
                 </a>
-                <a href="{{ url_for('collaborations') }}" class="sidebar-link">
-    <span class="sidebar-icon">🤝</span> Collaborations
-</a>
-<a href="{{ url_for('reports') }}" class="sidebar-link">
+                <a href="{{ url_for('collaborations') }}" class="sidebar-link active">
+                    <span class="sidebar-icon">🤝</span> Collaborations
+                </a>
+                <a href="{{ url_for('reports') }}" class="sidebar-link">
     <span class="sidebar-icon">📊</span> Reports
 </a>
                 <a href="{{ url_for('profile') }}" class="sidebar-link">
@@ -49,21 +46,21 @@
 
             <div class="dashboard-header">
                 <div>
-                    <h1 class="dashboard-title">Conferences</h1>
-                    <p class="dashboard-subtitle">Track conference registrations and events</p>
+                    <h1 class="dashboard-title">Collaborations</h1>
+                    <p class="dashboard-subtitle">Track co-author networks and institutional partnerships</p>
                 </div>
-                <a href="{{ url_for('add_conference') }}" class="btn-nav" style="text-decoration:none;">+ Add Conference</a>
+                <a href="{{ url_for('add_collaboration') }}" class="btn-nav" style="text-decoration:none;">+ Add Collaboration</a>
             </div>
 
-            {% if conferences %}
+            {% if collaborations %}
             <div class="pub-list">
-                {% for conf in conferences %}
+                {% for c in collaborations %}
                 <div class="pub-card">
                     <div class="pub-info">
-                        <h3>{{ conf.name }}</h3>
+                        <h3>{{ c.project_name }}</h3>
                         <div class="pub-meta">
-                            {% if conf.location %}<span class="pub-type">📍 {{ conf.location }}</span>{% endif %}
-                            {% if conf.start_date %}<span class="pub-doi">{{ conf.start_date }} → {{ conf.end_date }}</span>{% endif %}
+                            {% if c.institution_a %}<span class="pub-type">{{ c.institution_a }}</span>{% endif %}
+                            {% if c.institution_b %}<span class="pub-doi">🤝 {{ c.institution_b }}</span>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -72,9 +69,9 @@
             {% else %}
             <div class="dashboard-section">
                 <div class="empty-state">
-                    <div class="empty-icon">🎓</div>
-                    <p>No conferences yet</p>
-                    <a href="{{ url_for('add_conference') }}" class="link">Add your first conference</a>
+                    <div class="empty-icon">🤝</div>
+                    <p>No collaborations yet</p>
+                    <a href="{{ url_for('add_collaboration') }}" class="link">Add your first collaboration</a>
                 </div>
             </div>
             {% endif %}

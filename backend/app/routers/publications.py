@@ -18,6 +18,12 @@ def create_publication(pub: PublicationCreate, db: Session = Depends(get_db)):
     db.add(new_pub)
     db.commit()
     db.refresh(new_pub)
+
+    from app.models.notification import Notification
+    notif = Notification(message=f"New publication added: {new_pub.title}", type="publication")
+    db.add(notif)
+    db.commit()
+
     return new_pub
 
 

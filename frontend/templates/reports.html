@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reports - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="sidebar-logo" style="text-decoration: none;">🔬 SciCollab</a>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏠</span> Dashboard
+                </a>
+                <a href="{{ url_for('institutions') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏢</span> Institutions
+                </a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📄</span> Publications
+                </a>
+                <a href="{{ url_for('conferences') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🎓</span> Conferences
+                </a>
+                <a href="{{ url_for('collaborations') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🤝</span> Collaborations
+                </a>
+                <a href="{{ url_for('reports') }}" class="sidebar-link active">
+                    <span class="sidebar-icon">📊</span> Reports
+                </a>
+                <a href="{{ url_for('profile') }}" class="sidebar-link">
+                    <span class="sidebar-icon">👤</span> Profile
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">{{ session.get('email') }}</div>
+                <a href="{{ url_for('logout') }}" class="sidebar-logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">Reports</h1>
+                    <p class="dashboard-subtitle">Overview and exports across the platform</p>
+                </div>
+                <a href="{{ url_for('export_publications') }}" class="btn-nav" style="text-decoration:none;">⬇ Export Publications (CSV)</a>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-number">{{ summary.get('total_publications', 0) }}</div>
+                    <div class="stat-label">Publications</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎓</div>
+                    <div class="stat-number">{{ summary.get('total_conferences', 0) }}</div>
+                    <div class="stat-label">Conferences</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🤝</div>
+                    <div class="stat-number">{{ summary.get('total_collaborations', 0) }}</div>
+                    <div class="stat-label">Collaborations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-number">{{ summary.get('total_institutions', 0) }}</div>
+                    <div class="stat-label">Institutions</div>
+                </div>
+            </div>
+
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Publication Status Breakdown</h2>
+                </div>
+                {% if summary.get('publication_status_breakdown') %}
+                <div class="pub-list">
+                    {% for status, count in summary['publication_status_breakdown'].items() %}
+                    <div class="pub-card">
+                        <div class="pub-info">
+                            <h3>{{ status.title() }}</h3>
+                        </div>
+                        <span class="status-badge status-{{ status }}">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>No data available yet</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </main>
+
+    </div>
+
+</body>
+</html>

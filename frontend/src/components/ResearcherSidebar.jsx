@@ -69,6 +69,11 @@ function ResearcherSidebar() {
   >
     📊 Analytics
   </Link>
+  <li>
+    <Link to="/reports">
+        📊 Reports
+    </Link>
+</li>
 
   <Link
     to="/settings"

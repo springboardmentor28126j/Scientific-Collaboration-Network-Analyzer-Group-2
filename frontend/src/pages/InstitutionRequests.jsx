@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import PageHeader from "../components/PageHeader";
 import CustomCard from "../components/CustomCard";
+import Pagination from "../components/Pagination";
 
 function InstitutionRequests() {
 
     const [requests, setRequests] = useState([]);
     const [institutionName, setInstitutionName] = useState("");
+
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const requestsPerPage = 4;
 
     useEffect(() => {
         loadCurrentInstitution();
@@ -26,8 +31,6 @@ function InstitutionRequests() {
                     }
                 }
             );
-
-            console.log("Current User:", res.data);
 
             setInstitutionName(res.data.institution);
 
@@ -49,8 +52,6 @@ function InstitutionRequests() {
                 "/institution-collaboration-requests/"
             );
 
-            console.log("All Requests:", res.data);
-
             const filtered = res.data.filter(
 
                 (req) =>
@@ -58,9 +59,9 @@ function InstitutionRequests() {
 
             );
 
-            console.log("Filtered Requests:", filtered);
-
             setRequests(filtered);
+
+            setCurrentPage(1);
 
         } catch (err) {
 
@@ -86,13 +87,27 @@ function InstitutionRequests() {
 
             loadCurrentInstitution();
 
-        } catch (err) {
+        }
+
+        catch (err) {
 
             console.log(err);
 
         }
 
     };
+
+    const indexOfLast =
+        currentPage * requestsPerPage;
+
+    const indexOfFirst =
+        indexOfLast - requestsPerPage;
+
+    const currentRequests =
+        requests.slice(indexOfFirst, indexOfLast);
+
+    const totalPages =
+        Math.ceil(requests.length / requestsPerPage);
 
     return (
 
@@ -105,15 +120,13 @@ function InstitutionRequests() {
 
             <h5 className="mb-4 text-primary">
 
-                Logged Institution :
-                {" "}
-                {institutionName}
+                Logged Institution : {institutionName}
 
             </h5>
 
             <div className="row">
 
-                {requests.length === 0 ? (
+                {currentRequests.length === 0 ? (
 
                     <div className="col-12">
 
@@ -135,7 +148,7 @@ function InstitutionRequests() {
 
                 ) : (
 
-                    requests.map((request) => (
+                    currentRequests.map((request) => (
 
                         <div
                             className="col-lg-6 mb-4"
@@ -192,9 +205,7 @@ function InstitutionRequests() {
 
                                         Sender Institution :
 
-                                    </strong>
-
-                                    {" "}
+                                    </strong>{" "}
 
                                     {request.sender_institution_name}
 
@@ -206,9 +217,7 @@ function InstitutionRequests() {
 
                                         Receiver Institution :
 
-                                    </strong>
-
-                                    {" "}
+                                    </strong>{" "}
 
                                     {request.receiver_institution_name}
 
@@ -220,9 +229,7 @@ function InstitutionRequests() {
 
                                         Project :
 
-                                    </strong>
-
-                                    {" "}
+                                    </strong>{" "}
 
                                     {request.project_title}
 
@@ -312,6 +319,16 @@ function InstitutionRequests() {
                 )}
 
             </div>
+
+            <Pagination
+
+                currentPage={currentPage}
+
+                totalPages={totalPages}
+
+                onPageChange={setCurrentPage}
+
+            />
 
         </div>
 

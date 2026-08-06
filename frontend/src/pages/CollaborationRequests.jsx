@@ -2,10 +2,15 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import PageHeader from "../components/PageHeader";
 import CustomCard from "../components/CustomCard";
+import Pagination from "../components/Pagination";
 
 function CollaborationRequests() {
 
     const [requests, setRequests] = useState([]);
+
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const requestsPerPage = 4;
 
     useEffect(() => {
         loadRequests();
@@ -16,6 +21,7 @@ function CollaborationRequests() {
         try {
 
             const res = await api.get("/collaboration-requests/");
+
             setRequests(res.data);
 
         } catch (err) {
@@ -44,6 +50,18 @@ function CollaborationRequests() {
 
     };
 
+    const indexOfLast =
+        currentPage * requestsPerPage;
+
+    const indexOfFirst =
+        indexOfLast - requestsPerPage;
+
+    const currentRequests =
+        requests.slice(indexOfFirst, indexOfLast);
+
+    const totalPages =
+        Math.ceil(requests.length / requestsPerPage);
+
     return (
 
         <div className="container-fluid">
@@ -57,7 +75,7 @@ function CollaborationRequests() {
 
             <div className="row">
 
-                {requests.map((request) => (
+                {currentRequests.map((request) => (
 
                     <div
                         className="col-lg-6 mb-4"
@@ -174,6 +192,12 @@ function CollaborationRequests() {
                 ))}
 
             </div>
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
 
         </div>
 

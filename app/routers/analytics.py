@@ -143,6 +143,59 @@ def collaboration_statistics(db: Session = Depends(get_db)):
         "average_publications_per_researcher": avg_publications,
         "total_researchers": total_researchers
     }
+@router.get("/institution-report")
+def institution_report(db: Session = Depends(get_db)):
+
+    results = (
+        db.query(
+            User.institution,
+            func.count(User.id).label("researchers")
+        )
+        .filter(
+            User.institution != None,
+            User.institution != ""
+        )
+        .group_by(User.institution)
+        .order_by(desc("researchers"))
+        .all()
+    )
+
+    return [
+        {
+            "institution": row.institution,
+            "researchers": row.researchers
+        }
+        for row in results
+    ]
+@router.get("/collaboration-report")
+def collaboration_report(db: Session = Depends(get_db)):
+
+    pending = (
+        db.query(Collaboration)
+        .filter(Collaboration.status == "Pending")
+        .count()
+    )
+
+    accepted = (
+        db.query(Collaboration)
+        .filter(Collaboration.status == "Accepted")
+        .count()
+    )
+
+    rejected = (
+        db.query(Collaboration)
+        .filter(Collaboration.status == "Rejected")
+        .count()
+    )
+
+    total = pending + accepted + rejected
+
+    return {
+        "total": total,
+        "Pending": pending,
+        "Accepted": accepted,
+        "Rejected": rejected
+    }
 
 
 @router.get("/project-dashboard")
@@ -199,3 +252,30 @@ def project_dashboard(db: Session = Depends(get_db)):
         "pending_tasks": pending_tasks,
         "project_progress": progress
     }
+@router.get("/publication-status-report")
+def publication_status_report(db: Session = Depends(get_db)):
+
+    papers = db.query(ResearchPaper).all()
+
+    report = {}
+
+    for paper in papers:
+
+        year = paper.publication_year
+
+        if year not in report:
+
+            report[year] = {
+                "publication_year": year,
+                "Published": 0,
+                "Submitted": 0,
+                "Draft": 0,
+                "Archived": 0
+            }
+
+        status = paper.status
+
+        if status in report[year]:
+            report[year][status] += 1
+
+    return list(report.values())

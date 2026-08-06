@@ -29,6 +29,11 @@ import Notifications from "./pages/Notifications";
 import Timeline from "./pages/Timeline";
 import Citation from "./pages/Citation";
 import InstitutionCollaboration from "./pages/InstitutionCollaboration";
+import PublicationReport from "./pages/PublicationReport";
+import Reports from "./pages/Reports";
+import ResearchReport from "./pages/ResearchReport";
+import InstitutionReport from "./pages/InstitutionReport";
+import CollaborationReport from "./pages/CollaborationReport";
 function App() {
   return (
     <BrowserRouter>
@@ -144,6 +149,26 @@ function App() {
 <Route
     path="/institution-collaboration"
     element={<InstitutionCollaboration />}
+/>
+<Route
+    path="/publication-report"
+    element={<PublicationReport />}
+/>
+<Route
+    path="/reports"
+    element={<Reports />}
+/>
+<Route
+    path="/reports/research"
+    element={<ResearchReport />}
+/>
+<Route
+    path="/reports/institution"
+    element={<InstitutionReport />}
+/>
+<Route
+    path="/reports/collaboration"
+    element={<CollaborationReport />}
 />
 
       </Routes>

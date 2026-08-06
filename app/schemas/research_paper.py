@@ -10,7 +10,7 @@ class ResearchPaperBase(BaseModel):
 
     authors: str
 
-    abstract: str
+    abstract: str | None = None
 
     publication_year: int
 
@@ -41,7 +41,7 @@ class ResearchPaperUpdate(BaseModel):
 
     authors: str
 
-    abstract: str
+    abstract: str | None = None
 
     publication_year: int
 

@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app import crud, schemas
+from app import crud, schemas, auth
 from app.database import get_db
 
 router = APIRouter(
     prefix="/institutions",
-    tags=["Institutions"]
+    tags=["Institutions"],
+    dependencies=[Depends(auth.require_authenticated)]
 )
 
 
@@ -86,4 +87,7 @@ def delete_institution(institution_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{institution_id}/report")
 def institution_report(institution_id: int, db: Session = Depends(get_db)):
-    return crud.get_institution_report(db, institution_id)
+    report = crud.get_institution_report(db, institution_id)
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institution not found")
+    return report

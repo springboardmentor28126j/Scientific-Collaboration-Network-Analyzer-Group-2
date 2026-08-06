@@ -7,6 +7,10 @@
 
 document.addEventListener("DOMContentLoaded", function(){
 
+    const role = (localStorage.getItem("role") || "").toLowerCase();
+    const rolePages = {"institution admin":"pages/institution-dashboard.html",publisher:"pages/publisher-dashboard.html",reviewer:"pages/reviewer-dashboard.html",researcher:"pages/researcher-dashboard.html"};
+    if (rolePages[role]) { window.location.href = rolePages[role]; return; }
+
 
     loadDashboardData();
 
@@ -48,7 +52,8 @@ function loadUser(){
 
     const welcomeElement = document.getElementById("dashboardWelcome");
     if(welcomeElement){
-        welcomeElement.innerText = username ? `Welcome back, ${username}.` : "Welcome back.";
+        const role = localStorage.getItem("role") || "Researcher";
+        welcomeElement.innerText = username ? `Welcome back, ${username}. You are signed in as ${role}.` : "Welcome back.";
     }
 
 

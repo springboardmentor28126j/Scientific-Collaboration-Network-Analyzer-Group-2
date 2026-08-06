@@ -5,10 +5,11 @@ import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import crud, models, schemas, auth
 from app.database import get_db
+from app.notification_service import notify_all_users
 
-router = APIRouter(prefix="/publications", tags=["Publications"])
+router = APIRouter(prefix="/publications", tags=["Publications"], dependencies=[Depends(auth.require_authenticated)])
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -46,7 +47,9 @@ def create_publication(publication: schemas.PublicationCreate, db: Session = Dep
         found_ids = {row.id for row in db.query(models.Researcher).filter(models.Researcher.id.in_(requested_ids)).all()}
         if found_ids != requested_ids:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One or more author researcher IDs do not exist")
-    return crud.create_publication(db, publication)
+    created = crud.create_publication(db, publication)
+    notify_all_users(db, notification_type="publication", title="New publication added", message=f"{created.title} was added to the research network.", link="pages/publications.html")
+    return created
 
 
 @router.get("/")

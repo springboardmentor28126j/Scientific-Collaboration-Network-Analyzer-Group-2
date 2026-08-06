@@ -8,6 +8,8 @@
 const loginForm =
 document.getElementById("loginForm");
 
+const roleDashboard = role => ({"institution admin":"pages/institution-dashboard.html",publisher:"pages/publisher-dashboard.html",reviewer:"pages/reviewer-dashboard.html",researcher:"pages/researcher-dashboard.html"}[(role || "").toLowerCase()] || "dashboard.html");
+
 
 
 if(loginForm){
@@ -123,7 +125,7 @@ setTimeout(()=>{
 
 
 window.location.href=
-"dashboard.html";
+roleDashboard(data.role);
 
 
 },1000);

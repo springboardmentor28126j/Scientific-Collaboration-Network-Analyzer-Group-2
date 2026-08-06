@@ -22,6 +22,26 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     role = Column(String, nullable=False)
+    requested_role = Column(String, nullable=True)
+    account_status = Column(String, nullable=False, default="active")
+
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    type = Column(String, nullable=False, default="system")
+    title = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    link = Column(String, nullable=True)
+    is_read = Column(Integer, nullable=False, default=0)
+    email_sent = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="notifications")
 
 
 # ---------------- INSTITUTIONS ----------------
@@ -48,6 +68,7 @@ class Researcher(Base):
     skills = Column(String)
     research_interest = Column(String)
     designation = Column(String)
+    email = Column(String, nullable=True, unique=True)
 
     institution_id = Column(Integer, ForeignKey("institutions.id"))
 
@@ -139,6 +160,9 @@ class Collaboration(Base):
     )
 
     project = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="pending")
+    requested_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    responded_at = Column(DateTime(timezone=True), nullable=True)
 
     researcher1 = relationship(
         "Researcher",
@@ -178,6 +202,32 @@ class Citation(Base):
         "Publication",
         foreign_keys=[cited_publication_id]
     )
+
+
+class GeneratedReport(Base):
+    __tablename__ = "generated_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id"), unique=True, nullable=False)
+    researchers = Column(Integer, nullable=False, default=0)
+    publications = Column(Integer, nullable=False, default=0)
+    generated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    institution = relationship("Institution")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    action = Column(String, nullable=False)
+    entity_type = Column(String, nullable=False)
+    entity_id = Column(Integer, nullable=True)
+    details = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User")
 
 
 # ---------------- PROJECTS ----------------

@@ -232,6 +232,9 @@ research_interest.value,
 designation:
 designation.value,
 
+email:
+email.value || null,
+
 
 institution_id:
 parseInt(
@@ -362,6 +365,9 @@ researcher.department;
 
 designation.value =
 researcher.designation;
+
+email.value =
+researcher.email || "";
 
 
 skills.value =

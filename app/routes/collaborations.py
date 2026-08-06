@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, selectinload
+from datetime import datetime, timezone
+from sqlalchemy.orm import Session, selectinload, joinedload
 from collections import defaultdict
 from itertools import combinations
 
 from app.database import get_db
-from app import crud, schemas, models
+from app import crud, schemas, models, auth
 from app.models import Publication, Researcher, Collaboration
+from app.notification_service import notify_all_users
+from app.audit import record as record_audit
 
 
 router = APIRouter(
     prefix="/collaborations",
-    tags=["Collaborations"]
+    tags=["Collaborations"],
+    dependencies=[Depends(auth.require_authenticated)]
 )
 
 
@@ -107,6 +111,8 @@ def get_advanced_network(db: Session = Depends(get_db)):
 
     edge_weights = defaultdict(int)
     degree_count = defaultdict(int)
+    edge_activities = defaultdict(list)
+    seen_activities = defaultdict(set)
 
     # =====================================
     # BUILD GRAPH (COLLAB COUNT)
@@ -126,6 +132,41 @@ def get_advanced_network(db: Session = Depends(get_db)):
                 # degree = number of collaborations
                 degree_count[a.id] += 1
                 degree_count[b.id] += 1
+
+                # Keep the actual shared work so the network detail card can
+                # explain why two researchers are connected.
+                activity_key = ("publication", publication.id)
+                if activity_key not in seen_activities[key]:
+                    edge_activities[key].append({
+                        "type": "publication",
+                        "project": None,
+                        "title": publication.title or "Shared publication",
+                        "date": publication.publication_date.isoformat() if publication.publication_date else None,
+                    })
+                    seen_activities[key].add(activity_key)
+
+    # Include collaborations created directly from the Collaboration Management page.
+    for collaboration in db.query(Collaboration).all():
+        if collaboration.status != "accepted":
+            continue
+        if collaboration.researcher1_id == collaboration.researcher2_id:
+            continue
+        key = tuple(sorted((collaboration.researcher1_id, collaboration.researcher2_id)))
+        if key not in edge_weights:
+            edge_weights[key] = 0
+        edge_weights[key] += 1
+        degree_count[collaboration.researcher1_id] += 1
+        degree_count[collaboration.researcher2_id] += 1
+        activity_key = ("collaboration", collaboration.id)
+        if activity_key not in seen_activities[key]:
+            publication = collaboration.publication
+            edge_activities[key].append({
+                "type": "project" if collaboration.project else "collaboration",
+                "project": collaboration.project,
+                "title": publication.title if publication else None,
+                "date": publication.publication_date.isoformat() if publication and publication.publication_date else None,
+            })
+            seen_activities[key].add(activity_key)
 
     # =====================================
     # BUILD NODES (RICH DATA)
@@ -175,7 +216,8 @@ def get_advanced_network(db: Session = Depends(get_db)):
             "weight": w,
 
             # 🔥 optional stronger visual scaling
-            "strength": min(w * 2, 10)
+            "strength": min(w * 2, 10),
+            "activities": edge_activities[(a, b)],
         })
 
     # =====================================
@@ -201,6 +243,32 @@ def get_collaborations(
     db: Session = Depends(get_db)
 ):
     return crud.get_collaborations(db)
+
+
+@router.get("/detailed")
+def get_detailed_collaborations(db: Session = Depends(get_db)):
+    records = db.query(Collaboration).options(
+        joinedload(Collaboration.researcher1).joinedload(Researcher.institution),
+        joinedload(Collaboration.researcher2).joinedload(Researcher.institution),
+        joinedload(Collaboration.publication),
+    ).order_by(Collaboration.id.desc()).all()
+    return [
+        {
+            "id": record.id,
+            "researcher1_id": record.researcher1_id,
+            "researcher1_name": record.researcher1.full_name,
+            "researcher1_institution": record.researcher1.institution.name if record.researcher1.institution else "Unassigned",
+            "researcher2_id": record.researcher2_id,
+            "researcher2_name": record.researcher2.full_name,
+            "researcher2_institution": record.researcher2.institution.name if record.researcher2.institution else "Unassigned",
+            "project": record.project,
+            "status": record.status,
+            "requested_at": record.requested_at.isoformat() if record.requested_at else None,
+            "publication_id": record.publication_id,
+            "publication_title": record.publication.title if record.publication else None,
+        }
+        for record in records
+    ]
 
 
 @router.put("/{collaboration_id}", response_model=schemas.CollaborationResponse)
@@ -257,7 +325,30 @@ def create_collaboration(
     collaboration.researcher1_id = researcher1_id
     collaboration.researcher2_id = researcher2_id
 
-    return crud.create_collaboration(db, collaboration)
+    created = crud.create_collaboration(db, collaboration)
+    first = db.query(Researcher).filter(Researcher.id == created.researcher1_id).first()
+    second = db.query(Researcher).filter(Researcher.id == created.researcher2_id).first()
+    project = f" for the project '{created.project}'" if created.project else ""
+    notify_all_users(db, notification_type="collaboration", title="Collaboration request created", message=f"{first.full_name if first else 'A researcher'} requested a collaboration with {second.full_name if second else 'a researcher'}{project}.", link="pages/collaborations.html")
+    record_audit(db, action="created", entity_type="collaboration", entity_id=created.id, details=f"Collaboration request: {created.status}")
+    return created
+
+
+@router.post("/{collaboration_id}/decision")
+def decide_collaboration(collaboration_id: int, decision: str, db: Session = Depends(get_db)):
+    record = crud.get_collaboration_by_id(db, collaboration_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Collaboration not found")
+    if record.status != "pending":
+        raise HTTPException(status_code=400, detail="This collaboration request has already been decided")
+    if decision not in {"accepted", "rejected"}:
+        raise HTTPException(status_code=400, detail="Decision must be accepted or rejected")
+    record.status = decision
+    record.responded_at = datetime.now(timezone.utc)
+    db.commit()
+    notify_all_users(db, notification_type="collaboration", title=f"Collaboration request {decision}", message=f"A collaboration request was {decision}.", link="pages/network.html" if decision == "accepted" else "pages/collaborations.html", email=False)
+    record_audit(db, action=decision, entity_type="collaboration", entity_id=record.id)
+    return {"message": f"Collaboration request {decision}", "id": record.id, "status": record.status}
 @router.post("/add")
 def add_collaboration(
     researcher1_id: int,

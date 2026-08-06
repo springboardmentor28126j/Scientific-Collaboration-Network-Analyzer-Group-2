@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app import crud
+from app import crud, auth
 from app.database import get_db
 
 router = APIRouter(
     prefix="/dashboard",
-    tags=["Dashboard"]
+    tags=["Dashboard"],
+    dependencies=[Depends(auth.require_authenticated)]
 )
 
 @router.get("/")

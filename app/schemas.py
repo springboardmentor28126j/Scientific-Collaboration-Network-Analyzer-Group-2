@@ -13,6 +13,18 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+
+class UserApproval(BaseModel):
+    approved_role: str
+
+
+class AnnouncementCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=120)
+    message: str = Field(min_length=3, max_length=1000)
+    recipient_ids: Optional[List[str]] = None
+    link: Optional[str] = None
+    send_email: bool = True
+
 # ---------------- INSTITUTIONS ----------------
 class InstitutionCreate(BaseModel):
     name: str
@@ -28,6 +40,7 @@ class ResearcherCreate(BaseModel):
     research_interest: str
     designation: str
     institution_id: int   
+    email: Optional[str] = None
 
 class AuthorResponse(BaseModel):
     id: int
@@ -116,6 +129,7 @@ class CollaborationResponse(BaseModel):
     researcher2_id: int
     project: Optional[str] = None
     publication_id: Optional[int] = None
+    status: str = "pending"
 
     class Config:
         from_attributes = True

@@ -1,52 +1,136 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Collaboration Network | Scientific Collaboration Network Analyzer</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Collaboration Network</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
   <style>
-    #networkGraph { width: 100%; height: 500px; border: 1px solid #d9e2ec; border-radius: 12px; background: #fbfdff; }
-    .network-node { stroke: #fff; stroke-width: 2; }
-    .network-label { font: 12px sans-serif; fill: #1f2937; pointer-events: none; }
+    .network-heading { margin-bottom: 20px; }
+    .network-heading h1 { color: #123b72; font-weight: 700; }
+    .network-heading p { margin-bottom: 0; }
+    .network-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+    .network-control { position: relative; min-width: 250px; }
+    .network-control i { position: absolute; left: 14px; top: 50%; z-index: 1; transform: translateY(-50%); color: #0d6efd; }
+    .network-control .form-control, .network-control .form-select { min-height: 46px; padding-left: 42px; border: 1px solid #cddbef; border-radius: 10px; background-color: #fff; box-shadow: 0 3px 10px rgba(13, 110, 253, .05); }
+    .network-control .form-control:focus, .network-control .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .14); }
+    .network-frame { overflow: hidden; padding: 0 !important; border: 1px solid #d7e3f4; border-radius: 16px; box-shadow: 0 12px 30px rgba(27, 73, 125, .10); }
+    .network-frame-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #e4edf8; background: linear-gradient(90deg, #f7fbff, #fff); }
+    .network-frame-header strong { color: #173f73; }
+    #graph { height: 560px; background: radial-gradient(circle at 50% 40%, #f9fcff, #edf5ff); }
+    .network-overlay { position: fixed; inset: 0; z-index: 2000; display: none; background: rgba(16, 42, 67, .4); }
+    .network-overlay.show { display: block; }
+    .researcher-drawer { position: absolute; top: 84px; right: 24px; width: min(340px, 92vw); padding: 22px; border-radius: 16px; background: #fff; box-shadow: 0 18px 45px rgba(0, 0, 0, .25); }
+    .collaborator-list { max-height: 185px; overflow-y: auto; }
+    .collaborator-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #edf1f6; }
+    .collaborator-item:last-child { border-bottom: 0; }
+    .collaborator-name { color: #173f73; font-weight: 600; }
+    @media (max-width: 576px) { .network-control { width: 100%; min-width: 0; } .researcher-drawer { top: 70px; right: 12px; } #graph { height: 490px; } }
   </style>
 </head>
-<body class="dashboard-body">
-  <nav class="navbar navbar-dark bg-primary"><div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="../dashboard.html"><i class="bi bi-diagram-3-fill"></i> Scientific Collaboration Network Analyzer</a>
-    <a href="../dashboard.html" class="btn btn-light">Dashboard</a>
-  </div></nav>
-  <main class="container mt-4">
-    <div class="mb-4"><h2 class="fw-bold">Collaboration Network</h2><p class="text-muted">Nodes are researchers. Links represent co-authorship on a publication.</p></div>
-    <div class="row g-3 mb-4">
-      <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><small>Researchers</small><h3 id="researcherCount">0</h3></div></div></div>
-      <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><small>Collaboration links</small><h3 id="collaborationCount">0</h3></div></div></div>
-      <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><small>Highest degree</small><h3 id="maxDegree">0</h3></div></div></div>
+<body>
+  <nav class="navbar app-navbar navbar-dark"><div class="container-fluid"><span class="navbar-brand fw-bold">Collaboration Network</span></div></nav>
+  <main class="page-container">
+    <div class="network-heading">
+      <h1 class="h3 mb-1">Research Collaboration Network</h1>
+      <p class="text-muted">Explore researcher connections.</p>
+      <div class="network-controls">
+        <div class="network-control"><i class="bi bi-search"></i><input id="search" class="form-control" placeholder="Search researcher by name"></div>
+        <div class="network-control"><i class="bi bi-buildings"></i><select id="institution" class="form-select"><option value="">All institutions</option></select></div>
+      </div>
     </div>
-    <div class="card shadow-sm"><div class="card-body"><div id="networkMessage" class="text-muted mb-2">Loading network…</div><svg id="networkGraph" viewBox="0 0 900 500"></svg></div></div>
+    <div class="custom-card network-frame">
+      <div class="network-frame-header"><strong><i class="bi bi-diagram-3 me-2"></i>Interactive network</strong><span id="message" class="text-muted small">Loading...</span></div>
+      <div id="graph"></div>
+    </div>
   </main>
+  <div id="networkOverlay" class="network-overlay">
+    <section class="researcher-drawer" aria-label="Researcher details">
+      <button id="closeDrawer" class="btn-close float-end" type="button" aria-label="Close"></button>
+      <h2 class="h6">Researcher details</h2>
+      <div id="researcherDetail"></div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/layout.js"></script>
   <script>
-    const svg = document.getElementById("networkGraph");
-    const colors = ["#0d6efd", "#198754", "#fd7e14", "#6f42c1", "#dc3545"];
-    async function loadNetwork() {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/collaborations/network/advanced");
-        if (!response.ok) throw new Error("Unable to load the collaboration network.");
-        const {nodes, edges, stats} = await response.json();
-        researcherCount.textContent = stats.total_researchers;
-        collaborationCount.textContent = stats.total_collaborations;
-        maxDegree.textContent = stats.max_collaborations;
-        if (!nodes.length) { networkMessage.textContent = "Add researchers and create a publication with at least two authors to see the graph."; return; }
-        networkMessage.textContent = "Node size increases with publications and collaborations.";
-        const centerX = 450, centerY = 250, radius = Math.min(175, 35 + nodes.length * 18);
-        const positions = new Map(nodes.map((node, index) => [node.id, {x: centerX + radius * Math.cos((2 * Math.PI * index / nodes.length) - Math.PI / 2), y: centerY + radius * Math.sin((2 * Math.PI * index / nodes.length) - Math.PI / 2), node, index}]));
-        edges.forEach(edge => { const source = positions.get(edge.source), target = positions.get(edge.target); if (!source || !target) return; const line = document.createElementNS("http://www.w3.org/2000/svg", "line"); line.setAttribute("x1", source.x); line.setAttribute("y1", source.y); line.setAttribute("x2", target.x); line.setAttribute("y2", target.y); line.setAttribute("stroke", "#9aa5b1"); line.setAttribute("stroke-width", Math.min(1 + edge.weight, 6)); svg.appendChild(line); });
-        positions.forEach(({x, y, node, index}) => { const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle"); circle.setAttribute("cx", x); circle.setAttribute("cy", y); circle.setAttribute("r", Math.min(26, 11 + node.importance * 2)); circle.setAttribute("fill", colors[index % colors.length]); circle.setAttribute("class", "network-node"); circle.innerHTML = `<title>${node.label}: ${node.publications} publications, ${node.collaborations} collaborators</title>`; svg.appendChild(circle); const label = document.createElementNS("http://www.w3.org/2000/svg", "text"); label.setAttribute("x", x); label.setAttribute("y", y + 40); label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "network-label"); label.textContent = node.label; svg.appendChild(label); });
-      } catch (error) { networkMessage.textContent = error.message; }
+    const searchInput = document.getElementById('search');
+    const institutionSelect = document.getElementById('institution');
+    const graph = document.getElementById('graph');
+    const message = document.getElementById('message');
+    const overlay = document.getElementById('networkOverlay');
+    const closeDrawer = document.getElementById('closeDrawer');
+    const researcherDetail = document.getElementById('researcherDetail');
+    const colors = ['#0d6efd', '#198754', '#fd7e14', '#6f42c1'];
+    let cy, nodes = [], edges = [];
+
+    function getCollaborators(researcherId) {
+      const namesById = new Map(nodes.map(node => [String(node.id), node]));
+      return edges.filter(edge => String(edge.source) === String(researcherId) || String(edge.target) === String(researcherId))
+        .map(edge => ({ person: namesById.get(String(edge.source) === String(researcherId) ? String(edge.target) : String(edge.source)), activities: edge.activities || [] }))
+        .filter(connection => connection.person)
+        .sort((first, second) => first.person.label.localeCompare(second.person.label));
     }
-    loadNetwork();
+
+    function drawNetwork() {
+      const term = searchInput.value.trim().toLowerCase();
+      const selectedInstitution = institutionSelect.value;
+      const institutions = [...new Set(nodes.map(node => node.institution))];
+      cy?.destroy();
+      cy = cytoscape({
+        container: graph,
+        elements: [
+          ...nodes.map(node => ({ data: { id: String(node.id), label: node.label, institution: node.institution, importance: node.importance, publications: node.publications, collaborations: node.collaborations, color: colors[institutions.indexOf(node.institution) % colors.length] } })),
+          ...edges.map((edge, index) => ({ data: { id: `edge-${index}`, source: String(edge.source), target: String(edge.target), weight: edge.weight } }))
+        ],
+        style: [
+          { selector: 'node', style: { 'background-color': 'data(color)', label: 'data(label)', 'font-size': 10, 'text-valign': 'bottom', 'text-margin-y': 8, width: 'mapData(importance,0,20,24,56)', height: 'mapData(importance,0,20,24,56)' } },
+          { selector: '.node-hover', style: { width: 'mapData(importance,0,20,32,68)', height: 'mapData(importance,0,20,32,68)' } },
+          { selector: 'edge', style: { width: 'mapData(weight,1,5,1,6)', 'line-color': '#94a3b8', opacity: .4 } },
+          { selector: '.fade', style: { opacity: .12 } }
+        ],
+        layout: { name: 'cose', fit: true, padding: 40 }
+      });
+      const matches = cy.nodes().filter(node => (!term || node.data('label').toLowerCase().includes(term)) && (!selectedInstitution || node.data('institution') === selectedInstitution));
+      if (term || selectedInstitution) { cy.elements().addClass('fade'); matches.closedNeighborhood().removeClass('fade'); }
+      cy.on('mouseover', 'node', event => event.target.addClass('node-hover'));
+      cy.on('mouseout', 'node', event => event.target.removeClass('node-hover'));
+      cy.on('tap', 'node', event => {
+        const node = event.target;
+        const collaborators = getCollaborators(node.id());
+        const collaboratorContent = collaborators.length
+          ? collaborators.map(connection => {
+              const person = connection.person;
+              const work = connection.activities.slice(0, 2).map(activity => {
+                const date = activity.date ? ` · ${new Date(activity.date).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}` : '';
+                const label = activity.project ? `Project: ${activity.project}` : (activity.title ? `Publication: ${activity.title}` : 'Recorded collaboration');
+                return `<small class="d-block text-muted mt-1">${label}${date}</small>`;
+              }).join('');
+              return `<div class="collaborator-item"><div><div class="collaborator-name">${person.label}</div><small class="text-muted">${person.institution}</small>${work}</div><span class="badge text-bg-light border">${person.publications} pubs</span></div>`;
+            }).join('')
+          : '<p class="text-muted small mb-0">No connected collaborators are available yet.</p>';
+        researcherDetail.innerHTML = `<strong class="fs-5">${node.data('label')}</strong><p class="text-muted mb-3">${node.data('institution')}</p><div class="row text-center g-2 mb-3"><div class="col-6"><div class="border rounded-3 p-2"><strong class="d-block text-primary">${node.data('publications')}</strong><small>Publications</small></div></div><div class="col-6"><div class="border rounded-3 p-2"><strong class="d-block text-success">${collaborators.length}</strong><small>Collaborators</small></div></div></div><h3 class="h6 border-top pt-3 mb-2">Collaborated with</h3><div class="collaborator-list">${collaboratorContent}</div>`;
+        overlay.classList.add('show');
+      });
+    }
+
+    fetch('http://127.0.0.1:8000/collaborations/network/advanced')
+      .then(response => response.json())
+      .then(data => {
+        nodes = data.nodes || []; edges = data.edges || [];
+        [...new Set(nodes.map(node => node.institution))].forEach(name => institutionSelect.insertAdjacentHTML('beforeend', `<option>${name}</option>`));
+        message.textContent = 'Search, filter, zoom, or click a researcher.';
+        drawNetwork();
+      })
+      .catch(() => { message.textContent = 'The network data could not be loaded.'; });
+    searchInput.addEventListener('input', drawNetwork);
+    institutionSelect.addEventListener('change', drawNetwork);
+    closeDrawer.addEventListener('click', () => overlay.classList.remove('show'));
+    overlay.addEventListener('click', event => { if (event.target === overlay) overlay.classList.remove('show'); });
   </script>
 </body>
 </html>

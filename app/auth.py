@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta, timezone
 
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -32,3 +32,8 @@ def read_token_subject(token: str) -> int:
         return int(subject)
     except (JWTError, TypeError, ValueError):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+
+def require_authenticated(token: str = Depends(oauth2_scheme)) -> int:
+    """Shared dependency for every protected research-management API."""
+    return read_token_subject(token)

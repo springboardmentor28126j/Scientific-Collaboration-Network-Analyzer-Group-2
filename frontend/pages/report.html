@@ -1,55 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reports | Scientific Collaboration Network Analyzer</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="../css/main.css"><link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <style>
+    .report-card { height: 100%; padding: 25px; background: white; border-radius: 18px; box-shadow: 0 5px 20px rgba(0,0,0,.08); transition: .3s; }
+    .report-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,.12); }
+    .report-card-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 12px; background: #e7f1ff; color: #0d6efd; font-size: 1.35rem; }
+    .report-history-row { cursor: pointer; }
+  </style>
 </head>
 <body>
   <nav class="navbar app-navbar navbar-dark"><div class="container-fluid"><span class="navbar-brand fw-bold"><i class="bi bi-file-earmark-bar-graph"></i> Institution Reports</span></div></nav>
-  <main class="page-container"><div class="row justify-content-center"><div class="col-xl-9"><div class="custom-card p-4"><div class="d-flex align-items-center gap-3 mb-4"><div class="icon-box bg-primary-subtle"><i class="bi bi-building text-primary"></i></div><div><h2 class="h4 mb-1">Institution Research Report</h2><p class="text-muted mb-0">View researcher and publication totals for one institution.</p></div></div><div class="row g-2"><div class="col-md-8"><label class="form-label">Institution ID</label><input type="number" id="institutionId" class="form-control" placeholder="For example: 1"></div><div class="col-md-4 d-grid align-self-end"><button class="btn btn-primary" onclick="loadReport()"><i class="bi bi-file-earmark-text"></i> Generate Report</button></div></div></div><div class="custom-card p-4 mt-4"><h3 class="h5">Report Result</h3><div id="reportResult" class="text-muted py-4">Enter an institution ID and generate a report.</div></div><div class="custom-card p-4 mt-4"><div class="d-flex justify-content-between align-items-center"><h3 class="h5 mb-0">Generated Reports</h3><button class="btn btn-outline-secondary btn-sm" onclick="clearHistory()">Clear history</button></div><div class="table-responsive mt-3"><table class="table align-middle"><thead><tr><th>Institution ID</th><th>Researchers</th><th>Publications</th><th>Generated</th><th></th></tr></thead><tbody id="reportHistory"></tbody></table></div></div></div></div></main>
+  <main class="page-container">
+    <div class="row justify-content-center"><div class="col-xl-10">
+      <section class="custom-card p-4">
+        <div class="d-flex align-items-center gap-3 mb-4"><div class="icon-box bg-primary-subtle"><i class="bi bi-building text-primary"></i></div><div><h1 class="h4 mb-1">Institution Research Report</h1><p class="text-muted mb-0">View researcher and publication totals for one institution.</p></div></div>
+        <div class="row g-2"><div class="col-md-8"><label for="institutionId" class="form-label">Institution ID</label><input type="number" id="institutionId" class="form-control" min="1" placeholder="For example: 1"></div><div class="col-md-4 d-grid align-self-end"><button class="btn btn-primary" id="generateReportButton" type="button"><i class="bi bi-file-earmark-text"></i> Generate Report</button></div></div>
+        <div id="reportMessage" class="mt-3" aria-live="polite"></div>
+      </section>
+
+      <section class="custom-card p-4 mt-4">
+        <h2 class="h5 mb-1">Report Result</h2>
+        <p class="text-muted small mb-3">The most recently generated institution report.</p>
+        <div id="reportResult" class="text-muted py-3">Generate an institution report to view its summary.</div>
+      </section>
+
+      <section class="custom-card p-4 mt-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><div><h2 class="h5 mb-1">Generated Reports</h2><p class="text-muted small mb-0">Select View to open every graph and table for one saved institution report.</p></div><button class="btn btn-outline-secondary btn-sm" id="clearHistoryButton" type="button"><i class="bi bi-trash3"></i> Clear history</button></div>
+        <div class="table-responsive mt-3"><table class="table align-middle mb-0"><thead><tr><th>Institution</th><th>Researchers</th><th>Publications</th><th>Generated</th><th class="text-end">Action</th></tr></thead><tbody id="reportHistory"></tbody></table></div>
+      </section>
+
+      <section class="mt-5" aria-label="Overall analytics reports">
+        <div class="mb-3"><h2 class="h4 mb-1">Overall Analytics</h2><p class="text-muted mb-0">Explore graphs based on all data in the system.</p></div>
+        <div class="row g-4">
+          <div class="col-md-6 col-xl-3"><article class="report-card"><div class="report-card-icon mb-3"><i class="bi bi-journal-text"></i></div><h3 class="h5">Publication Analytics</h3><p class="text-muted small">View publication status by year and publication types across all data.</p><a class="btn btn-outline-primary mt-3" href="analytics.html?section=publications">View Report</a></article></div>
+          <div class="col-md-6 col-xl-3"><article class="report-card"><div class="report-card-icon mb-3"><i class="bi bi-people"></i></div><h3 class="h5">Researcher Analytics</h3><p class="text-muted small">Compare researchers by their publication contribution.</p><a class="btn btn-outline-primary mt-3" href="analytics.html?section=researchers">View Report</a></article></div>
+          <div class="col-md-6 col-xl-3"><article class="report-card"><div class="report-card-icon mb-3"><i class="bi bi-diagram-3"></i></div><h3 class="h5">Collaboration Analytics</h3><p class="text-muted small">Identify the researchers with the most recorded collaborations.</p><a class="btn btn-outline-primary mt-3" href="analytics.html?section=collaborations">View Report</a></article></div>
+          <div class="col-md-6 col-xl-3"><article class="report-card"><div class="report-card-icon mb-3"><i class="bi bi-building"></i></div><h3 class="h5">Institution Analytics</h3><p class="text-muted small">Compare researcher and publication totals across institutions.</p><a class="btn btn-outline-primary mt-3" href="analytics.html?section=institutions">View Report</a></article></div>
+        </div>
+      </section>
+    </div></div>
+  </main>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../js/layout.js"></script>
   <script>
-    const historyKey = "scnaInstitutionReports";
+    const apiBaseUrl = "http://127.0.0.1:8000";
     const institutionInput = document.getElementById("institutionId");
+    const generateReportButton = document.getElementById("generateReportButton");
+    const messageElement = document.getElementById("reportMessage");
     const resultElement = document.getElementById("reportResult");
     const historyElement = document.getElementById("reportHistory");
+    let generatedReports = [];
 
-    function getHistory() {
-      try { return JSON.parse(localStorage.getItem(historyKey) || "[]"); }
-      catch { return []; }
-    }
-
+    function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character])); }
     function renderHistory() {
-      const rows = getHistory();
-      historyElement.innerHTML = rows.length
-        ? rows.map((item, index) => `<tr><td>${item.institution_id}</td><td>${item.researchers}</td><td>${item.publications}</td><td>${item.generated_at}</td><td><button type="button" class="btn btn-sm btn-outline-primary view-report" data-index="${index}"><i class="bi bi-eye"></i> View</button></td></tr>`).join("")
-        : '<tr><td colspan="5" class="text-center text-muted">No reports generated yet.</td></tr>';
-
-      historyElement.querySelectorAll(".view-report").forEach(button => {
-        button.addEventListener("click", () => showSaved(Number(button.dataset.index)));
-      });
+      historyElement.innerHTML = generatedReports.length ? generatedReports.map(item => `<tr class="report-history-row"><td><strong>${escapeHtml(item.institution_name)}</strong><small class="d-block text-muted">ID ${escapeHtml(item.institution_id)}</small></td><td>${escapeHtml(item.researchers)}</td><td>${escapeHtml(item.publications)}</td><td>${escapeHtml(new Date(item.generated_at).toLocaleString())}</td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="institution-report.html?id=${encodeURIComponent(item.institution_id)}"><i class="bi bi-eye"></i> View</a></td></tr>`).join("") : '<tr><td colspan="5" class="text-center text-muted py-4">No reports generated yet.</td></tr>';
     }
-
-    function showSaved(index) {
-      const item = getHistory()[index];
-      if (!item) return;
-      institutionInput.value = item.institution_id;
-      resultElement.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><strong>Saved report</strong><small class="text-muted">Generated ${item.generated_at}</small></div><div class="row g-3"><div class="col-md-4"><div class="p-3 bg-light rounded"><small>Institution ID</small><div class="fs-3 fw-bold">${item.institution_id}</div></div></div><div class="col-md-4"><div class="p-3 bg-light rounded"><small>Researchers</small><div class="fs-3 fw-bold text-primary">${item.researchers}</div></div></div><div class="col-md-4"><div class="p-3 bg-light rounded"><small>Publications</small><div class="fs-3 fw-bold text-success">${item.publications}</div></div></div></div>`;
-      resultElement.closest(".custom-card").scrollIntoView({ behavior: "smooth", block: "center" });
+    async function loadHistory() {
+      try { const response = await fetch(`${apiBaseUrl}/reports/generated`); if (!response.ok) throw new Error(); generatedReports = await response.json(); renderHistory(); }
+      catch { historyElement.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Start the API to load generated reports.</td></tr>'; }
     }
-
-    function clearHistory() { localStorage.removeItem(historyKey); renderHistory(); }
-    async function loadReport(){
-      const id=institutionInput.value;
-      const result=resultElement;
-      if(!id){result.innerHTML='<div class="alert alert-warning mb-0">Enter an institution ID first.</div>';return;}
-      result.innerHTML='Loading report…';
-      try{const response=await fetch(`http://127.0.0.1:8000/institutions/${id}/report`);const data=await response.json();if(!response.ok){result.innerHTML=`<div class="alert alert-danger mb-0">${data.detail||"Unable to generate report."}</div>`;return;}const history=getHistory().filter(item=>item.institution_id!==data.institution_id);history.unshift({...data,generated_at:new Date().toLocaleString()});localStorage.setItem(historyKey,JSON.stringify(history.slice(0,10)));renderHistory();showSaved(0);}catch(error){result.innerHTML='<div class="alert alert-danger mb-0">Unable to connect to the server.</div>';}}
-    renderHistory();
+    async function generateReport() {
+      const id = institutionInput.value.trim();
+      if (!id) { messageElement.innerHTML = '<div class="alert alert-warning mb-0">Enter an institution ID first.</div>'; return; }
+      generateReportButton.disabled = true;
+      messageElement.innerHTML = '<div class="alert alert-info mb-0">Generating report...</div>';
+      try {
+        const response = await fetch(`${apiBaseUrl}/reports/generated/${encodeURIComponent(id)}`, { method: "POST" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to generate report.");
+        await loadHistory();
+        resultElement.className = "";
+        resultElement.innerHTML = `<div class="row g-3"><div class="col-md-4"><div class="p-3 bg-light rounded"><small>Institution</small><div class="fs-5 fw-bold">${escapeHtml(data.institution_name)}</div><small class="text-muted">ID ${escapeHtml(data.institution_id)}</small></div></div><div class="col-md-4"><div class="p-3 bg-light rounded"><small>Researchers</small><div class="fs-3 fw-bold text-primary">${escapeHtml(data.researchers)}</div></div></div><div class="col-md-4"><div class="p-3 bg-light rounded"><small>Publications</small><div class="fs-3 fw-bold text-success">${escapeHtml(data.publications)}</div></div></div></div>`;
+        messageElement.innerHTML = `<div class="alert alert-success mb-0">Report generated. <a class="alert-link" href="institution-report.html?id=${encodeURIComponent(data.institution_id)}">Open the full report</a>.</div>`;
+      } catch (error) { messageElement.innerHTML = `<div class="alert alert-danger mb-0">${escapeHtml(error.message || "Unable to connect to the server.")}</div>`; }
+      finally { generateReportButton.disabled = false; }
+    }
+    async function clearHistory() { if (!generatedReports.length || !window.confirm("Clear all saved institution reports?")) return; const response = await fetch(`${apiBaseUrl}/reports/generated`, { method: "DELETE" }); if (response.ok) { generatedReports = []; renderHistory(); } }
+    generateReportButton.addEventListener("click", generateReport);
+    institutionInput.addEventListener("keydown", event => { if (event.key === "Enter") generateReport(); });
+    document.getElementById("clearHistoryButton").addEventListener("click", clearHistory);
+    loadHistory();
   </script>
 </body>
 </html>

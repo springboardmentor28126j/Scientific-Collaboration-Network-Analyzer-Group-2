@@ -12,7 +12,9 @@ def create_user(db: Session, user: schemas.UserCreate):
         name=user.name,
         email=user.email,
         password=hashed_password,
-        role=user.role
+        role="Researcher",
+        requested_role=user.role,
+        account_status="active" if user.role.lower() == "researcher" else "pending"
     )
 
     db.add(db_user)
@@ -42,7 +44,8 @@ def create_researcher(
         skills=researcher.skills,
         research_interest=researcher.research_interest,
         designation=researcher.designation,
-        institution_id=researcher.institution_id
+        institution_id=researcher.institution_id,
+        email=researcher.email
     )
 
     db.add(db_researcher)
@@ -87,6 +90,7 @@ def update_researcher(
     researcher.research_interest = updated.research_interest
     researcher.designation = updated.designation
     researcher.institution_id = updated.institution_id
+    researcher.email = updated.email
 
 
     db.commit()
@@ -465,7 +469,8 @@ def create_collaboration(
         researcher1_id=collaboration.researcher1_id,
         researcher2_id=collaboration.researcher2_id,
         project=collaboration.project,
-        publication_id=collaboration.publication_id
+        publication_id=collaboration.publication_id,
+        status="pending"
     )
 
     db.add(db_collaboration)
@@ -584,6 +589,10 @@ def get_institution_report(
     institution_id: int
 ):
 
+    institution = get_institution_by_id(db, institution_id)
+    if not institution:
+        return None
+
     researchers = db.query(
         models.Researcher
     ).filter(
@@ -601,6 +610,7 @@ def get_institution_report(
 
     return {
         "institution_id": institution_id,
+        "institution_name": institution.name,
         "researchers": researchers,
         "publications": publications
     }

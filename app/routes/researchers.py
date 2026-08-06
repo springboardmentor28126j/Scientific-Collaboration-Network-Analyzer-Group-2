@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app import models, schemas, crud
+from app import models, schemas, crud, auth
 
 router = APIRouter(
     prefix="/researchers",
-    tags=["Researchers"]
+    tags=["Researchers"],
+    dependencies=[Depends(auth.require_authenticated)]
 )
 
 @router.post("/")

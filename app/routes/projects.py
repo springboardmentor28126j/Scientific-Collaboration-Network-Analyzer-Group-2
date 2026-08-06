@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import crud, models, schemas, auth
 from app.database import get_db
+from app.notification_service import notify_all_users
 
-router = APIRouter(prefix="/projects", tags=["Projects"])
+router = APIRouter(prefix="/projects", tags=["Projects"], dependencies=[Depends(auth.require_authenticated)])
 
 
 def _project_or_404(db: Session, project_id: int):
@@ -16,7 +17,9 @@ def _project_or_404(db: Session, project_id: int):
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)):
-    return crud.create_project(db, project)
+    created = crud.create_project(db, project)
+    notify_all_users(db, notification_type="project", title="New project created", message=f"{created.title} is now available in the research workspace.", link="pages/projects.html")
+    return created
 
 
 @router.get("/")

@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app import crud, schemas
+from app import crud, schemas, auth
 from app.database import get_db
+from app.notification_service import notify_all_users
 
 router = APIRouter(
     prefix="/conferences",
-    tags=["Conferences"]
+    tags=["Conferences"],
+    dependencies=[Depends(auth.require_authenticated)]
 )
 
 @router.post("/", response_model=schemas.ConferenceResponse)
 def create_conference(conference: schemas.ConferenceCreate, db: Session = Depends(get_db)):
-    return crud.create_conference(db, conference)
+    created = crud.create_conference(db, conference)
+    notify_all_users(db, notification_type="conference", title="New conference scheduled", message=f"{created.name} was added to the conference calendar.", link="pages/conferences.html")
+    return created
 
 @router.get("/", response_model=list[schemas.ConferenceResponse])
 def get_conferences(db: Session = Depends(get_db)):

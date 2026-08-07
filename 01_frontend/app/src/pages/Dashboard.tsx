@@ -1,6 +1,6 @@
 import { useAuthStore, useIsSuperAdmin, useIsInstitutionAdmin, useIsResearcher, useIsReviewer } from "@/stores/authStore";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, BookOpen, ClipboardCheck, Shield, Activity, PieChart as PieChartIcon } from "lucide-react";
+import { Building2, Users, BookOpen, ClipboardCheck, Shield, Activity, PieChart as PieChartIcon, Trophy } from "lucide-react";
 import { useInstitutions } from "@/hooks/useAuthQuery";
 import { useDashboard } from "@/hooks/useDashboardQuery";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
@@ -295,6 +295,45 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Top Researchers */}
+      {(isSuperAdmin || isInstitutionAdmin) && dashboard?.top_researchers && dashboard.top_researchers.length > 0 && (
+        <Card className="border-slate-200 shadow-sm mt-6 mb-6">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+            <CardTitle className="text-lg flex items-center gap-2 text-amber-600">
+              <Trophy className="h-5 w-5" />
+              Top Researchers
+            </CardTitle>
+            <CardDescription>
+              Researchers with the highest number of published papers
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-slate-100">
+              {dashboard.top_researchers.map((researcher: any, idx: number) => (
+                <div key={researcher.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">{researcher.full_name}</p>
+                      <p className="text-xs text-slate-500 flex items-center gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {researcher.institution_name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-2xl font-bold text-slate-700">{researcher.published_papers}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Papers</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Role-specific info */}

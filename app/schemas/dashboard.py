@@ -1,5 +1,11 @@
+import uuid
 from pydantic import BaseModel
 
+class TopResearcher(BaseModel):
+    id: uuid.UUID
+    full_name: str
+    institution_name: str | None = None
+    published_papers: int
 
 class PublicationStatusStats(BaseModel):
     draft: int
@@ -20,6 +26,7 @@ class SuperAdminDashboard(BaseModel):
     total_institutions: int
     total_researchers: int
     total_reviewers: int
+    top_researchers: list[TopResearcher]
 
 
 class InstitutionDashboard(BaseModel):
@@ -29,6 +36,7 @@ class InstitutionDashboard(BaseModel):
 
     total_researchers: int
     total_reviewers: int
+    top_researchers: list[TopResearcher]
 
 
 class ResearcherDashboard(BaseModel):

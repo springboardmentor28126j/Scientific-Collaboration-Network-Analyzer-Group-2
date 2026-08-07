@@ -11,12 +11,20 @@ export interface PublicationStatusStats {
   archived: number;
 }
 
+export interface TopResearcher {
+  id: string;
+  full_name: string;
+  institution_name: string;
+  published_papers: number;
+}
+
 export interface SuperAdminDashboard {
   total_publications: number;
   publication_status: PublicationStatusStats;
   total_institutions: number;
   total_researchers: number;
   total_reviewers: number;
+  top_researchers?: TopResearcher[];
 }
 
 export interface InstitutionDashboard {
@@ -24,6 +32,7 @@ export interface InstitutionDashboard {
   publication_status: PublicationStatusStats;
   total_researchers: number;
   total_reviewers: number;
+  top_researchers?: TopResearcher[];
 }
 
 export interface ResearcherDashboard {

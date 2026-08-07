@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.institution import Institution
 from app.models.publication import Publication, PublicationStatus
 from app.models.review_assignment import ReviewAssignment
+from app.schemas.dashboard import TopResearcher
 from app.schemas.dashboard_filter import DashboardFilter
 from app.models.review import Review
 from app.models.review_assignment import (
@@ -201,3 +202,62 @@ class DashboardRepository:
         )
 
         return result.scalar_one()
+
+    async def top_researchers(
+        self,
+        institution_id: UUID | None = None,
+        limit: int = 10,
+    ) -> list[TopResearcher]:
+
+        query = (
+            select(
+                User.id,
+                User.full_name,
+                Institution.name,
+                func.count(Publication.id).label("published_papers"),
+            )
+            .join(
+                Publication,
+                Publication.created_by == User.id,
+            )
+            .join(
+                Institution,
+                Institution.id == User.institution_id,
+            )
+            .where(
+                User.role == UserRole.RESEARCHER,
+                Publication.status.in_(
+                    [
+                        PublicationStatus.PUBLISHED,
+                        PublicationStatus.ARCHIVED,
+                    ]
+                ),
+            )
+            .group_by(
+                User.id,
+                User.full_name,
+                Institution.name,
+            )
+            .order_by(
+                func.count(Publication.id).desc(),
+                User.full_name.asc(),
+            )
+            .limit(limit)
+        )
+
+        if institution_id:
+            query = query.where(
+                User.institution_id == institution_id,
+            )
+
+        result = await self.session.execute(query)
+
+        return [
+            TopResearcher(
+                id=row.id,
+                full_name=row.full_name,
+                institution_name=row.name,
+                published_papers=row.published_papers,
+            )
+            for row in result
+        ]

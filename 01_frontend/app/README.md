@@ -1,109 +1,72 @@
-# Personal Blog Fullstack Template
+# ResearchMesh Frontend
 
-A fullstack bilingual (中文 / English) personal blog + portfolio named **NEURAL ATELIER**. Three-column editorial layout (sidebar / posts feed / right rail), light & dark themes, Kimi OAuth + local username/password auth, and an admin-only authoring flow.
+ResearchMesh is a comprehensive scientific collaboration network analyzer platform. It facilitates the management, peer review, and public access to research publications across various academic institutions.
 
 ## Features
 
-- Three-column editorial layout: profile sidebar, post feed, CV rail
-- Bilingual content (zh / en) for every post, bio paragraph, and CV entry — language toggle in the header
-- Light / dark theme toggle that writes CSS variables to `document.documentElement`
-- Admin-only post authoring (`/admin/new-post`) with image upload to `public/images/`
-- Public guestbook (`/guestbook`) writing to the `contacts` table
-- Editable profile bio, CV entries, and avatar through the settings modal (admin only)
-- Dual auth: Kimi OAuth and local username/password — first local user is auto-promoted to admin
-- Animated three.js shader backdrop behind the layout
+- **Role-Based Dashboards**: Tailored views and capabilities for Super Admins, Institution Admins, Researchers, and Reviewers.
+  - *Super Admin*: Manage institutions, oversee global platform health, and view top researchers.
+  - *Institution Admin*: Manage users (researchers & reviewers) within their respective institution.
+  - *Researcher*: Submit publications, manage drafts, invite co-authors, and curate references.
+  - *Reviewer*: Access assigned papers, review content, and submit editorial decisions.
+- **Public Library (Catalog)**: A public-facing searchable catalog of all published and archived research papers.
+- **Advanced Publication Management**: Full lifecycle management of papers from Draft -> Submitted -> Under Review -> Revision Required -> Accepted -> Published.
+- **Citation & References System**: Integrated lookup system to seamlessly add internal and external citations.
+- **Automated Workflows**: Download PDFs, track co-authors, and monitor peer-review feedback.
 
 ## Tech Stack
 
-- React 19 + TypeScript + Vite
-- Tailwind CSS v3 + shadcn/ui
-- tRPC 11 + Hono + Drizzle ORM + MySQL
-- Kimi OAuth 2.0 **and** local username/password authentication (both enabled)
-- React Router v7
-- three.js for the ambient hero shader
+- React 18 + TypeScript + Vite
+- Tailwind CSS + shadcn/ui for UI components
+- Zustand for state management
+- React Query for data fetching and caching
+- React Router v6 for navigation
+- Recharts for dashboard analytics
 
-## Quick Start
+## Local Development
 
-1. Clone / extract this template
-2. Install dependencies: `npm install`
-3. Copy `.env.example` to `.env` and fill in `DATABASE_URL` and Kimi OAuth credentials
-4. Run database migrations: `npx drizzle-kit push`
-5. Seed starter content (posts, profile bio, CV entries): `npx tsx db/seed.ts`
-6. Run the dev server: `npm run dev`
-7. Build for production: `npm run build`
+To run the frontend application locally on your machine:
 
-## Configuration
+1. **Install Dependencies**
+   Ensure you have Node.js and `pnpm` installed. Run the following command from this directory:
+   ```bash
+   pnpm install
+   ```
 
-This template does not use `src/config.ts`. All user-visible content is driven by the database and loaded through tRPC. A few static UI strings live inline in components — edit them there:
+2. **Environment Variables**
+   Create a `.env` file in the root of the frontend folder and specify the backend API URL:
+   ```env
+   VITE_API_URL=http://localhost:8000
+   ```
 
-- **`src/App.tsx`** — header wordmark, `LOG IN / 登入`, `ADMIN`, theme / language toggles, `LOADING…`
-- **`src/components/LeftColumn.tsx`** — profile column (bio paragraphs render from `profileBio`)
-- **`src/components/MiddleColumn.tsx`** — post feed (renders from `posts`)
-- **`src/components/RightColumn.tsx`** — CV rail (renders from `cvEntries`)
-- **`src/components/PostDetail.tsx`** — post detail page layout
-- **`src/components/ContactModal.tsx`** — contact form (writes to `contacts`)
-- **`src/components/SettingsModal.tsx`** — admin settings modal (editable profile + avatar)
-- **`src/pages/Guestbook.tsx`** — guestbook page
-- **`src/pages/NewPost.tsx`** — admin-only post editor
-- **`src/pages/Login.tsx`** — sign-in UI (Kimi + local)
-- **`db/seed.ts`** — bootstrap content for posts, bio, CV entries, and avatar
+3. **Start the Development Server**
+   ```bash
+   pnpm run dev
+   ```
+   The application will be available at `http://localhost:3000`.
 
-See `info.md` (outer folder) for layout character limits per field.
+## Production Deployment (Render.com)
 
-## Database Schema
+This frontend is designed to be easily deployed as a Static Site on Render.com.
 
-Seven tables, defined in `db/schema.ts`:
+1. **Connect your Repository**
+   Log into Render and create a new "Static Site". Connect your GitHub/GitLab repository.
 
-- **`users`** — Kimi OAuth-managed (id, unionId, name, email, avatar, role)
-- **`localUsers`** — local username/password records (id, username, passwordHash, name, role)
-- **`posts`** — bilingual blog posts (id, year, image, sortOrder, zh*/en* title, subtitle, collection, content, detailContent)
-- **`contacts`** — guestbook / contact submissions (id, name, message, createdAt)
-- **`profileBio`** — single-row profile bio (id=1, zhText, enText, email, instagram)
-- **`cvEntries`** — CV rows grouped by category (id, category, zh/en title, subtitle, year, sortOrder)
-- **`siteSettings`** — single-row site settings (id=1, avatarImage)
+2. **Configure the Build Settings**
+   - **Build Command**: `pnpm install && pnpm run build`
+   - **Publish Directory**: `dist`
+   
+3. **Environment Variables**
+   Under the Advanced settings in Render, add your production environment variables:
+   - `VITE_API_URL`: The URL of your deployed backend API (e.g., `https://api.your-backend.onrender.com`)
 
-## Required Assets
+4. **Routing Configuration**
+   Since this is a Single Page Application (SPA) using React Router, you must configure URL rewriting in Render so that all paths redirect to `index.html`.
+   - In your Render dashboard, navigate to the **Redirects/Rewrites** tab for your Static Site.
+   - Add a rule:
+     - **Source**: `/*`
+     - **Destination**: `/index.html`
+     - **Action**: `Rewrite`
 
-Images are referenced by URL from the database. Seeded defaults live under `public/images/`:
-
-- `/images/portrait.jpg` — default profile avatar (square, 800×800+ recommended)
-- `/images/hero-art.jpg`, `/images/blog-1.jpg`, … — post cover images seeded by `db/seed.ts`
-
-New post covers should be uploaded through the admin `NewPost` editor rather than edited by hand.
-
-## Project Structure
-
-```
-.
-├── api/                # tRPC routers: auth, local-auth, blog, contact, profile, cv, settings
-├── contracts/          # Shared tRPC types
-├── db/                 # Drizzle schema, migrations, seed
-├── public/             # Static assets (incl. seed images)
-├── src/
-│   ├── components/     # AuthLayout, PostDetail, {Left,Middle,Right}Column,
-│   │                   # ContactModal, SettingsModal, ImageUpload, ShaderCanvas
-│   ├── contexts/       # ThemeContext, LanguageContext
-│   ├── data/           # blogPosts.ts (type definitions)
-│   ├── hooks/          # useAuth
-│   ├── pages/          # Home, Guestbook, NewPost, Login, NotFound
-│   ├── providers/      # trpc
-│   └── App.tsx
-├── Dockerfile
-├── drizzle.config.ts
-├── .backend-features.json  # Declares ["auth", "db"]
-└── .env.example
-```
-
-## Design
-
-- Three-column layout: left profile (~260px), middle feed (flex), right CV rail (~260px)
-- Fixed 40px top header; each column scrolls independently
-- Fonts: Inter body, Space Mono for small labels, a custom serif for headlines
-- CSS variables drive the theme (`--bg-warm-white`, `--text-charcoal`, `--accent-teal`, `--border-light`, …)
-
-## Notes
-
-- Don't re-introduce hard-coded post content into components — the DB is the source of truth
-- Both auth flows stay live at the same time (`api/kimi/` and `api/local-auth-router.ts`); the first local user is auto-admin
-- Content edits must go through the admin UI (`SettingsModal`, `NewPost`) or `db/seed.ts`
-- Every bilingual row (`posts`, `profileBio`, `cvEntries`) requires both `zh*` and `en*` fields populated
+5. **Deploy**
+   Save the changes and trigger a manual deploy if necessary. Render will automatically build the site and deploy your frontend.

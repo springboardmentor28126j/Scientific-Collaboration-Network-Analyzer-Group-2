@@ -120,3 +120,14 @@ export const addAuthorSchema = z.object({
 });
 
 export type AddAuthorFormData = z.infer<typeof addAuthorSchema>;
+
+export const referenceSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500),
+  authors: z.string().min(1, "Authors are required"),
+  publication_name: z.string().nullable().optional(),
+  year: z.number().int().min(1800, "Year must be valid").max(new Date().getFullYear() + 1),
+  doi: z.string().nullable().optional(),
+  url: z.string().url("Must be a valid URL").nullable().optional(),
+});
+
+export type ReferenceFormData = z.infer<typeof referenceSchema>;

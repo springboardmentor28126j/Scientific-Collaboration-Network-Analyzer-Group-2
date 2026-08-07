@@ -22,6 +22,8 @@ import Publications from "@/pages/Publications";
 import PublicationDetail from "@/pages/PublicationDetail";
 import Reviewer from "@/pages/Reviewer";
 import Profile from "@/pages/Profile";
+import Catalog from "@/pages/Catalog";
+import CatalogDetail from "@/pages/CatalogDetail";
 import NotFound from "@/pages/NotFound";
 
 function AppRoutes() {
@@ -59,6 +61,22 @@ function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route
+          path="catalog"
+          element={
+            <ProtectedRoute>
+              <Catalog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="catalog/:id"
+          element={
+            <ProtectedRoute>
+              <CatalogDetail />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="institutions"
           element={

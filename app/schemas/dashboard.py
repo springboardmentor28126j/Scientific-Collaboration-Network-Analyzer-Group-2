@@ -43,5 +43,3 @@ class ReviewerDashboard(BaseModel):
     assigned_reviews: int
     pending_reviews: int
     completed_reviews: int
-
-

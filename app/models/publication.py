@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.models.review_assignment import ReviewAssignment
     from app.models.publication_history import PublicationHistory
     from app.models.institution import Institution
+    from app.models.publication_reference import PublicationReference
 
 
 class PublicationStatus(StrEnum):
@@ -174,4 +175,11 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="publication",
         uselist=False,
         cascade="all, delete-orphan",
+    )
+
+    references: Mapped[list["PublicationReference"]] = relationship(
+        "PublicationReference",
+        back_populates="publication",
+        cascade="all, delete-orphan",
+        order_by="PublicationReference.reference_order",
     )

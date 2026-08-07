@@ -3,7 +3,11 @@ import uuid
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from fastapi.responses import RedirectResponse
 
-from app.api.deps import get_publication_author_service, get_publication_service
+from app.api.deps import (
+    get_publication_author_service,
+    get_publication_service,
+    get_publication_reference_service,
+)
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.publication import PublicationType
@@ -21,10 +25,23 @@ from app.schemas.publication_author import (
 from app.schemas.publication_decision import (
     PublicationDecisionCreate,
 )
+from app.schemas.publication_reference import (
+    PublicationReferenceCreate,
+    PublicationReferenceRead,
+    PublicationReferenceUpdate,
+)
+from app.schemas.publication_catalog import (
+    PublicationCatalogItem,
+    PublicationCatalogSearchItem,
+)
+from app.schemas.publication_reference_lookup import PublicationReferenceLookup
+from app.schemas.publication_catalog_filter import PublicationCatalogFilter
+
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.publication_filter import PublicationFilter
 from app.services.publication_service import PublicationService
 from app.services.publication_author_service import PublicationAuthorService
+from app.services.publication_reference_service import PublicationReferenceService
 
 router = APIRouter(
     prefix="/publications",
@@ -78,6 +95,44 @@ async def list_publications(
     return await service.list_publications(
         current_user=current_user,
         filters=filters,
+    )
+
+
+@router.get(
+    "/catalog",
+    response_model=PaginatedResponse[PublicationCatalogItem],
+    summary="Browse published publications",
+)
+async def list_catalog(
+    filters: PublicationCatalogFilter = Depends(),
+    service: PublicationService = Depends(get_publication_service),
+):
+    return await service.list_catalog(filters)
+
+
+@router.get(
+    "/catalog/search",
+    response_model=list[PublicationCatalogSearchItem],
+    summary="Search published publications",
+)
+async def search_catalog(
+    search: str,
+    service: PublicationService = Depends(get_publication_service),
+):
+    return await service.search_catalog(search)
+
+
+@router.get(
+    "/catalog/{publication_id}",
+    response_model=PublicationReferenceLookup,
+    summary="Get publication details for citation/reference",
+)
+async def get_catalog_publication(
+    publication_id: uuid.UUID,
+    service: PublicationService = Depends(get_publication_service),
+):
+    return await service.get_catalog_publication(
+        publication_id=publication_id,
     )
 
 
@@ -204,13 +259,13 @@ async def submit_publication(
         current_user,
     )
 
+
 @router.get(
     "/{publication_id}/download",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     summary="Download publication PDF",
     description=(
-        "Downloads the publication PDF. Only verified users "
-        "are allowed to download papers."
+        "Downloads the publication PDF. Only verified users are allowed to download papers."
     ),
 )
 async def download_publication(
@@ -229,6 +284,7 @@ async def download_publication(
         url=paper_url,
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     )
+
 
 @router.post(
     "/{publication_id}/decision",
@@ -280,4 +336,87 @@ async def archive_publication(
     return await service.archive(
         publication_id=publication_id,
         current_user=current_user,
+    )
+
+
+@router.post(
+    "/{publication_id}/references",
+    response_model=PublicationReferenceRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add a reference",
+)
+async def add_reference(
+    publication_id: uuid.UUID,
+    payload: PublicationReferenceCreate,
+    current_user: User = Depends(get_current_user),
+    service: PublicationReferenceService = Depends(
+        get_publication_reference_service,
+    ),
+):
+    return await service.add_reference(
+        publication_id=publication_id,
+        payload=payload,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/{publication_id}/references",
+    response_model=list[PublicationReferenceRead],
+    summary="List publication references",
+)
+async def list_references(
+    publication_id: uuid.UUID,
+    service: PublicationReferenceService = Depends(
+        get_publication_reference_service,
+    ),
+):
+    return await service.list_references(
+        publication_id,
+    )
+
+
+@router.put(
+    "/{publication_id}/references/{reference_id}",
+    response_model=PublicationReferenceRead,
+    summary="Update reference",
+)
+async def update_reference(
+    publication_id: uuid.UUID,
+    reference_id: uuid.UUID,
+    payload: PublicationReferenceUpdate,
+    current_user: User = Depends(get_current_user),
+    service: PublicationReferenceService = Depends(
+        get_publication_reference_service,
+    ),
+):
+    return await service.update_reference(
+        publication_id=publication_id,
+        reference_id=reference_id,
+        payload=payload,
+        current_user=current_user,
+    )
+
+
+@router.delete(
+    "/{publication_id}/references/{reference_id}",
+    response_model=Message,
+    summary="Delete reference",
+)
+async def delete_reference(
+    publication_id: uuid.UUID,
+    reference_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    service: PublicationReferenceService = Depends(
+        get_publication_reference_service,
+    ),
+):
+    await service.delete_reference(
+        publication_id=publication_id,
+        reference_id=reference_id,
+        current_user=current_user,
+    )
+
+    return Message(
+        detail="Reference deleted successfully.",
     )

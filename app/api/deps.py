@@ -12,6 +12,7 @@ from app.services.auth_service import AuthService
 from app.services.institution_service import InstitutionService
 from app.services.publication_conference_service import PublicationConferenceService
 from app.services.publication_conference_service import PublicationConferenceService
+from app.services.publication_reference_service import PublicationReferenceService
 from app.services.review_assignment_service import ReviewAssignmentService
 from app.services.user_service import UserService
 from app.services.publication_service import PublicationService
@@ -71,3 +72,9 @@ def get_publication_conference_service(
     session: AsyncSession = Depends(get_session),
 ) -> PublicationConferenceService:
     return PublicationConferenceService(session)
+
+
+def get_publication_reference_service(
+    session: AsyncSession = Depends(get_session),
+) -> PublicationReferenceService:
+    return PublicationReferenceService(session)

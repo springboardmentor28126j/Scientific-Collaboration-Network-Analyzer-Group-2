@@ -37,6 +37,12 @@ function getNavItems(): NavItem[] {
       roles: ["SUPER_ADMIN", "INSTITUTION_ADMIN", "RESEARCHER", "REVIEWER"],
     },
     {
+      label: "Public Library",
+      path: "/dashboard/catalog",
+      icon: <BookOpen className="h-5 w-5" />,
+      roles: ["SUPER_ADMIN", "INSTITUTION_ADMIN", "RESEARCHER", "REVIEWER"],
+    },
+    {
       label: "Institutions",
       path: "/dashboard/institutions",
       icon: <Building2 className="h-5 w-5" />,

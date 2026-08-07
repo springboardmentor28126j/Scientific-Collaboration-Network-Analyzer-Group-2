@@ -690,3 +690,133 @@ select {
     background: #fee2e2;
     color: #b91c1c;
 }
+/* ============ CITATIONS ============ */
+
+.form-container {
+    max-width: 600px;
+}
+
+.form-card {
+    background: #fafafa;
+    border: 1px solid #f0f1f3;
+    border-radius: 14px;
+    padding: 28px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="email"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111827;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #3b82f6;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.form-actions button,
+.form-actions a {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.formatted-citation {
+    background: #eff6ff;
+    border-left: 3px solid #3b82f6;
+    padding: 12px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #1e40af;
+    border-radius: 6px;
+    font-style: italic;
+}
+
+.citation-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s ease;
+}
+
+.btn-edit {
+    background: #fbbf24;
+    color: #78350f;
+}
+
+.btn-edit:hover {
+    background: #f59e0b;
+}
+
+.btn-delete {
+    background: #fca5a5;
+    color: #7f1d1d;
+}
+
+.btn-delete:hover {
+    background: #f87171;
+}
+
+.status-apa {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-ieee {
+    background: #c7d2fe;
+    color: #3730a3;
+}
+
+.status-bibtex {
+    background: #ddd6fe;
+    color: #5b21b6;
+}

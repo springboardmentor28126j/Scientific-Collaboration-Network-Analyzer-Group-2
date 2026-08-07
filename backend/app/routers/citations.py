@@ -1,46 +1,106 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+
 from app.database import get_db
 from app.models.citation import Citation
-from app.models.publication import Publication
-from app.schemas.citation import CitationCreate, CitationOut
+from app.schemas.citation import Citation as CitationSchema, CitationCreate, CitationUpdate
 
-router = APIRouter()
+router = APIRouter(tags=["citations"])
+# GET - Sab citations
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
+from typing import Optional
+from app.database import get_db
+from app.models.citation import Citation
+from app.schemas.citation import Citation as CitationSchema
 
+router = APIRouter(tags=["citations"])
 
-@router.post("/", response_model=CitationOut)
-def create_citation(citation: CitationCreate, db: Session = Depends(get_db)):
-    new_citation = Citation(**citation.dict())
-    db.add(new_citation)
-    db.commit()
-    db.refresh(new_citation)
-    return new_citation
+@router.get("/")
+def get_citations(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    sort_by: str = Query("id", regex="^(id|year|citation_style|title)$"),
+    order: str = Query("desc", regex="^(asc|desc)$"),
+    citation_style: Optional[str] = None,
+    year: Optional[int] = None,
+    search: Optional[str] = None
+):
+    query = db.query(Citation)
 
+    # Filters
+    if citation_style:
+        query = query.filter(Citation.citation_style == citation_style)
+    if year:
+        query = query.filter(Citation.year == year)
+    if search:
+        query = query.filter(
+            Citation.title.ilike(f"%{search}%") |
+            Citation.authors.ilike(f"%{search}%")
+        )
 
-@router.get("/", response_model=List[CitationOut])
-def list_citations(db: Session = Depends(get_db)):
-    return db.query(Citation).all()
+    # Sorting
+    sort_column = getattr(Citation, sort_by)
+    if order == "asc":
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
 
+    total = query.count()
 
-@router.get("/publication/{publication_id}")
-def get_citations_for_publication(publication_id: int, db: Session = Depends(get_db)):
-    citing = db.query(Citation).filter(Citation.cited_publication_id == publication_id).all()
+    # Pagination
+    offset = (page - 1) * limit
+    citations = query.offset(offset).limit(limit).all()
 
-    result = []
-    for c in citing:
-        pub = db.query(Publication).filter(Publication.id == c.citing_publication_id).first()
-        if pub:
-            result.append({"citation_id": c.id, "citing_publication_title": pub.title, "citing_publication_id": pub.id})
-
-    return {"cited_by_count": len(result), "citations": result}
-
-
-@router.delete("/{citation_id}")
-def delete_citation(citation_id: int, db: Session = Depends(get_db)):
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit,
+        "citations": citations
+    }
+# GET - Single citation
+@router.get("/{citation_id}")
+def get_citation(citation_id: int, db: Session = Depends(get_db)):
     citation = db.query(Citation).filter(Citation.id == citation_id).first()
     if not citation:
         raise HTTPException(status_code=404, detail="Citation not found")
-    db.delete(citation)
+    return citation
+
+# POST - Citation add karo
+@router.post("/")
+def create_citation(citation: CitationCreate, db: Session = Depends(get_db)):
+    db_citation = Citation(**citation.dict())
+    db.add(db_citation)
     db.commit()
-    return {"message": "Citation deleted successfully"}
+    db.refresh(db_citation)
+    return db_citation
+
+# PUT - Citation update karo
+@router.put("/{citation_id}")
+def update_citation(citation_id: int, citation: CitationUpdate, db: Session = Depends(get_db)):
+    db_citation = db.query(Citation).filter(Citation.id == citation_id).first()
+    if not db_citation:
+        raise HTTPException(status_code=404, detail="Citation not found")
+    
+    update_data = citation.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_citation, field, value)
+    
+    db.commit()
+    db.refresh(db_citation)
+    return db_citation
+
+# DELETE - Citation delete karo
+@router.delete("/{citation_id}")
+def delete_citation(citation_id: int, db: Session = Depends(get_db)):
+    db_citation = db.query(Citation).filter(Citation.id == citation_id).first()
+    if not db_citation:
+        raise HTTPException(status_code=404, detail="Citation not found")
+    
+    db.delete(db_citation)
+    db.commit()
+    return {"message": "Citation deleted"}

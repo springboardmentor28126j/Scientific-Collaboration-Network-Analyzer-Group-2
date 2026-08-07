@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
 from typing import List, Optional
 import os
 import shutil
@@ -27,12 +28,16 @@ def create_publication(pub: PublicationCreate, db: Session = Depends(get_db)):
     return new_pub
 
 
-@router.get("/", response_model=List[PublicationOut])
+@router.get("/")
 def list_publications(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    sort_by: str = Query("id", regex="^(id|title|type|status|year)$"),
+    order: str = Query("desc", regex="^(asc|desc)$"),
     status: Optional[PublicationStatus] = None,
     type: Optional[PublicationType] = None,
-    author_id: Optional[int] = None,
-    db: Session = Depends(get_db)
+    author_id: Optional[int] = None
 ):
     query = db.query(Publication)
 
@@ -43,7 +48,23 @@ def list_publications(
     if author_id:
         query = query.filter(Publication.author_id == author_id)
 
-    return query.all()
+    sort_column = getattr(Publication, sort_by)
+    if order == "asc":
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
+
+    total = query.count()
+    offset = (page - 1) * limit
+    publications = query.offset(offset).limit(limit).all()
+
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit,
+        "publications": publications
+    }
 
 
 @router.get("/{publication_id}", response_model=PublicationOut)

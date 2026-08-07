@@ -1,3 +1,11 @@
+from flask import send_file
+from openpyxl import Workbook
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from io import BytesIO
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
 
@@ -135,11 +143,12 @@ def dashboard():
     pub_count = 0
     recent_pubs = []
     try:
-        response = requests.get(f"{API_URL}/publications/")
+        response = requests.get(f"{API_URL}/publications/", params={'limit': 100})
         if response.status_code == 200:
-            pubs = response.json()
-            pub_count = len(pubs)
-            recent_pubs = pubs[-3:]  # sabse recent 3
+            result = response.json()
+            pubs = result.get('publications', [])
+            pub_count = result.get('total', len(pubs))
+            recent_pubs = pubs[:3]  # sabse recent 3 (already sorted desc by id)
     except requests.exceptions.ConnectionError:
         pass
 
@@ -150,6 +159,16 @@ def dashboard():
         if response.status_code == 200:
             confs = response.json()
             conf_count = len(confs)
+    except requests.exceptions.ConnectionError:
+        pass
+
+    # Collaborations count fetch karo
+    collaborations_count = 0
+    try:
+        response = requests.get(f"{API_URL}/collaborations/")
+        if response.status_code == 200:
+            collabs = response.json()
+            collaborations_count = len(collabs)
     except requests.exceptions.ConnectionError:
         pass
 
@@ -164,10 +183,11 @@ def dashboard():
             display_name=display_name,
             pub_count=pub_count,
             conf_count=conf_count,
+            collaborations_count=collaborations_count,
             recent_pubs=recent_pubs,
             unread_count=get_unread_count()
-        ) 
-
+        )
+    
 @app.route("/notifications")
 def notifications_page():
     if "token" not in session:
@@ -191,11 +211,26 @@ def publications():
     if "token" not in session:
         return redirect(url_for("login"))
 
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort_by', 'id')
+    order = request.args.get('order', 'desc')
+
+    params = {
+        'page': page,
+        'limit': 3,
+        'sort_by': sort_by,
+        'order': order
+    }
+
     try:
-        response = requests.get(f"{API_URL}/publications/")
-        pubs = response.json() if response.status_code == 200 else []
+        response = requests.get(f"{API_URL}/publications/", params=params)
+        result = response.json() if response.status_code == 200 else {}
     except requests.exceptions.ConnectionError:
-        pubs = []
+        result = {}
+
+    pubs = result.get('publications', [])
+    total_pages = result.get('total_pages', 1)
+    current_page = result.get('page', 1)
 
     # Researchers ka data fetch karo taaki author name dikha sakein
     try:
@@ -208,7 +243,6 @@ def publications():
     for pub in pubs:
         pub["author_name"] = researcher_map.get(pub.get("author_id"), "Unknown")
 
-        # Citation count fetch karo har publication ke liye
         try:
             c_response = requests.get(f"{API_URL}/citations/publication/{pub['id']}")
             if c_response.status_code == 200:
@@ -218,7 +252,15 @@ def publications():
         except requests.exceptions.ConnectionError:
             pub["cited_count"] = 0
 
-    return render_template("publications.html", publications=pubs)
+    return render_template(
+        "publications.html",
+        publications=pubs,
+        total_pages=total_pages,
+        current_page=current_page,
+        sort_by=sort_by,
+        order=order
+    )
+
 @app.route("/publications/add", methods=["GET", "POST"])
 def add_publication():
     if "token" not in session:
@@ -269,20 +311,171 @@ def delete_publication(pub_id):
         pass
 
     return redirect(url_for("publications"))
+# ===== CITATIONS ROUTES =====
 
+@app.route('/citations')
+def citations():
+    token = session.get('token')
+    headers = {'Authorization': f'Bearer {token}'} if token else {}
+
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort_by', 'id')
+    order = request.args.get('order', 'desc')
+    citation_style = request.args.get('citation_style', '')
+    year = request.args.get('year', '')
+    search = request.args.get('search', '')
+
+    params = {
+        'page': page,
+        'limit': 2,
+        'sort_by': sort_by,
+        'order': order
+    }
+    if citation_style:
+        params['citation_style'] = citation_style
+    if year:
+        params['year'] = year
+    if search:
+        params['search'] = search
+
+    try:
+        response = requests.get(f'{API_URL}/citations/', headers=headers, params=params)
+        result = response.json() if response.status_code == 200 else {}
+    except:
+        result = {}
+
+    citations_data = result.get('citations', [])
+    total_pages = result.get('total_pages', 1)
+    current_page = result.get('page', 1)
+
+    return render_template('citations.html', 
+        citations=citations_data,
+        total_pages=total_pages,
+        current_page=current_page,
+        sort_by=sort_by,
+        order=order,
+        citation_style=citation_style,
+        year=year,
+        search=search
+    )
+@app.route('/add_citation', methods=['GET', 'POST'])
+def add_citation():
+    if "token" not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        token = session.get('token')
+        headers = {'Authorization': f'Bearer {token}'} if token else {}
+        
+        data = {
+            'citing_publication_id': int(request.form.get('citing_publication_id', 0)),
+            'cited_publication_id': int(request.form.get('cited_publication_id', 0)),
+            'title': request.form.get('title', ''),
+            'authors': request.form.get('authors', ''),
+            'journal': request.form.get('journal', ''),
+            'year': int(request.form.get('year')) if request.form.get('year') else None,
+            'doi': request.form.get('doi', ''),
+            'citation_style': request.form.get('citation_style', 'APA'),
+            'formatted_citation': request.form.get('formatted_citation', '')
+        }
+        
+        try:
+            response = requests.post(f'{API_URL}/citations/', json=data, headers=headers)
+            print(f"DEBUG: Status: {response.status_code}")
+            print(f"DEBUG: Response: {response.text}")
+            if response.status_code == 200:
+                return redirect(url_for('citations'))
+        except Exception as e:
+            print(f"DEBUG: Error: {str(e)}")
+    
+    return render_template('add_citation.html')
+@app.route('/edit_citation/<int:citation_id>', methods=['GET', 'POST'])
+def edit_citation(citation_id):
+    if 'access_token' not in session:
+        return redirect(url_for('login'))
+    
+    token = session['access_token']
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # Get citation
+    try:
+        response = requests.get(f'{API_URL}/citations/{citation_id}', headers=headers)
+        citation = response.json() if response.status_code == 200 else None
+    except:
+        citation = None
+    
+    if not citation:
+        return redirect(url_for('citations'))
+    
+    if request.method == 'POST':
+        data = {
+            'title': request.form.get('title', ''),
+            'authors': request.form.get('authors', ''),
+            'journal': request.form.get('journal', ''),
+            'year': int(request.form.get('year')) if request.form.get('year') else None,
+            'doi': request.form.get('doi', ''),
+            'citation_style': request.form.get('citation_style', 'APA'),
+            'formatted_citation': request.form.get('formatted_citation', '')
+        }
+        
+        try:
+            response = requests.put(f'{API_URL}/citations/{citation_id}', json=data, headers=headers)
+            if response.status_code == 200:
+                return redirect(url_for('citations'))
+        except Exception as e:
+            print(f'Error: {e}')
+    
+    return render_template('edit_citation.html', citation=citation)
+
+
+@app.route('/delete_citation/<int:citation_id>')
+def delete_citation(citation_id):
+    if 'access_token' not in session:
+        return redirect(url_for('login'))
+    
+    token = session['access_token']
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        requests.delete(f'{API_URL}/citations/{citation_id}', headers=headers)
+    except:
+        pass
+    
+    return redirect(url_for('citations'))
 @app.route("/conferences")
 def conferences():
     if "token" not in session:
         return redirect(url_for("login"))
 
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort_by', 'id')
+    order = request.args.get('order', 'desc')
+
+    params = {
+        'page': page,
+        'limit': 3,
+        'sort_by': sort_by,
+        'order': order
+    }
+
     try:
-        response = requests.get(f"{API_URL}/conferences/")
-        confs = response.json() if response.status_code == 200 else []
+        response = requests.get(f"{API_URL}/conferences/", params=params)
+        result = response.json() if response.status_code == 200 else {}
     except requests.exceptions.ConnectionError:
-        confs = []
+        result = {}
 
-    return render_template("conferences.html", conferences=confs)
+    confs = result.get('conferences', [])
+    total_pages = result.get('total_pages', 1)
+    current_page = result.get('page', 1)
 
+    return render_template(
+        "conferences.html",
+        conferences=confs,
+        total_pages=total_pages,
+        current_page=current_page,
+        sort_by=sort_by,
+        order=order
+    )
 
 @app.route("/conferences/add", methods=["GET", "POST"])
 def add_conference():
@@ -319,15 +512,35 @@ def institutions():
     if "token" not in session:
         return redirect(url_for("login"))
 
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort_by', 'id')
+    order = request.args.get('order', 'desc')
+
+    params = {
+        'page': page,
+        'limit': 3,
+        'sort_by': sort_by,
+        'order': order
+    }
+
     try:
-        response = requests.get(f"{API_URL}/institutions/")
-        insts = response.json() if response.status_code == 200 else []
+        response = requests.get(f"{API_URL}/institutions/", params=params)
+        result = response.json() if response.status_code == 200 else {}
     except requests.exceptions.ConnectionError:
-        insts = []
+        result = {}
 
-    return render_template("institutions.html", institutions=insts)
+    insts = result.get('institutions', [])
+    total_pages = result.get('total_pages', 1)
+    current_page = result.get('page', 1)
 
-
+    return render_template(
+        "institutions.html",
+        institutions=insts,
+        total_pages=total_pages,
+        current_page=current_page,
+        sort_by=sort_by,
+        order=order
+    )
 @app.route("/institutions/add", methods=["GET", "POST"])
 def add_institution():
     if "token" not in session:
@@ -359,20 +572,40 @@ def add_institution():
             return render_template("add_institution.html", error="Cannot connect to server")
 
     return render_template("add_institution.html")
-
 @app.route("/collaborations")
 def collaborations():
     if "token" not in session:
         return redirect(url_for("login"))
 
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort_by', 'id')
+    order = request.args.get('order', 'desc')
+
+    params = {
+        'page': page,
+        'limit': 3,
+        'sort_by': sort_by,
+        'order': order
+    }
+
     try:
-        response = requests.get(f"{API_URL}/collaborations/")
-        collabs = response.json() if response.status_code == 200 else []
+        response = requests.get(f"{API_URL}/collaborations/", params=params)
+        result = response.json() if response.status_code == 200 else {}
     except requests.exceptions.ConnectionError:
-        collabs = []
+        result = {}
 
-    return render_template("collaborations.html", collaborations=collabs)
+    collabs = result.get('collaborations', [])
+    total_pages = result.get('total_pages', 1)
+    current_page = result.get('page', 1)
 
+    return render_template(
+        "collaborations.html",
+        collaborations=collabs,
+        total_pages=total_pages,
+        current_page=current_page,
+        sort_by=sort_by,
+        order=order
+    )
 
 @app.route("/collaborations/add", methods=["GET", "POST"])
 def add_collaboration():
@@ -432,6 +665,169 @@ def export_publications():
         )
     except requests.exceptions.ConnectionError:
         return redirect(url_for("reports"))
+@app.route('/report/<report_type>')
+def view_report(report_type):
+    token = session.get('token')
+    headers = {'Authorization': f'Bearer {token}'} if token else {}
+    
+    try:
+        response = requests.get(f'{API_URL}/reports/type/{report_type}', headers=headers)
+        reports_data = response.json() if response.status_code == 200 else []
+    except Exception as e:
+        reports_data = []
+
+    # Chart data set karo report type ke hisaab se
+    chart_configs = {
+        'publication': {
+            'title': 'Publication Trends',
+            'labels': ['2021', '2022', '2023', '2024'],
+            'data': [3, 2, 4, 6],
+            'label': 'Publications'
+        },
+        'research': {
+            'title': 'Research Activity',
+            'labels': ['2021', '2022', '2023', '2024'],
+            'data': [2, 3, 5, 4],
+            'label': 'Research Projects'
+        },
+        'collaboration': {
+            'title': 'Collaboration Growth',
+            'labels': ['2021', '2022', '2023', '2024'],
+            'data': [1, 2, 2, 3],
+            'label': 'Collaborations'
+        },
+        'institution': {
+            'title': 'Institution Partnerships',
+            'labels': ['2021', '2022', '2023', '2024'],
+            'data': [1, 1, 2, 3],
+            'label': 'Institutions'
+        }
+    }
+
+    chart_info = chart_configs.get(report_type, {
+        'title': 'Activity Trend',
+        'labels': ['2021', '2022', '2023', '2024'],
+        'data': [1, 2, 3, 4],
+        'label': 'Records'
+    })
+
+    return render_template(
+        'view_report.html',
+        reports=reports_data,
+        report_type=report_type,
+        chart_title=chart_info['title'],
+        chart_labels=chart_info['labels'],
+        chart_data=chart_info['data'],
+        chart_label=chart_info['label']
+    )
+
+@app.route('/report/<report_type>/export/pdf')
+def export_report_pdf(report_type):
+    if "token" not in session:
+        return redirect(url_for('login'))
+    
+    token = session.get('token')
+    headers = {'Authorization': f'Bearer {token}'} if token else {}
+    
+    try:
+        response = requests.get(f'{API_URL}/reports/type/{report_type}', headers=headers)
+        reports_data = response.json() if response.status_code == 200 else []
+    except:
+        reports_data = []
+    
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+    elements = []
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#111827'),
+        spaceAfter=30,
+        alignment=1
+    )
+    
+    title = Paragraph(f"{report_type.upper()} Report", title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 0.3*inch))
+    
+    if reports_data:
+        for report in reports_data:
+            data = [
+                ['Field', 'Value'],
+                ['Title', report.get('title', 'N/A')],
+                ['Description', report.get('description', 'N/A')],
+                ['Total Count', str(report.get('total_count', 0))],
+                ['Year Range', report.get('year_range', 'N/A')],
+                ['Summary', report.get('summary', 'N/A')]
+            ]
+            
+            table = Table(data, colWidths=[2*inch, 4*inch])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3b82f6')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            
+            elements.append(table)
+            elements.append(Spacer(1, 0.5*inch))
+    
+    doc.build(elements)
+    pdf_buffer.seek(0)
+    
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'{report_type}_report.pdf'
+    )
+@app.route('/report/<report_type>/export/excel')
+def export_report_excel(report_type):
+    if "token" not in session:
+        return redirect(url_for('login'))
+    
+    token = session.get('token')
+    headers = {'Authorization': f'Bearer {token}'} if token else {}
+    
+    try:
+        response = requests.get(f'{API_URL}/reports/type/{report_type}', headers=headers)
+        reports_data = response.json() if response.status_code == 200 else []
+    except:
+        reports_data = []
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"{report_type} Report"
+    
+    headers_list = ['Title', 'Description', 'Total Count', 'Year Range', 'Summary']
+    ws.append(headers_list)
+    
+    for report in reports_data:
+        ws.append([
+            report.get('title', ''),
+            report.get('description', ''),
+            report.get('total_count', 0),
+            report.get('year_range', ''),
+            report.get('summary', '')
+        ])
+    
+    excel_buffer = BytesIO()
+    wb.save(excel_buffer)
+    excel_buffer.seek(0)
+    
+    return send_file(
+        excel_buffer,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'{report_type}_report.xlsx'
+    )
 @app.route("/logout")
 def logout():
     session.clear()

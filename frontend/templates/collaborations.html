@@ -25,6 +25,9 @@
                 <a href="{{ url_for('conferences') }}" class="sidebar-link">
                     <span class="sidebar-icon">🎓</span> Conferences
                 </a>
+                <a href="{{ url_for('citations') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📚</span> Citations
+                </a>
                 <a href="{{ url_for('collaborations') }}" class="sidebar-link active">
                     <span class="sidebar-icon">🤝</span> Collaborations
                 </a>
@@ -44,6 +47,7 @@
 
         <main class="main-content">
 
+            
             <div class="dashboard-header">
                 <div>
                     <h1 class="dashboard-title">Collaborations</h1>
@@ -51,6 +55,28 @@
                 </div>
                 <a href="{{ url_for('add_collaboration') }}" class="btn-nav" style="text-decoration:none;">+ Add Collaboration</a>
             </div>
+
+            <form method="GET" action="{{ url_for('collaborations') }}" style="background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 12px; align-items: end;">
+                <div>
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Sort By</label>
+                    <select name="sort_by" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
+                        <option value="project_name" {% if sort_by == 'project_name' %}selected{% endif %}>Project Name</option>
+                        <option value="institution_a" {% if sort_by == 'institution_a' %}selected{% endif %}>Institution A</option>
+                        <option value="institution_b" {% if sort_by == 'institution_b' %}selected{% endif %}>Institution B</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Order</label>
+                    <select name="order" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="desc" {% if order == 'desc' %}selected{% endif %}>Newest First</option>
+                        <option value="asc" {% if order == 'asc' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                </div>
+                <button type="submit" style="padding: 9px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Apply</button>
+            </form>
+
+        
 
             {% if collaborations %}
             <div class="pub-list">
@@ -75,6 +101,26 @@
                 </div>
             </div>
             {% endif %}
+
+            {% if total_pages and total_pages > 1 %}
+            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 30px;">
+                {% if current_page > 1 %}
+                <a href="{{ url_for('collaborations', page=current_page-1, sort_by=sort_by, order=order) }}" 
+                    style="padding: 8px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #111827; font-size: 14px;">← Previous</a>
+                {% endif %}
+
+                <span style="padding: 8px 16px; background: #3b82f6; color: white; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                    Page {{ current_page }} of {{ total_pages }}
+                </span>
+
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('collaborations', page=current_page+1, sort_by=sort_by, order=order) }}" 
+                    style="padding: 8px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #111827; font-size: 14px;">Next →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        
 
         </main>
 

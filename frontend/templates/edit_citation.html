@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Citation - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="sidebar-logo" style="text-decoration: none;">🔬 SciCollab</a>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏠</span> Dashboard
+                </a>
+                <a href="{{ url_for('institutions') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏢</span> Institutions
+                </a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📄</span> Publications
+                </a>
+                <a href="{{ url_for('conferences') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🎓</span> Conferences
+                </a>
+                <a href="{{ url_for('citations') }}" class="sidebar-link active">
+                    <span class="sidebar-icon">📚</span> Citations
+                </a>
+                <a href="{{ url_for('collaborations') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🤝</span> Collaborations
+                </a>
+                <a href="{{ url_for('reports') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📊</span> Reports
+                </a>
+                <a href="{{ url_for('profile') }}" class="sidebar-link">
+                    <span class="sidebar-icon">👤</span> Profile
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">{{ session.get('email') }}</div>
+                <a href="{{ url_for('logout') }}" class="sidebar-logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">Edit Citation</h1>
+                    <p class="dashboard-subtitle">Update citation details</p>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <form method="POST" action="{{ url_for('edit_citation', citation_id=citation.id) }}" class="form-card">
+                    
+                    <div class="form-group">
+                        <label>Citing Publication ID *</label>
+                        <input type="number" name="citing_publication_id" value="{{ citation.citing_publication_id }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cited Publication ID *</label>
+                        <input type="number" name="cited_publication_id" value="{{ citation.cited_publication_id }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" name="title" value="{{ citation.title or '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Authors</label>
+                        <input type="text" name="authors" value="{{ citation.authors or '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Journal</label>
+                        <input type="text" name="journal" value="{{ citation.journal or '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Year</label>
+                        <input type="number" name="year" value="{{ citation.year or '' }}" min="1900" max="2100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>DOI</label>
+                        <input type="text" name="doi" value="{{ citation.doi or '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Citation Style</label>
+                        <select name="citation_style">
+                            <option value="APA" {% if citation.citation_style == 'APA' %}selected{% endif %}>APA</option>
+                            <option value="IEEE" {% if citation.citation_style == 'IEEE' %}selected{% endif %}>IEEE</option>
+                            <option value="BibTeX" {% if citation.citation_style == 'BibTeX' %}selected{% endif %}>BibTeX</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Formatted Citation</label>
+                        <textarea name="formatted_citation" rows="4">{{ citation.formatted_citation or '' }}</textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">✓ Update Citation</button>
+                        <a href="{{ url_for('citations') }}" class="btn-secondary" style="text-decoration: none; text-align: center;">Cancel</a>
+                    </div>
+                </form>
+            </div>
+
+        </main>
+
+    </div>
+
+</body>
+</html>

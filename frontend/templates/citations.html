@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Citation Management - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="sidebar-logo" style="text-decoration: none;">🔬 SciCollab</a>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏠</span> Dashboard
+                </a>
+                <a href="{{ url_for('institutions') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏢</span> Institutions
+                </a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📄</span> Publications
+                </a>
+                <a href="{{ url_for('conferences') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🎓</span> Conferences
+                </a>
+                <a href="{{ url_for('citations') }}" class="sidebar-link active">
+                    <span class="sidebar-icon">📚</span> Citations
+                </a>
+                <a href="{{ url_for('collaborations') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🤝</span> Collaborations
+                </a>
+                <a href="{{ url_for('reports') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📊</span> Reports
+                </a>
+                <a href="{{ url_for('profile') }}" class="sidebar-link">
+                    <span class="sidebar-icon">👤</span> Profile
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">{{ session.get('email') }}</div>
+                <a href="{{ url_for('logout') }}" class="sidebar-logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="dashboard-header">
+    <div>
+        <h1 class="dashboard-title">Citation Management</h1>
+        <p class="dashboard-subtitle">Manage and organize citations in multiple formats</p>
+    </div>
+    <a href="{{ url_for('add_citation') }}" class="btn-nav" style="text-decoration:none;">+ Add Citation</a>
+</div>
+
+<!-- FILTERS + SORT -->
+<form method="GET" action="{{ url_for('citations') }}" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: end;">
+    
+    <div style="flex: 1; min-width: 200px;">
+        <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Search</label>
+        <input type="text" name="search" value="{{ search }}" placeholder="Search title or author..." 
+            style="width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+    </div>
+
+    <div>
+        <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Citation Style</label>
+        <select name="citation_style" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+            <option value="">All</option>
+            <option value="APA" {% if citation_style == 'APA' %}selected{% endif %}>APA</option>
+            <option value="IEEE" {% if citation_style == 'IEEE' %}selected{% endif %}>IEEE</option>
+            <option value="BibTeX" {% if citation_style == 'BibTeX' %}selected{% endif %}>BibTeX</option>
+        </select>
+    </div>
+
+    <div>
+        <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Year</label>
+        <input type="number" name="year" value="{{ year }}" placeholder="e.g. 2024" 
+            style="width: 100px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+    </div>
+
+    <div>
+        <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Sort By</label>
+        <select name="sort_by" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+            <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
+            <option value="year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+            <option value="citation_style" {% if sort_by == 'citation_style' %}selected{% endif %}>Style</option>
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>
+        </select>
+    </div>
+
+    <div>
+        <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Order</label>
+        <select name="order" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+            <option value="desc" {% if order == 'desc' %}selected{% endif %}>Newest First</option>
+            <option value="asc" {% if order == 'asc' %}selected{% endif %}>Oldest First</option>
+        </select>
+    </div>
+
+    <button type="submit" style="padding: 9px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Apply</button>
+    <a href="{{ url_for('citations') }}" style="padding: 9px 16px; color: #6b7280; text-decoration: none; font-size: 14px;">Clear</a>
+</form>
+            {% if citations %}
+            <div class="pub-list">
+                {% for citation in citations %}
+                <div class="pub-card">
+                    <div class="pub-info">
+                        <h3>{{ citation.title or 'Citation #' + citation.id|string }}</h3>
+                        
+                        <div class="pub-meta">
+                            {% if citation.authors %}<span>✍️ {{ citation.authors }}</span>{% endif %}
+                            {% if citation.journal %}<span>📖 {{ citation.journal }}</span>{% endif %}
+                            {% if citation.year %}<span>📅 {{ citation.year }}</span>{% endif %}
+                        </div>
+
+                        <div class="pub-meta" style="margin-top: 8px;">
+                            <span class="status-badge" style="background: #dbeafe; color: #1e40af;">{{ citation.citation_style }}</span>
+                            <span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; margin-left: 8px;">📖 Cited by researchers</span>
+                        </div>
+
+                        {% if citation.doi %}
+                        <div class="pub-meta" style="margin-top: 8px;">
+                            <span>🔗 DOI: {{ citation.doi }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if citation.formatted_citation %}
+                        <p style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 12px; margin-top: 10px; font-size: 13px; color: #1e40af; border-radius: 6px; font-style: italic;">{{ citation.formatted_citation }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div style="display: flex; gap: 8px;">
+                        <a href="{{ url_for('edit_citation', citation_id=citation.id) }}" style="padding: 6px 12px; background: #fbbf24; color: #78350f; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s ease;" onmouseover="this.style.background='#f59e0b'" onmouseout="this.style.background='#fbbf24'">Edit</a>
+                        <a href="{{ url_for('delete_citation', citation_id=citation.id) }}" style="padding: 6px 12px; background: #fca5a5; color: #7f1d1d; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s ease;" onclick="return confirm('Delete this citation?')" onmouseover="this.style.background='#f87171'" onmouseout="this.style.background='#fca5a5'">Delete</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dashboard-section">
+                <div class="empty-state">
+                    <div class="empty-icon">📚</div>
+                    <p>No citations yet</p>
+                    <a href="{{ url_for('add_citation') }}" class="link">Add your first citation</a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if total_pages and total_pages > 1 %}
+            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 30px;">
+                {% if current_page > 1 %}
+                <a href="{{ url_for('citations', page=current_page-1, sort_by=sort_by, order=order, citation_style=citation_style, year=year, search=search) }}" 
+                    style="padding: 8px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #111827; font-size: 14px;">← Previous</a>
+                {% endif %}
+
+                <span style="padding: 8px 16px; background: #3b82f6; color: white; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                    Page {{ current_page }} of {{ total_pages }}
+                </span>
+
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('citations', page=current_page+1, sort_by=sort_by, order=order, citation_style=citation_style, year=year, search=search) }}" 
+                    style="padding: 8px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #111827; font-size: 14px;">Next →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </main>
+
+    </div>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import asc, desc
+from typing import List, Optional
 from app.database import get_db
 from app.models.conference import Conference, ConferenceParticipation
 from app.schemas.conference import ConferenceCreate, ConferenceOut, ParticipationCreate, ParticipationOut
@@ -17,9 +18,33 @@ def create_conference(conference: ConferenceCreate, db: Session = Depends(get_db
     return new_conf
 
 
-@router.get("/", response_model=List[ConferenceOut])
-def list_conferences(db: Session = Depends(get_db)):
-    return db.query(Conference).all()
+@router.get("/")
+def list_conferences(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    sort_by: str = Query("id", regex="^(id|name|start_date|location)$"),
+    order: str = Query("desc", regex="^(asc|desc)$")
+):
+    query = db.query(Conference)
+
+    sort_column = getattr(Conference, sort_by)
+    if order == "asc":
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
+
+    total = query.count()
+    offset = (page - 1) * limit
+    conferences = query.offset(offset).limit(limit).all()
+
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit,
+        "conferences": conferences
+    }
 
 
 @router.get("/{conference_id}", response_model=ConferenceOut)

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
 from typing import List
 from app.database import get_db
 from app.models.institution import Institution
@@ -17,9 +18,33 @@ def create_institution(institution: InstitutionCreate, db: Session = Depends(get
     return new_institution
 
 
-@router.get("/", response_model=List[InstitutionOut])
-def list_institutions(db: Session = Depends(get_db)):
-    return db.query(Institution).all()
+@router.get("/")
+def list_institutions(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    sort_by: str = Query("id", regex="^(id|name|type|location)$"),
+    order: str = Query("desc", regex="^(asc|desc)$")
+):
+    query = db.query(Institution)
+
+    sort_column = getattr(Institution, sort_by)
+    if order == "asc":
+        query = query.order_by(asc(sort_column))
+    else:
+        query = query.order_by(desc(sort_column))
+
+    total = query.count()
+    offset = (page - 1) * limit
+    institutions = query.offset(offset).limit(limit).all()
+
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit,
+        "institutions": institutions
+    }
 
 
 @router.get("/{institution_id}", response_model=InstitutionOut)

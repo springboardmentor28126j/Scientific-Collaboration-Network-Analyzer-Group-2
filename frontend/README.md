@@ -3,16 +3,12 @@
 ## Setup
 
 # Navigate to frontend folder
-cd "C:\Users\yella\Group1\Infosys Internship\internship\frontend"
+cd "Scientific-Collaboration-Network-Analyzer-Group-2/frontend"
 
-# --- First time only ---
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+source venv/bin/activate
 pip install -r requirements.txt
-
-# --- Every time you open a new terminal ---
-.\venv\Scripts\Activate.ps1
 python app.py
+
 
 
 {deactivate

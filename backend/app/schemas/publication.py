@@ -6,10 +6,23 @@ from pydantic import BaseModel, ConfigDict, computed_field
 from app.models.publication import PublicationStatus, PublicationType
 
 
+from pydantic import model_validator
+
 class PublicationAuthorOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     researcher_id: int
+    email: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten(cls, obj):
+        if hasattr(obj, "researcher_id"):
+            email = None
+            researcher = getattr(obj, "researcher", None)
+            if researcher is not None and getattr(researcher, "user", None):
+                email = researcher.user.email
+            return {"researcher_id": obj.researcher_id, "email": email}
+        return obj
 
 
 class PublicationBase(BaseModel):

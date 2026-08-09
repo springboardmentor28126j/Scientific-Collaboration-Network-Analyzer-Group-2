@@ -13,6 +13,13 @@ from app.api.routes import (
     institution,
     publications,
     reviewer_assignments,
+    citations,
+    collaborations,
+    reports,
+    projects,
+    notifications,
+    audit_logs,
+    messages,
 )
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -38,7 +45,13 @@ app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(
     reviewer_assignments.router, prefix="/reviewer-assignments", tags=["reviewer-assignments"]
 )
-
+app.include_router(citations.router, prefix="/citations", tags=["citations"])
+app.include_router(collaborations.router, prefix="/collaborations", tags=["collaborations"])
+app.include_router(reports.router, prefix="/reports", tags=["reports"])
+app.include_router(projects.router, prefix="/projects", tags=["projects"])
+app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
+app.include_router(audit_logs.router, prefix="/audit-logs", tags=["audit-logs"])
+app.include_router(messages.router, prefix="/messages", tags=["messages"])
 
 @app.get("/health")
 def health_check():

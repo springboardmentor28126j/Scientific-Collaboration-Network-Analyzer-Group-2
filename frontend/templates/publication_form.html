@@ -76,7 +76,7 @@
     <h2 style="font-size:16px;">Paper file</h2>
     {% if publication.original_filename %}
       <p style="font-size:13px; color:var(--muted);">
-        Current file: <a href="{{ publication.file_url }}" target="_blank" rel="noopener">{{ publication.original_filename }}</a>
+        Current file: <a href="{{ backend_url }}{{ publication.file_url }}" target="_blank" rel="noopener">{{ publication.original_filename }}</a>
       </p>
     {% else %}
       <p style="font-size:13px; color:var(--muted);">No file uploaded yet.</p>

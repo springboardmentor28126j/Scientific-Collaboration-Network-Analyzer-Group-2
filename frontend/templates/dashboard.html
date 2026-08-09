@@ -2,101 +2,138 @@
 {% block title %}Dashboard — SCNA{% endblock %}
 {% block content %}
 <div class="container wide">
-  <h1>Welcome, {{ user.email }}</h1>
-  <p style="color: var(--muted)">Role: {{ user.role }}</p>
 
-  {% if user.role == 'system_admin' %}
-    {# ---------- Admin Dashboard ---------- #}
-    <div class="profile-field">
-      <span class="k">Total Users</span>
-      <span class="v">{{ admin_stats.total_users if admin_stats else '—' }}</span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Active / Inactive</span>
-      <span class="v">
-        {% if admin_stats %}{{ admin_stats.active_users }} active / {{ admin_stats.inactive_users }} inactive{% else %}—{% endif %}
-      </span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Institutions</span>
-      <span class="v">{{ admin_stats.total_institutions if admin_stats else '—' }}</span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Conferences</span>
-      <span class="v">{{ admin_stats.total_conferences if admin_stats else '—' }}</span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Publications</span>
-      <span class="v">{{ admin_stats.total_publications if admin_stats else '—' }}</span>
-    </div>
+  <div class="dash-hero {{ user.role }}">
+    <span class="role-badge">{{ user.role.replace('_', ' ') }}</span>
+    <h1>Welcome back, {{ user.email.split('@')[0] }}</h1>
+    <p>{{ user.email }}</p>
+  </div>
 
-    <a class="muted-link" href="{{ url_for('admin_users') }}">Manage users &rarr;</a><br>
-    <a class="muted-link" href="{{ url_for('institution') }}">Manage institutions &rarr;</a>
+  {% if user.role == 'researcher' %}
+  <div class="stat-grid">
+    <a href="{{ url_for('publications') }}" class="stat-card stat-purple">
+      <span class="icon">📄</span>
+      <div class="num">{{ publication_count }}</div>
+      <div class="label">Publications</div>
+    </a>
+    <a href="{{ url_for('projects') }}" class="stat-card stat-blue">
+      <span class="icon">🧩</span>
+      <div class="num">{{ project_count }}</div>
+      <div class="label">Projects</div>
+    </a>
+    <a href="{{ url_for('collaborations') }}" class="stat-card stat-teal">
+      <span class="icon">🤝</span>
+      <div class="num">{{ collaborator_count }}</div>
+      <div class="label">Collaborators</div>
+    </a>
+    <a href="{{ url_for('conferences') }}" class="stat-card stat-orange">
+      <span class="icon">🎤</span>
+      <div class="num">&rarr;</div>
+      <div class="label">Conferences</div>
+    </a>
+  </div>
 
-  {% elif user.role == 'institution_admin' %}
-    {# ---------- Institution Dashboard ---------- #}
-    <div class="profile-field">
-      <span class="k">Institutions</span>
-      <span class="v"><a href="{{ url_for('institution') }}">View / manage your institution &rarr;</a></span>
+  <div class="dash-section">
+    <h2>Quick actions</h2>
+    <div class="quick-links">
+      <a href="{{ url_for('citations') }}">Add a citation</a>
+      <a href="{{ url_for('suggested_collaborators') }}">Find collaborators</a>
+      <a href="{{ url_for('collaboration_network') }}">View my network</a>
+      <a href="{{ url_for('profile') }}">Edit profile</a>
     </div>
-    <div class="profile-field">
-      <span class="k">Publications</span>
-      <span class="v"><a href="{{ url_for('publications') }}">View publications &rarr;</a></span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Conferences</span>
-      <span class="v"><a href="{{ url_for('conferences') }}">View conferences &rarr;</a></span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Collaboration Statistics</span>
-      <span class="v">Coming in Milestone 3</span>
-    </div>
-
-    <a class="muted-link" href="{{ url_for('profile') }}">Go to your profile &rarr;</a>
+  </div>
 
   {% elif user.role == 'reviewer' %}
-    {# ---------- Reviewer Dashboard ---------- #}
-    <div class="profile-field">
-      <span class="k">Pending Reviews</span>
-      <span class="v">
-        {% if reviewer_pending_count is not none %}
-          <a href="{{ url_for('review_queue') }}">{{ reviewer_pending_count }} publication{{ '' if reviewer_pending_count == 1 else 's' }} awaiting your review &rarr;</a>
-        {% else %}
-          <a href="{{ url_for('review_queue') }}">View review queue &rarr;</a>
-        {% endif %}
-      </span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Publications</span>
-      <span class="v"><a href="{{ url_for('publications') }}">View publications &rarr;</a></span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Conferences</span>
-      <span class="v"><a href="{{ url_for('conferences') }}">View conferences &rarr;</a></span>
-    </div>
+  <div class="stat-grid">
+    <a href="{{ url_for('review_queue') }}" class="stat-card stat-orange">
+      <span class="icon">⏳</span>
+      <div class="num">{{ reviewer_pending_count }}</div>
+      <div class="label">Pending Review</div>
+    </a>
+    <a href="{{ url_for('reviewed_publications') }}" class="stat-card stat-teal">
+      <span class="icon">✅</span>
+      <div class="num">{{ reviewer_reviewed_count }}</div>
+      <div class="label">Reviewed</div>
+    </a>
+  </div>
 
-    <a class="muted-link" href="{{ url_for('profile') }}">Go to your profile &rarr;</a>
+  <div class="dash-section">
+    <h2>Quick actions</h2>
+    <div class="quick-links">
+      <a href="{{ url_for('review_queue') }}">Go to review queue</a>
+      <a href="{{ url_for('reviewed_publications') }}">View review history</a>
+    </div>
+  </div>
 
-  {% else %}
-    {# ---------- Researcher Dashboard ---------- #}
-    <div class="profile-field">
-      <span class="k">Publications</span>
-      <span class="v"><a href="{{ url_for('publications') }}">View publications &rarr;</a></span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Projects</span>
-      <span class="v">Coming in Milestone 3</span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Conferences</span>
-      <span class="v"><a href="{{ url_for('conferences') }}">View conferences &rarr;</a></span>
-    </div>
-    <div class="profile-field">
-      <span class="k">Collaborators</span>
-      <span class="v">Coming in Milestone 3</span>
-    </div>
-
-    <a class="muted-link" href="{{ url_for('profile') }}">Go to your researcher profile &rarr;</a>
+  {% elif user.role == 'institution_admin' %}
+  {% if institution %}
+  <div class="dash-section">
+    <h2>{{ institution.name }}</h2>
+    <p style="color:var(--muted); font-size:13px; margin-top:-8px;">{{ institution.city }}, {{ institution.country }}</p>
+  </div>
   {% endif %}
+  <div class="stat-grid">
+    <a href="{{ url_for('assign_reviewers') }}" class="stat-card stat-purple">
+      <span class="icon">🧑‍⚖️</span>
+      <div class="num">{{ institution_reviewer_count if institution_reviewer_count is not none else '—' }}</div>
+      <div class="label">Reviewers Assigned</div>
+    </a>
+    <a href="{{ url_for('institution') }}" class="stat-card stat-blue">
+      <span class="icon">🏛️</span>
+      <div class="num">&rarr;</div>
+      <div class="label">Manage Institution</div>
+    </a>
+    <a href="{{ url_for('conferences') }}" class="stat-card stat-orange">
+      <span class="icon">🎤</span>
+      <div class="num">&rarr;</div>
+      <div class="label">Conferences</div>
+    </a>
+  </div>
+
+  <div class="dash-section">
+    <h2>Quick actions</h2>
+    <div class="quick-links">
+      {% if institution %}
+      <a href="{{ url_for('edit_institution', institution_id=institution.id) }}">Edit institution details</a>
+      {% endif %}
+      <a href="{{ url_for('assign_reviewers') }}">Assign a reviewer</a>
+    </div>
+  </div>
+
+  {% elif user.role == 'system_admin' %}
+  <div class="stat-grid">
+    <a href="{{ url_for('admin_users') }}" class="stat-card stat-purple">
+      <span class="icon">👥</span>
+      <div class="num">{{ admin_stats.total_users if admin_stats else '—' }}</div>
+      <div class="label">Total Users</div>
+    </a>
+    <a href="{{ url_for('institution') }}" class="stat-card stat-blue">
+      <span class="icon">🏛️</span>
+      <div class="num">{{ admin_stats.total_institutions if admin_stats and admin_stats.total_institutions is not none else '—' }}</div>
+      <div class="label">Institutions</div>
+    </a>
+    <a href="{{ url_for('publications') }}" class="stat-card stat-teal">
+      <span class="icon">📄</span>
+      <div class="num">{{ admin_stats.total_publications if admin_stats and admin_stats.total_publications is not none else '—' }}</div>
+      <div class="label">Publications</div>
+    </a>
+    <a href="{{ url_for('conferences') }}" class="stat-card stat-orange">
+      <span class="icon">🎤</span>
+      <div class="num">{{ admin_stats.total_conferences if admin_stats and admin_stats.total_conferences is not none else '—' }}</div>
+      <div class="label">Conferences</div>
+    </a>
+  </div>
+
+  <div class="dash-section">
+    <h2>Quick actions</h2>
+    <div class="quick-links">
+      <a href="{{ url_for('admin_users') }}">Manage users</a>
+      <a href="{{ url_for('assign_reviewers') }}">Assign reviewers</a>
+      <a href="{{ url_for('reports') }}">View reports</a>
+      <a href="{{ url_for('audit_logs') }}">Audit logs</a>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}

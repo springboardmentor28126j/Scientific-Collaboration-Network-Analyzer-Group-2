@@ -11,17 +11,47 @@
       <span class="brand">SCNA</span>
       {% if session.get('token') %}
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('conferences') }}">Conferences</a>
-        <a href="{{ url_for('conference_history') }}">My Conferences</a>
-        <a href="{{ url_for('publications') }}" class="nav-purple">Publications</a>
-        <a href="{{ url_for('institution') }}">Institutions</a>
-        <a href="{{ url_for('profile') }}">Profile</a>
-        {% if current_role in ('reviewer', 'system_admin') %}
+
+        {% if current_role == 'researcher' %}
+          <a href="{{ url_for('conferences') }}">Conferences</a>
+          <a href="{{ url_for('conference_history') }}">My Conferences</a>
+          <a href="{{ url_for('publications') }}" class="nav-purple">Publications</a>
+          <a href="{{ url_for('collaborations') }}">Collaborations</a>
+          <a href="{{ url_for('citations') }}">Citations</a>
+          <a href="{{ url_for('reports') }}">Reports</a>
+          <a href="{{ url_for('projects') }}">Projects</a>
+          <a href="{{ url_for('institution') }}">Institutions</a>
+          <a href="{{ url_for('profile') }}">Profile</a>
+
+        {% elif current_role == 'reviewer' %}
           <a href="{{ url_for('review_queue') }}">Review Queue</a>
+          <a href="{{ url_for('reviewed_publications') }}">Review History</a>
+          <a href="{{ url_for('profile') }}">Profile</a>
+
+        {% elif current_role == 'institution_admin' %}
+          <a href="{{ url_for('institution') }}">Institutions</a>
+          <a href="{{ url_for('conferences') }}">Conferences</a>
+          <a href="{{ url_for('publications') }}">Publications</a>
+          <a href="{{ url_for('reports') }}">Reports</a>
+          <a href="{{ url_for('profile') }}">Profile</a>
+          <a href="{{ url_for('messages_inbox') }}">Messages</a>
+        {% elif current_role == 'system_admin' %}
+          {# Everything else (Manage Users, Assign Reviewers, Reports,
+             Publications, Conferences, Institutions) is already one click
+             away from the Dashboard's stat cards and Quick Actions -- no
+             need to duplicate it in the nav bar. #}
         {% endif %}
-        {% if current_role == 'system_admin' %}
-          <a href="{{ url_for('admin_users') }}" class="nav-purple">Manage Users</a>
-        {% endif %}
+      
+        <div style="position:relative; display:inline-block;">
+          <a href="#" id="notif-bell" style="position:relative;" onclick="toggleNotifDropdown(event)">
+            Notifications
+            <span id="notif-badge" style="position:absolute; top:-6px; right:-14px; background:#E5484D; color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:9px; line-height:1.4; display:{{ 'inline' if unread_notification_count else 'none' }};">{{ unread_notification_count }}</span>
+          </a>
+          <div id="notif-dropdown" style="display:none; position:absolute; right:0; top:28px; width:320px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 28px rgba(20,30,60,0.15); z-index:50; max-height:400px; overflow-y:auto;">
+            <div id="notif-list" style="padding:8px;"></div>
+            <a href="{{ url_for('notifications') }}" style="display:block; text-align:center; padding:10px; font-size:12px; font-weight:700; color:#534AB7; border-top:1px solid var(--border); text-decoration:none;">See all notifications</a>
+          </div>
+        </div>
       {% endif %}
     </div>
     <div>
@@ -33,7 +63,11 @@
       {% endif %}
     </div>
   </nav>
-
+   {% if session.get('token') and request.endpoint != 'dashboard' %}
+  <div style="padding:12px 32px; border-bottom:1px solid var(--border);">
+    <button onclick="history.back()" style="all:unset; cursor:pointer; font-size:13px; font-weight:700; color:#534AB7;">&larr; Back</button>
+  </div>
+  {% endif %}
   <main>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -47,5 +81,42 @@
 
     {% block content %}{% endblock %}
   </main>
+<script>
+async function toggleNotifDropdown(e) {
+  e.preventDefault();
+  const dropdown = document.getElementById("notif-dropdown");
+  const isOpen = dropdown.style.display === "block";
+  dropdown.style.display = isOpen ? "none" : "block";
+  if (!isOpen) {
+    const res = await fetch("{{ url_for('notifications_preview') }}");
+    const data = await res.json();
+    const list = document.getElementById("notif-list");
+    list.innerHTML = "";
+    if (data.items.length === 0) {
+      list.innerHTML = '<p style="padding:16px; font-size:13px; color:#8A8580; text-align:center;">You\'re all caught up.</p>';
+    } else {
+      data.items.forEach(function (n) {
+        const item = document.createElement("a");
+        item.href = n.link || "{{ url_for('notifications') }}";
+        item.style.cssText = "display:block; padding:10px 12px; border-radius:8px; text-decoration:none; color:inherit; " + (n.is_read ? "" : "background:#F4F3FE;");
+        item.innerHTML =
+          '<p style="margin:0; font-size:13px; font-weight:' + (n.is_read ? "400" : "700") + ';">' + n.message + "</p>" +
+          '<p style="margin:2px 0 0; font-size:11px; color:#8A8580;">' + n.created_at.slice(0, 16).replace("T", " ") + "</p>";
+        list.appendChild(item);
+      });
+    }
+    document.getElementById("notif-badge").style.display = data.unread_count ? "inline" : "none";
+    document.getElementById("notif-badge").textContent = data.unread_count;
+  }
+}
+
+document.addEventListener("click", function (e) {
+  const dropdown = document.getElementById("notif-dropdown");
+  const bell = document.getElementById("notif-bell");
+  if (dropdown && !dropdown.contains(e.target) && e.target !== bell) {
+    dropdown.style.display = "none";
+  }
+});
+</script>
 </body>
 </html>

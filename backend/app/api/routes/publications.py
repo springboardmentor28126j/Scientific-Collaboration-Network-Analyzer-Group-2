@@ -5,7 +5,11 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
+from app.api.routes.notifications import create_notification
 from app.api.deps import get_current_user
+from app.core.audit import log_audit
+from app.core.config import settings
+from app.core.email import render_email, send_email
 from app.db.base_class import utcnow
 from app.db.session import get_db
 from app.models.publication import Publication, PublicationAuthor, PublicationStatus
@@ -40,7 +44,7 @@ def _get_current_researcher(db: Session, current_user: User) -> Researcher:
 def _get_publication_or_404(db: Session, publication_id: int) -> Publication:
     publication = (
         db.query(Publication)
-        .options(selectinload(Publication.authors))
+        .options(selectinload(Publication.authors).selectinload(PublicationAuthor.researcher).selectinload(Researcher.user))
         .filter(Publication.id == publication_id)
         .first()
     )
@@ -134,6 +138,7 @@ def create_publication(
 
     db.commit()
     db.refresh(publication)
+    log_audit(db, actor_user_id=current_user.id, action="publication_created", entity_type="publication", entity_id=publication.id, details=publication.title)
     return _get_publication_or_404(db, publication.id)
 
 
@@ -144,7 +149,7 @@ def list_publications(
     author_id: int | None = None,
     db: Session = Depends(get_db),
 ) -> list[Publication]:
-    query = db.query(Publication).options(selectinload(Publication.authors))
+    query = db.query(Publication).options(selectinload(Publication.authors).selectinload(PublicationAuthor.researcher).selectinload(Researcher.user))
     if q:
         like = f"%{q}%"
         query = query.filter(or_(Publication.title.ilike(like), Publication.venue.ilike(like)))
@@ -174,7 +179,7 @@ def list_pending_review(
 
     submitted = (
         db.query(Publication)
-        .options(selectinload(Publication.authors))
+        .options(selectinload(Publication.authors).selectinload(PublicationAuthor.researcher).selectinload(Researcher.user))
         .filter(Publication.status == PublicationStatus.SUBMITTED)
         .order_by(Publication.id.desc())
         .all()
@@ -182,6 +187,31 @@ def list_pending_review(
     if current_user.role == UserRole.SYSTEM_ADMIN:
         return submitted
     return [p for p in submitted if _is_eligible_reviewer(db, current_user, p)]
+
+
+@router.get("/reviewed-by-me", response_model=list[PublicationOut])
+def list_reviewed_by_me(
+    decision: str | None = None,  # "approved" or "rejected", or omit for both
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[Publication]:
+    if current_user.role not in (UserRole.REVIEWER, UserRole.SYSTEM_ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a Reviewer or System Admin can view review history",
+        )
+
+    query = (
+        db.query(Publication)
+        .options(selectinload(Publication.authors).selectinload(PublicationAuthor.researcher).selectinload(Researcher.user))
+        .filter(Publication.reviewed_by == current_user.id)
+    )
+    if decision == "approved":
+        query = query.filter(Publication.status == PublicationStatus.PUBLISHED)
+    elif decision == "rejected":
+        query = query.filter(Publication.status == PublicationStatus.DRAFT)
+
+    return query.order_by(Publication.reviewed_at.desc()).all()
 
 
 @router.get("/{publication_id}", response_model=PublicationOut)
@@ -224,6 +254,7 @@ def update_publication(
         db.add(PublicationAuthor(publication_id=publication.id, researcher_id=author_id))
 
     db.commit()
+    log_audit(db, actor_user_id=current_user.id, action="publication_updated", entity_type="publication", entity_id=publication.id)
     return _get_publication_or_404(db, publication_id)
 
 
@@ -237,6 +268,7 @@ def delete_publication(
     publication = _get_publication_or_404(db, publication_id)
     _require_author(publication, researcher)
 
+    log_audit(db, actor_user_id=current_user.id, action="publication_deleted", entity_type="publication", entity_id=publication.id, details=publication.title)
     db.delete(publication)
     db.commit()
 
@@ -273,6 +305,7 @@ async def upload_publication_file(
     publication.stored_filename = stored_filename
     publication.original_filename = original_name
     db.commit()
+    log_audit(db, actor_user_id=current_user.id, action="publication_file_uploaded", entity_type="publication", entity_id=publication_id, details=original_name)
     return _get_publication_or_404(db, publication_id)
 
 @router.patch("/{publication_id}/review", response_model=PublicationOut)
@@ -309,4 +342,31 @@ def review_publication(
 
     db.commit()
     db.refresh(publication)
+    log_audit(db, actor_user_id=current_user.id, action=f"publication_{payload.decision}d", entity_type="publication", entity_id=publication.id, details=payload.comment)
+
+    decision_text = "approved and published" if payload.decision == "approve" else "sent back to draft"
+    for author_link in publication.authors:
+        author_researcher = db.query(Researcher).filter(Researcher.id == author_link.researcher_id).first()
+        if author_researcher:
+            create_notification(
+                db,
+                recipient_user_id=author_researcher.user_id,
+                type="publication_reviewed",
+                message=f"Your publication '{publication.title}' was {decision_text}",
+                link="/publications",
+            )
+            author_user = db.query(User).filter(User.id == author_researcher.user_id).first()
+            if author_user:
+                send_email(
+                    to_email=author_user.email,
+                    subject=f"Your publication was {decision_text}",
+                    html_body=render_email(
+                        title="Publication review outcome",
+                        body_html=f"<p>Your publication <strong>{publication.title}</strong> was {decision_text}.</p>"
+                        + (f"<p>Reviewer comment: {payload.comment}</p>" if payload.comment else ""),
+                        cta_text="View Publications",
+                        cta_link=f"{settings.FRONTEND_URL}/publications",
+                    ),
+                )
+            
     return _get_publication_or_404(db, publication_id)

@@ -3,15 +3,12 @@
 ## Setup
 
 # Navigate to backend folder
-cd "C:\Users\yella\Group1\Infosys Internship\internship\backend"
+cd "Scientific-Collaboration-Network-Analyzer-Group-2/backend"
 
 # --- First time only ---
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+source venv/bin/activate
 pip install -r requirements.txt
 
-# --- Every time you open a new terminal ---
-.\venv\Scripts\Activate.ps1
 alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 

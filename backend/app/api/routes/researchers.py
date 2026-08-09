@@ -105,8 +105,10 @@ def search_researchers(
     like = f"%{q}%"
     return (
         db.query(Researcher)
+        .join(User, User.id == Researcher.user_id)
         .filter(
             or_(
+                User.email.ilike(like),
                 Researcher.department.ilike(like),
                 Researcher.research_interests.ilike(like),
                 Researcher.skills.ilike(like),
@@ -169,5 +171,26 @@ def get_researcher_conferences(
         .options(selectinload(ConferenceParticipation.conference))
         .filter(ConferenceParticipation.researcher_id == researcher_id)
         .order_by(ConferenceParticipation.id.desc())
+        .all()
+    )
+
+@router.get("/search", response_model=list[ResearcherOut])
+def search_researchers(
+    q: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[Researcher]:
+    like = f"%{q}%"
+    return (
+        db.query(Researcher)
+        .filter(
+            or_(
+                Researcher.department.ilike(like),
+                Researcher.research_interests.ilike(like),
+                Researcher.skills.ilike(like),
+                Researcher.affiliations.ilike(like),
+            )
+        )
+        .order_by(Researcher.id)
         .all()
     )

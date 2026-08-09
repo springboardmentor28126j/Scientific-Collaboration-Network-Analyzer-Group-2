@@ -31,7 +31,7 @@
 
 {% if item.file_url %}
   <div style="font-size:14px; margin-top:8px;">
-    <a class="muted-link" href="{{ item.file_url }}" target="_blank">
+    <a class="muted-link" href="{{ backend_url }}{{ item.file_url }}" target="_blank">
       &#128206; {{ item.original_filename }}
     </a>
   </div>

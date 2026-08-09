@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
+from app.api.routes.notifications import create_notification
+from app.core.audit import log_audit
+from app.core.config import settings
+from app.core.email import render_email, send_email
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.schemas.admin import AdminUserUpdate
@@ -45,9 +49,46 @@ def update_user(
         )
 
     update_data = payload.model_dump(exclude_unset=True)
+
+    was_pending_institution_admin = (
+        user.role == UserRole.INSTITUTION_ADMIN
+        and "is_active" in update_data
+        and update_data["is_active"] is True
+        and not user.is_active
+    )
+
     for field, value in update_data.items():
         setattr(user, field, value)
 
     db.commit()
     db.refresh(user)
+
+    if was_pending_institution_admin:
+        create_notification(
+            db,
+            recipient_user_id=user.id,
+            type="institution_admin_approved",
+            message="Your Institution Admin application has been approved. You can now log in.",
+            link="/login",
+        )
+        send_email(
+            to_email=user.email,
+            subject="Your Institution Admin application was approved",
+            html_body=render_email(
+                title="Application approved",
+                body_html="<p>Your Institution Admin application has been approved. You can log in now.</p>",
+                cta_text="Log In",
+                cta_link=f"{settings.FRONTEND_URL}/login",
+            ),
+        )
+
+    log_audit(
+        db,
+        actor_user_id=current_user.id,
+        action="user_role_updated",
+        entity_type="user",
+        entity_id=user.id,
+        details=str(update_data),
+    )
+
     return user

@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     role: UserRole = UserRole.RESEARCHER
+    institution_id: int | None = None  # required when role == INSTITUTION_ADMIN
 
 
 class UserOut(BaseModel):
@@ -16,6 +17,7 @@ class UserOut(BaseModel):
     email: EmailStr
     role: UserRole
     is_active: bool
+    is_verified: bool
 
 
 class Token(BaseModel):
@@ -25,3 +27,18 @@ class Token(BaseModel):
 
 class TokenPayload(BaseModel):
     sub: str | None = None
+
+
+class GoogleSignInRequest(BaseModel):
+    id_token: str
+    role: UserRole | None = None
+    institution_id: int | None = None
+
+
+class GoogleSignInResult(BaseModel):
+    access_token: str | None = None
+    token_type: str = "bearer"
+    needs_role_selection: bool = False
+    pending_approval: bool = False
+    message: str | None = None
+    email: str | None = None

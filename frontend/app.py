@@ -7,12 +7,13 @@ and store the JWT access token in the Flask session.
 import os
 
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, jsonify, g
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 
 
 def _auth_headers() -> dict:
@@ -41,9 +42,23 @@ def _current_user_id():
     return researcher.get("user_id") if researcher else None
 
 
+def _unread_notification_count():
+    if not session.get("token"):
+        return 0
+    resp = requests.get(
+        f"{BACKEND_URL}/notifications/unread-count", headers=_auth_headers(), timeout=5
+    )
+    return resp.json().get("unread_count", 0) if resp.status_code == 200 else 0
+
+
 @app.context_processor
 def inject_role():
-    return {"current_role": _current_role(), "current_user_id": _current_user_id()}
+    return {
+        "current_role": _current_role(),
+        "current_user_id": _current_user_id(),
+        "unread_notification_count": _unread_notification_count(),
+        "backend_url": BACKEND_URL,
+    }
 
 # -----------------------------
 # Sorting / Pagination helpers
@@ -160,7 +175,10 @@ def login():
             return redirect(url_for("login"))
 
         if resp.status_code != 200:
-            flash("Incorrect email or password.", "error")
+            detail = resp.json().get("detail", "Incorrect email or password.") if resp.content else "Incorrect email or password."
+            flash(detail, "error")
+            if resp.status_code == 403 and "verify" in detail.lower():
+                session["unverified_email"] = email
             return redirect(url_for("login"))
 
         data = resp.json()
@@ -169,7 +187,11 @@ def login():
         flash("Logged in successfully.", "success")
         return redirect(url_for("dashboard"))
 
-    return render_template("login.html")
+    return render_template(
+        "login.html",
+        unverified_email=session.pop("unverified_email", None),
+        google_client_id=GOOGLE_CLIENT_ID,
+    )
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -177,12 +199,15 @@ def register():
     if request.method == "POST":
         email = request.form.get("email", "")
         password = request.form.get("password", "")
+        role = request.form.get("role", "researcher")
+        institution_id = _to_int_or_none(request.form.get("institution_id"))
+
+        payload = {"email": email, "password": password, "role": role}
+        if role == "institution_admin":
+            payload["institution_id"] = institution_id
+
         try:
-            resp = requests.post(
-                f"{BACKEND_URL}/auth/register",
-                json={"email": email, "password": password},
-                timeout=10,
-            )
+            resp = requests.post(f"{BACKEND_URL}/auth/register", json=payload, timeout=10)
         except requests.RequestException:
             flash("Could not reach the backend. Is it running on BACKEND_URL?", "error")
             return redirect(url_for("register"))
@@ -192,10 +217,16 @@ def register():
             flash(detail, "error")
             return redirect(url_for("register"))
 
-        flash("Account created. Please log in.", "success")
+        data = resp.json()
+        if data.get("is_active") is False:
+            flash("Application submitted — awaiting System Admin approval before you can log in.", "success")
+        else:
+            flash("Account created! Check your email to verify your account before logging in.", "success")
         return redirect(url_for("login"))
 
-    return render_template("register.html")
+    inst_resp = requests.get(f"{BACKEND_URL}/institutions/public", timeout=10)
+    institutions = inst_resp.json() if inst_resp.status_code == 200 else []
+    return render_template("register.html", institutions=institutions, google_client_id=GOOGLE_CLIENT_ID)
 
 
 @app.route("/dashboard")
@@ -211,30 +242,120 @@ def dashboard():
 
     researcher = resp.json() if resp.status_code == 200 else {}
     user = researcher.get("user", {"email": session.get("email"), "role": "researcher"})
+    role = user.get("role", "researcher")
 
     admin_stats = None
     reviewer_pending_count = None
-    if user.get("role") == "system_admin":
+    reviewer_reviewed_count = None
+    project_count = None
+    collaborator_count = None
+    publication_count = None
+    institution = None
+    institution_reviewer_count = None
+
+    if role == "system_admin":
         _, admin_stats = _admin_user_stats()
-    elif user.get("role") == "reviewer":
+
+    elif role == "reviewer":
         rq = requests.get(
             f"{BACKEND_URL}/publications/pending-review", headers=_auth_headers(), timeout=10
         )
-        if rq.status_code == 200:
-            reviewer_pending_count = len(rq.json())
+        reviewer_pending_count = len(rq.json()) if rq.status_code == 200 else 0
+
+        rvd = requests.get(
+            f"{BACKEND_URL}/publications/reviewed-by-me", headers=_auth_headers(), timeout=10
+        )
+        reviewer_reviewed_count = len(rvd.json()) if rvd.status_code == 200 else 0
+
+    elif role == "institution_admin":
+        inst_resp = requests.get(f"{BACKEND_URL}/institutions/mine", headers=_auth_headers(), timeout=10)
+        institutions = inst_resp.json() if inst_resp.status_code == 200 else []
+        institution = institutions[0] if institutions else None
+
+        if institution:
+            ra_resp = requests.get(
+                f"{BACKEND_URL}/reviewer-assignments",
+                params={"institution_id": institution["id"]},
+                headers=_auth_headers(),
+                timeout=10,
+            )
+            institution_reviewer_count = len(ra_resp.json()) if ra_resp.status_code == 200 else 0
+
+    else:  # researcher
+        pub_resp = requests.get(
+            f"{BACKEND_URL}/publications", params={"author_id": researcher.get("id")}, headers=_auth_headers(), timeout=10
+        )
+        publication_count = len(pub_resp.json()) if pub_resp.status_code == 200 else 0
+
+        proj_resp = requests.get(f"{BACKEND_URL}/projects", headers=_auth_headers(), timeout=10)
+        project_count = len(proj_resp.json()) if proj_resp.status_code == 200 else 0
+
+        collab_resp = requests.get(
+            f"{BACKEND_URL}/collaborations/my", params={"page": 1, "page_size": 10}, headers=_auth_headers(), timeout=10
+        )
+        collaborator_count = collab_resp.json().get("total", 0) if collab_resp.status_code == 200 else 0
 
     return render_template(
         "dashboard.html",
         user=user,
         admin_stats=admin_stats,
         reviewer_pending_count=reviewer_pending_count,
+        reviewer_reviewed_count=reviewer_reviewed_count,
+        project_count=project_count,
+        collaborator_count=collaborator_count,
+        publication_count=publication_count,
+        institution=institution,
+        institution_reviewer_count=institution_reviewer_count,
     )
-
 
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
     if not session.get("token"):
         return redirect(url_for("login"))
+
+    role = _current_role()
+
+    if role == "institution_admin":
+        inst_resp = requests.get(f"{BACKEND_URL}/institutions/mine", headers=_auth_headers(), timeout=10)
+        institutions = inst_resp.json() if inst_resp.status_code == 200 else []
+        if institutions:
+            return redirect(url_for("edit_institution", institution_id=institutions[0]["id"]))
+        flash("No institution is linked to your account yet. Contact a System Admin.", "error")
+        return redirect(url_for("dashboard"))
+
+    if role == "reviewer":
+        user_id = _current_user_id()
+
+        me_resp = requests.get(f"{BACKEND_URL}/researchers/me", headers=_auth_headers(), timeout=10)
+        me = me_resp.json().get("user", {}) if me_resp.status_code == 200 else {}
+
+        ra_resp = requests.get(
+            f"{BACKEND_URL}/reviewer-assignments", params={"reviewer_user_id": user_id}, headers=_auth_headers(), timeout=10
+        )
+        assignments = ra_resp.json() if ra_resp.status_code == 200 else []
+
+        inst_resp = requests.get(f"{BACKEND_URL}/institutions/", headers=_auth_headers(), timeout=10)
+        institutions = inst_resp.json() if inst_resp.status_code == 200 else []
+        institution_lookup = {i["id"]: i["name"] for i in institutions}
+
+        pub_resp = requests.get(f"{BACKEND_URL}/publications/pending-review", headers=_auth_headers(), timeout=10)
+        pending = pub_resp.json() if pub_resp.status_code == 200 else []
+
+        types_seen = sorted({p["type"] for p in pending if p.get("type")})
+        venues_seen = sorted({p["venue"] for p in pending if p.get("venue")})
+
+        for a in assignments:
+            a["institution_name"] = institution_lookup.get(a["institution_id"]) if a.get("institution_id") else None
+
+        return render_template(
+            "profile_reviewer.html",
+            user_id=user_id,
+            email=me.get("email"),
+            assignments=assignments,
+            pending_count=len(pending),
+            types_seen=types_seen,
+            venues_seen=venues_seen,
+        )
 
     if request.method == "POST":
         payload = {
@@ -789,6 +910,29 @@ def review_queue():
     pubs = resp.json() if resp.status_code == 200 else []
     return render_template("review_queue.html", publications=pubs)
 
+
+@app.route("/publications/reviewed")
+def reviewed_publications():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+    if _current_role() not in ("reviewer", "system_admin"):
+        flash("Only a Reviewer or System Admin can view this page.", "error")
+        return redirect(url_for("dashboard"))
+
+    decision = request.args.get("decision", "")
+    params = {"decision": decision} if decision else {}
+    resp = requests.get(
+        f"{BACKEND_URL}/publications/reviewed-by-me", params=params, headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    items = resp.json() if resp.status_code == 200 else []
+    return render_template("reviewed_publications.html", items=items, decision=decision)
+        
+
 @app.route("/publications/<int:publication_id>/review", methods=["POST"])
 def review_publication(publication_id):
     if not session.get("token"):
@@ -1245,6 +1389,817 @@ def admin_update_user(user_id):
     return redirect(url_for("admin_users"))
 
 
+@app.route("/admin/reviewer-assignments")
+def assign_reviewers():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+    if _current_role() != "system_admin":
+        flash("Only a System Admin can view this page.", "error")
+        return redirect(url_for("dashboard"))
+
+    def _get(path):
+        resp = requests.get(f"{BACKEND_URL}{path}", headers=_auth_headers(), timeout=10)
+        return resp.json() if resp.status_code == 200 else None
+
+    all_users = _get("/admin/users") or []
+    reviewers = [u for u in all_users if u["role"] == "reviewer"]
+    institutions = _get("/institutions/") or []
+    all_publications = _get("/publications") or []
+    submitted_publications = [p for p in all_publications if p.get("status") == "submitted"]
+    assignments = _get("/reviewer-assignments") or []
+
+    reviewer_lookup = {u["id"]: u["email"] for u in all_users}
+    institution_lookup = {i["id"]: i["name"] for i in institutions}
+    publication_lookup = {p["id"]: p["title"] for p in all_publications}
+    for a in assignments:
+        a["reviewer_email"] = reviewer_lookup.get(a["reviewer_user_id"], f"User #{a['reviewer_user_id']}")
+        a["institution_name"] = institution_lookup.get(a["institution_id"]) if a["institution_id"] else None
+        a["publication_title"] = publication_lookup.get(a["publication_id"]) if a["publication_id"] else None
+
+    return render_template(
+        "assign_reviewers.html",
+        reviewers=reviewers,
+        institutions=institutions,
+        submitted_publications=submitted_publications,
+        assignments=assignments,
+    )
+
+
+@app.route("/admin/reviewer-assignments/create", methods=["POST"])
+def create_reviewer_assignment():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    scope = request.form.get("scope")
+    payload = {"reviewer_user_id": _to_int_or_none(request.form.get("reviewer_user_id"))}
+    if scope == "institution":
+        payload["institution_id"] = _to_int_or_none(request.form.get("institution_id"))
+    else:
+        payload["publication_id"] = _to_int_or_none(request.form.get("publication_id"))
+
+    resp = requests.post(
+        f"{BACKEND_URL}/reviewer-assignments", json=payload, headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code != 201:
+        detail = resp.json().get("detail", "Could not create assignment.") if resp.content else "Could not create assignment."
+        flash(detail, "error")
+    else:
+        flash("Reviewer assigned.", "success")
+    return redirect(url_for("assign_reviewers"))
+
+
+@app.route("/admin/reviewer-assignments/<int:assignment_id>/delete", methods=["POST"])
+def delete_reviewer_assignment(assignment_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.delete(
+        f"{BACKEND_URL}/reviewer-assignments/{assignment_id}", headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code != 204:
+        detail = resp.json().get("detail", "Could not remove assignment.") if resp.content else "Could not remove assignment."
+        flash(detail, "error")
+    else:
+        flash("Assignment removed.", "success")
+    return redirect(url_for("assign_reviewers"))
+
+
+# reports
+@app.route("/reports")
+def reports():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    headers = _auth_headers()
+
+    dashboard = requests.get(f"{BACKEND_URL}/reports/dashboard", headers=headers).json()
+    institution_report = requests.get(f"{BACKEND_URL}/reports/institutions", headers=headers).json()
+    publication_year = requests.get(f"{BACKEND_URL}/reports/publications/year", headers=headers).json()
+    publication_type = requests.get(f"{BACKEND_URL}/reports/publications/type", headers=headers).json()
+    publication_status = requests.get(f"{BACKEND_URL}/reports/publications/status", headers=headers).json()
+    conference_type = requests.get(f"{BACKEND_URL}/reports/conferences/type", headers=headers).json()
+    user_roles = requests.get(f"{BACKEND_URL}/reports/users/roles", headers=headers).json()
+    departments = requests.get(f"{BACKEND_URL}/reports/departments", headers=headers).json()
+    interests = requests.get(f"{BACKEND_URL}/reports/research-interests", headers=headers).json()
+    skills = requests.get(f"{BACKEND_URL}/reports/skills", headers=headers).json()
+    collaboration_status = requests.get(f"{BACKEND_URL}/reports/collaborations/status", headers=headers).json()
+    top_collaborations = requests.get(f"{BACKEND_URL}/reports/collaborations/top", headers=headers).json()
+
+    return render_template(
+        "reports.html",
+        dashboard=dashboard,
+        institution_report=institution_report,
+        publication_year=publication_year,
+        publication_type=publication_type,
+        publication_status=publication_status,
+        conference_type=conference_type,
+        user_roles=user_roles,
+        departments=departments,
+        interests=interests,
+        skills=skills,
+        collaboration_status=collaboration_status,
+        top_collaborations=top_collaborations,
+    )
+
+
+@app.route("/reports/download/excel")
+def download_report_excel():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+    resp = requests.get(f"{BACKEND_URL}/reports/dashboard/excel", headers=_auth_headers())
+    return Response(
+        resp.content,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment;filename=dashboard_report.xlsx"},
+    )
+
+
+@app.route("/reports/download/pdf")
+def download_report_pdf():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+    resp = requests.get(f"{BACKEND_URL}/reports/dashboard/pdf", headers=_auth_headers())
+    return Response(
+        resp.content,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": "attachment;filename=dashboard_report.pdf"},
+    )
+
+
+
+@app.route("/citations", methods=["GET", "POST"])
+def citations():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    researcher = _current_researcher()
+    researcher_id = researcher.get("id") if researcher else None
+
+    if request.method == "POST":
+        if not researcher_id:
+            flash("Create your researcher profile before managing citations.", "error")
+            return redirect(url_for("citations"))
+
+        cited_publication_id = _to_int_or_none(request.form.get("cited_publication_id"))
+        payload = {
+            "citing_publication_id": _to_int_or_none(request.form.get("citing_publication_id")),
+            "cited_publication_id": cited_publication_id,
+        }
+        if cited_publication_id is None:
+            payload["cited_title"] = request.form.get("cited_title") or None
+            payload["cited_authors"] = request.form.get("cited_authors") or None
+            payload["cited_year"] = _to_int_or_none(request.form.get("cited_year"))
+            payload["cited_venue"] = request.form.get("cited_venue") or None
+
+        resp = requests.post(
+            f"{BACKEND_URL}/citations", json=payload, headers=_auth_headers(), timeout=10
+        )
+        if resp.status_code == 401:
+            session.clear()
+            flash("Session expired. Please log in again.", "error")
+            return redirect(url_for("login"))
+        if resp.status_code != 201:
+            detail = (
+                resp.json().get("detail", "Could not add citation.")
+                if resp.content
+                else "Could not add citation."
+            )
+            flash(detail, "error")
+        else:
+            flash("Citation added.", "success")
+        return redirect(url_for("citations"))
+
+    my_publications = []
+    all_publications = []
+    my_citations = []
+    if researcher_id:
+        my_pubs_resp = requests.get(
+            f"{BACKEND_URL}/publications", params={"author_id": researcher_id}, timeout=10
+        )
+        my_publications = my_pubs_resp.json() if my_pubs_resp.status_code == 200 else []
+
+        all_pubs_resp = requests.get(f"{BACKEND_URL}/publications", timeout=10)
+        all_publications = all_pubs_resp.json() if all_pubs_resp.status_code == 200 else []
+
+        for pub in my_publications:
+            c_resp = requests.get(
+                f"{BACKEND_URL}/citations",
+                params={"citing_publication_id": pub["id"]},
+                timeout=10,
+            )
+            if c_resp.status_code == 200:
+                my_citations.extend(c_resp.json())
+        my_citations.sort(key=lambda c: c["created_at"], reverse=True)
+    else:
+        flash("Create your researcher profile before managing citations.", "error")
+
+    return render_template(
+        "citations.html",
+        my_publications=my_publications,
+        all_publications=all_publications,
+        my_citations=my_citations,
+    )
+
+
+@app.route("/citations/<int:citation_id>/delete", methods=["POST"])
+def delete_citation(citation_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.delete(
+        f"{BACKEND_URL}/citations/{citation_id}", headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code != 204:
+        detail = (
+            resp.json().get("detail", "Could not delete citation.")
+            if resp.content
+            else "Could not delete citation."
+        )
+        flash(detail, "error")
+    else:
+        flash("Citation deleted.", "success")
+    return redirect(url_for("citations"))
+
+
+@app.route("/citations/insights")
+def citation_insights():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    def _get(path):
+        resp = requests.get(f"{BACKEND_URL}{path}", headers=_auth_headers(), timeout=10)
+        return resp.json() if resp.status_code == 200 else None
+
+    top_papers = _get("/citations/stats/top-papers") or []
+    top_authors = _get("/citations/stats/top-authors") or []
+    top_institutions = _get("/citations/stats/top-institutions") or []
+    network = _get("/citations/network") or {"nodes": [], "edges": []}
+
+    return render_template(
+        "citation_insights.html",
+        top_papers=top_papers,
+        top_authors=top_authors,
+        top_institutions=top_institutions,
+        network=network,
+    )
+
+@app.route("/collaborations")
+def collaborations():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    def _get(path, params=None):
+        resp = requests.get(f"{BACKEND_URL}{path}", params=params, headers=_auth_headers(), timeout=10)
+        return resp
+
+    incoming_resp = _get("/collaborations/collaboration-requests", {"direction": "incoming", "status": "pending"})
+    outgoing_resp = _get("/collaborations/collaboration-requests", {"direction": "outgoing", "status": "pending"})
+    my_collabs_resp = _get("/collaborations/my", {"page": 1, "page_size": 25})
+
+    for resp in (incoming_resp, outgoing_resp, my_collabs_resp):
+        if resp.status_code == 401:
+            session.clear()
+            flash("Session expired. Please log in again.", "error")
+            return redirect(url_for("login"))
+        if resp.status_code != 200:
+            try:
+                detail = resp.json().get("detail", "Something went wrong.")
+            except ValueError:
+                detail = f"Backend error {resp.status_code}: {resp.text[:200]}"
+            flash(detail, "error")
+            return redirect(url_for("dashboard"))
+
+    incoming = incoming_resp.json()
+    outgoing = outgoing_resp.json()
+    my_collabs = my_collabs_resp.json()
+
+    q = request.args.get("q", "").strip()
+    directory_results = []
+    if q:
+        search_resp = requests.get(
+            f"{BACKEND_URL}/researchers/search", params={"q": q}, headers=_auth_headers(), timeout=10
+        )
+        if search_resp.status_code == 200:
+            directory_results = search_resp.json()
+
+    researcher = _current_researcher()
+    if researcher:
+        my_researcher_id = researcher.get("id")
+        directory_results = [r for r in directory_results if r.get("id") != my_researcher_id]
+
+    return render_template(
+        "collaborations.html",
+        incoming_requests=incoming["items"],
+        outgoing_requests=outgoing["items"],
+        my_collaborations=my_collabs["items"],
+        directory_results=directory_results,
+        q=q,
+    )
+
+
+@app.route("/collaborations/send", methods=["POST"])
+def send_collaboration_request():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    payload = {
+        "addressee_researcher_id": _to_int_or_none(request.form.get("addressee_researcher_id")),
+        "message": request.form.get("message") or None,
+    }
+    resp = requests.post(
+        f"{BACKEND_URL}/collaborations/collaboration-requests", json=payload, headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code != 201:
+        detail = resp.json().get("detail", "Could not send request.") if resp.content else "Could not send request."
+        flash(detail, "error")
+    else:
+        flash("Collaboration request sent.", "success")
+    return redirect(request.referrer or url_for("collaborations"))
+
+
+@app.route("/collaborations/requests/<int:request_id>/respond", methods=["POST"])
+def respond_collaboration_request(request_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    action = request.form.get("action", "")
+    status_map = {"accept": "accepted", "reject": "rejected", "cancel": "cancelled"}
+    new_status = status_map.get(action)
+    if new_status is None:
+        flash("Unknown action.", "error")
+        return redirect(url_for("collaborations"))
+
+    resp = requests.patch(
+        f"{BACKEND_URL}/collaborations/collaboration-requests/{request_id}",
+        json={"status": new_status},
+        headers=_auth_headers(),
+        timeout=10,
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code != 200:
+        detail = resp.json().get("detail", "Could not update request.") if resp.content else "Could not update request."
+        flash(detail, "error")
+    else:
+        flash_text = {
+            "accepted": "Request accepted -- you're now collaborators.",
+            "rejected": "Request rejected.",
+            "cancelled": "Request cancelled.",
+        }[new_status]
+        flash(flash_text, "success")
+    return redirect(url_for("collaborations"))
+
+
+@app.route("/collaborations/<int:collaboration_id>")
+def collaboration_detail(collaboration_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.get(f"{BACKEND_URL}/collaborations/{collaboration_id}", headers=_auth_headers(), timeout=10)
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code == 403:
+        flash("You can only view collaborations you're part of.", "error")
+        return redirect(url_for("collaborations"))
+    if resp.status_code != 200:
+        flash("Collaboration not found.", "error")
+        return redirect(url_for("collaborations"))
+
+    return render_template("collaboration_detail.html", collaboration=resp.json())
+
+
+@app.route("/collaborations/network")
+def collaboration_network():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    try:
+        depth = int(request.args.get("depth", 2))
+    except ValueError:
+        depth = 2
+    depth = max(1, min(depth, 3))
+
+    resp = requests.get(
+        f"{BACKEND_URL}/collaborations/network", params={"depth": depth}, headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    network = resp.json() if resp.status_code == 200 else {"nodes": [], "edges": []}
+    return render_template("collaboration_network.html", network=network, depth=depth)
+
+
+@app.route("/collaborations/suggested")
+def suggested_collaborators():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.get(
+        f"{BACKEND_URL}/collaborations/suggested", params={"limit": 12}, headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    suggestions = resp.json() if resp.status_code == 200 else []
+    return render_template("suggested_collaborators.html", suggestions=suggestions)
+
+
+# projects
+@app.route("/projects")
+def projects():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.get(f"{BACKEND_URL}/projects", headers=_auth_headers(), timeout=10)
+    if resp.status_code != 200:
+        flash("Could not load projects.", "error")
+        my_projects = []
+    else:
+        my_projects = resp.json()
+
+    return render_template("projects.html", projects=my_projects)
+
+
+@app.route("/projects/new", methods=["GET", "POST"])
+def new_project():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        payload = {
+            "title": request.form.get("title", "").strip(),
+            "description": request.form.get("description", "").strip() or None,
+            "start_date": request.form.get("start_date") or None,
+            "end_date": request.form.get("end_date") or None,
+        }
+        resp = requests.post(f"{BACKEND_URL}/projects", json=payload, headers=_auth_headers(), timeout=10)
+        if resp.status_code != 201:
+            detail = resp.json().get("detail", "Could not create project.") if resp.content else "Could not create project."
+            flash(detail, "error")
+            return render_template("new_project.html", form=request.form)
+
+        flash("Project created.", "success")
+        return redirect(url_for("project_detail", project_id=resp.json()["id"]))
+
+    return render_template("new_project.html", form={})
+
+
+@app.route("/projects/<int:project_id>")
+def project_detail(project_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.get(f"{BACKEND_URL}/projects/{project_id}", headers=_auth_headers(), timeout=10)
+    if resp.status_code == 404:
+        flash("Project not found.", "error")
+        return redirect(url_for("projects"))
+    if resp.status_code == 403:
+        flash("You are not a member of this project.", "error")
+        return redirect(url_for("projects"))
+
+    project = resp.json()
+    researcher = _current_researcher()
+    is_lead = researcher and researcher.get("id") == project.get("lead_researcher_id")
+
+    q = request.args.get("q", "").strip()
+    search_results = []
+    if q and is_lead:
+        search_resp = requests.get(
+            f"{BACKEND_URL}/researchers/search", params={"q": q}, headers=_auth_headers(), timeout=10
+        )
+        if search_resp.status_code == 200:
+            member_ids = {m["researcher_id"] for m in project.get("members", [])}
+            search_results = [r for r in search_resp.json() if r["id"] not in member_ids]
+
+    return render_template(
+        "project_detail.html",
+        project=project,
+        is_lead=is_lead,
+        my_researcher_id=researcher.get("id") if researcher else None,
+        q=q,
+        search_results=search_results,
+    )
+
+
+@app.route("/projects/<int:project_id>/members/invite", methods=["POST"])
+def invite_project_member(project_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    researcher_id = request.form.get("researcher_id")
+    resp = requests.post(
+        f"{BACKEND_URL}/projects/{project_id}/members",
+        json={"researcher_id": int(researcher_id)},
+        headers=_auth_headers(),
+        timeout=10,
+    )
+    if resp.status_code != 201:
+        detail = resp.json().get("detail", "Could not invite member.") if resp.content else "Could not invite member."
+        flash(detail, "error")
+    else:
+        flash("Invite sent.", "success")
+
+    return redirect(url_for("project_detail", project_id=project_id))
+
+
+@app.route("/projects/<int:project_id>/members/<int:member_id>/respond", methods=["POST"])
+def respond_project_invite(project_id, member_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    accept = request.form.get("accept") == "1"
+    resp = requests.post(
+        f"{BACKEND_URL}/projects/{project_id}/members/{member_id}/respond",
+        json={"accept": accept},
+        headers=_auth_headers(),
+        timeout=10,
+    )
+    if resp.status_code != 200:
+        flash("Could not respond to invite.", "error")
+    else:
+        flash("Invite accepted." if accept else "Invite declined.", "success")
+
+    return redirect(url_for("project_detail", project_id=project_id))
+
+
+@app.route("/projects/<int:project_id>/members/<int:member_id>/remove", methods=["POST"])
+def remove_project_member(project_id, member_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.delete(
+        f"{BACKEND_URL}/projects/{project_id}/members/{member_id}", headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code != 204:
+        flash("Could not remove member.", "error")
+    else:
+        flash("Member removed.", "success")
+
+    return redirect(url_for("project_detail", project_id=project_id))
+
+
+@app.route("/notifications")
+def notifications():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.get(f"{BACKEND_URL}/notifications", headers=_auth_headers(), timeout=10)
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code != 200:
+        flash("Could not load notifications.", "error")
+        return render_template("notifications.html", items=[])
+
+    data = resp.json()
+    return render_template("notifications.html", items=data["items"])
+
+@app.route("/notifications/preview.json")
+def notifications_preview():
+    if not session.get("token"):
+        return jsonify({"items": [], "unread_count": 0})
+
+    resp = requests.get(f"{BACKEND_URL}/notifications", params={"limit": 6}, headers=_auth_headers(), timeout=10)
+    if resp.status_code != 200:
+        return jsonify({"items": [], "unread_count": 0})
+
+    data = resp.json()
+    return jsonify({"items": data["items"], "unread_count": data["unread_count"]})
+
+@app.route("/notifications/<int:notification_id>/read", methods=["POST"])
+def mark_notification_read(notification_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.patch(
+        f"{BACKEND_URL}/notifications/{notification_id}/read", headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    # Support both: clicking a notification's own "mark read" button (stays
+    # on the page) and clicking the notification to jump to its link.
+    next_url = request.form.get("next")
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("notifications"))
+
+
+@app.route("/notifications/mark-all-read", methods=["POST"])
+def mark_all_notifications_read():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    resp = requests.post(
+        f"{BACKEND_URL}/notifications/mark-all-read", headers=_auth_headers(), timeout=10
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+
+    flash("All notifications marked as read.", "success")
+    return redirect(url_for("notifications"))
+    
+
+@app.route("/verify-email")
+def verify_email():
+    token = request.args.get("token", "")
+    if not token:
+        flash("Missing verification token.", "error")
+        return redirect(url_for("login"))
+
+    resp = requests.post(f"{BACKEND_URL}/auth/verify-email", json={"token": token}, timeout=10)
+    if resp.status_code == 200:
+        flash("Email verified! You can now log in.", "success")
+    else:
+        detail = resp.json().get("detail", "Verification failed.") if resp.content else "Verification failed."
+        flash(detail, "error")
+
+    return redirect(url_for("login"))
+
+
+@app.route("/resend-verification", methods=["POST"])
+def resend_verification():
+    email = request.form.get("email", "").strip()
+    if email:
+        requests.post(f"{BACKEND_URL}/auth/resend-verification", json={"email": email}, timeout=10)
+    flash("If that account exists and isn't verified yet, a new link has been sent.", "success")
+    return redirect(url_for("login"))
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        requests.post(f"{BACKEND_URL}/auth/forgot-password", json={"email": email}, timeout=10)
+        flash("If that email is registered, a reset link has been sent.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+    token = request.args.get("token", "") if request.method == "GET" else request.form.get("token", "")
+
+    if request.method == "POST":
+        new_password = request.form.get("password", "")
+        resp = requests.post(
+            f"{BACKEND_URL}/auth/reset-password",
+            json={"token": token, "new_password": new_password},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            flash("Password updated. Please log in.", "success")
+            return redirect(url_for("login"))
+
+        detail = resp.json().get("detail", "Could not reset password.") if resp.content else "Could not reset password."
+        flash(detail, "error")
+        return render_template("reset_password.html", token=token)
+
+    if not token:
+        flash("Missing reset token.", "error")
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html", token=token)
+
+
+@app.route("/admin/audit-logs")
+def audit_logs():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    action = request.args.get("action", "").strip()
+    entity_type = request.args.get("entity_type", "").strip()
+    page = request.args.get("page", 1, type=int)
+
+    params = {"page": page, "page_size": 50}
+    if action:
+        params["action"] = action
+    if entity_type:
+        params["entity_type"] = entity_type
+
+    resp = requests.get(f"{BACKEND_URL}/audit-logs", params=params, headers=_auth_headers(), timeout=10)
+    if resp.status_code == 403:
+        flash("You don't have permission to view audit logs.", "error")
+        return redirect(url_for("dashboard"))
+
+    data = resp.json() if resp.status_code == 200 else {"items": [], "total": 0, "page": 1, "page_size": 50}
+
+    return render_template(
+        "audit_logs.html",
+        logs=data["items"],
+        total=data["total"],
+        page=data["page"],
+        action=action,
+        entity_type=entity_type,
+    )
+
+@app.route("/auth/google", methods=["POST"])
+def auth_google():
+    credential = request.form.get("credential", "")
+    role = request.form.get("role") or None
+    institution_id = _to_int_or_none(request.form.get("institution_id"))
+
+    payload = {"id_token": credential}
+    if role:
+        payload["role"] = role
+    if institution_id:
+        payload["institution_id"] = institution_id
+
+    try:
+        resp = requests.post(f"{BACKEND_URL}/auth/google", json=payload, timeout=10)
+    except requests.RequestException:
+        flash("Could not reach the backend.", "error")
+        return redirect(url_for("login"))
+
+    if resp.status_code != 200:
+        detail = resp.json().get("detail", "Google sign-in failed.") if resp.content else "Google sign-in failed."
+        flash(detail, "error")
+        return redirect(url_for("login"))
+
+    data = resp.json()
+
+    if data.get("pending_approval"):
+        flash(data.get("message", "Application submitted, awaiting approval."), "success")
+        return redirect(url_for("login"))
+
+    if data.get("needs_role_selection"):
+        flash("No account found for that Google email. Please use Register instead.", "error")
+        return redirect(url_for("register"))
+
+    session["token"] = data["access_token"]
+    flash("Logged in successfully.", "success")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/messages")
+def messages_inbox():
+    if "token" not in session:
+        return redirect(url_for("login"))
+    resp = requests.get(f"{BACKEND_URL}/messages/inbox", headers=_auth_headers(), timeout=10)
+    items = resp.json().get("items", []) if resp.status_code == 200 else []
+    return render_template("messages_inbox.html", items=items)
+
+
+def _message_thread(scope_type, scope_id):
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        body = request.form.get("body", "").strip()
+        if body:
+            requests.post(
+                f"{BACKEND_URL}/messages/{scope_type}/{scope_id}",
+                json={"body": body},
+                headers=_auth_headers(),
+                timeout=10,
+            )
+        return redirect(url_for("project_messages" if scope_type == "project" else "collaboration_messages", **{f"{scope_type}_id": scope_id}))
+
+    resp = requests.get(f"{BACKEND_URL}/messages/{scope_type}/{scope_id}", headers=_auth_headers(), timeout=10)
+    if resp.status_code != 200:
+        flash(resp.json().get("detail", "Could not load this conversation."), "error")
+        return redirect(url_for("messages_inbox"))
+    return render_template("message_thread.html", conversation=resp.json())
+
+
+@app.route("/projects/<int:project_id>/messages", methods=["GET", "POST"])
+def project_messages(project_id):
+    return _message_thread("project", project_id)
+
+
+@app.route("/collaborations/<int:collaboration_id>/messages", methods=["GET", "POST"])
+def collaboration_messages(collaboration_id):
+    return _message_thread("collaboration", collaboration_id)
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
-

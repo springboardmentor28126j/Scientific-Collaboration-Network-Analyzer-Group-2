@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Suggested Collaborators — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Suggested Collaborators</h1>
+      <div class="section-sub">People you might want to connect with, based on mutual collaborators and shared department or institution</div>
+    </div>
+    <a href="{{ url_for('collaborations') }}" class="btn-inline btn-purple">Back to Collaborations</a>
+  </div>
+
+  {% if suggestions %}
+  <div class="card-list">
+    {% for s in suggestions %}
+    <div class="item-card conf">
+      <div>
+        <p class="item-title">{{ s.researcher.email }}</p>
+        <div class="item-sub">
+          {% if s.researcher.department %}{{ s.researcher.department }} &middot; {% endif %}{{ s.reason }}
+        </div>
+      </div>
+      <div class="item-actions">
+        {% if s.mutual_collaborator_count %}
+        <span class="pill pill-gray">{{ s.mutual_collaborator_count }} mutual</span>
+        {% endif %}
+        <form method="POST" action="{{ url_for('send_collaboration_request') }}" style="display:inline;">
+          <input type="hidden" name="addressee_researcher_id" value="{{ s.researcher.researcher_id }}">
+          <button type="submit" class="link-edit" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Send request</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">No suggestions right now -- as you build collaborations and fill in your department/institution, we'll surface people you might know here.</div>
+  {% endif %}
+</div>
+{% endblock %}

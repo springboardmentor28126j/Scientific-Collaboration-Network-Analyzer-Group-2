@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Collaborations — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Collaborations</h1>
+      <div class="section-sub">Connect with other researchers and track your collaboration network</div>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('suggested_collaborators') }}" class="btn-inline btn-purple">Suggested Collaborators</a>
+      <a href="{{ url_for('collaboration_network') }}" class="btn-inline btn-teal">View Network</a>
+    </div>
+  </div>
+
+  {% if incoming_requests %}
+  <h2 style="font-size:15px;">Incoming requests</h2>
+  <div class="card-list" style="margin-bottom:24px;">
+    {% for req in incoming_requests %}
+    <div class="item-card pub">
+      <div>
+        <p class="item-title">{{ req.requester.email }}</p>
+        <div class="item-sub">
+          {% if req.requester.department %}{{ req.requester.department }}{% endif %}
+          {% if req.message %} &middot; &ldquo;{{ req.message }}&rdquo;{% endif %}
+        </div>
+      </div>
+      <div class="item-actions">
+        <form method="POST" action="{{ url_for('respond_collaboration_request', request_id=req.id) }}" style="display:inline;">
+          <input type="hidden" name="action" value="accept">
+          <button type="submit" class="link-edit" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Accept</button>
+        </form>
+        <form method="POST" action="{{ url_for('respond_collaboration_request', request_id=req.id) }}" style="display:inline;">
+          <input type="hidden" name="action" value="reject">
+          <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Reject</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if outgoing_requests %}
+  <h2 style="font-size:15px;">Outgoing requests</h2>
+  <div class="card-list" style="margin-bottom:24px;">
+    {% for req in outgoing_requests %}
+    <div class="item-card pub">
+      <div>
+        <p class="item-title">{{ req.addressee.email }}</p>
+        <div class="item-sub">
+          {% if req.addressee.department %}{{ req.addressee.department }}{% endif %}
+          &middot; <span class="pill pill-gray">Pending</span>
+        </div>
+      </div>
+      <div class="item-actions">
+        <form method="POST" action="{{ url_for('respond_collaboration_request', request_id=req.id) }}" style="display:inline;">
+          <input type="hidden" name="action" value="cancel">
+          <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Cancel</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <h2 style="font-size:15px;">My collaborators</h2>
+  {% if my_collaborations %}
+  <div class="card-list" style="margin-bottom:24px;">
+    {% for c in my_collaborations %}
+    <a href="{{ url_for('collaboration_detail', collaboration_id=c.id) }}" style="text-decoration:none; color:inherit;">
+      <div class="item-card pub">
+        <div>
+          <p class="item-title">{{ c.partner.email if c.partner else (c.researcher1.email + ' & ' + c.researcher2.email) }}</p>
+          <div class="item-sub">
+            {% if c.partner and c.partner.department %}{{ c.partner.department }}{% endif %}
+            {% if c.last_collaboration %} &middot; Last collaborated {{ c.last_collaboration }}{% endif %}
+          </div>
+        </div>
+        <div class="item-actions"><span class="pill pill-purple">{{ c.strength }} shared publication{{ '' if c.strength == 1 else 's' }}</span></div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state" style="margin-bottom:24px;">No collaborations yet -- send a request below to get started.</div>
+  {% endif %}
+
+  <h2 style="font-size:15px;">Find a collaborator</h2>
+  <form method="GET" action="{{ url_for('collaborations') }}" class="toolbar" style="margin-bottom:16px;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by department, interests, or skills">
+    <button type="submit" class="btn-inline btn-purple" style="margin-top:0;">Search</button>
+  </form>
+
+  {% if q %}
+    {% if directory_results %}
+    <div class="card-list">
+      {% for r in directory_results %}
+      <div class="item-card conf">
+        <div>
+          <p class="item-title">{{ r.user.email if r.user else 'Researcher #' + r.id|string }}</p>
+          <div class="item-sub">{% if r.department %}{{ r.department }}{% endif %}</div>
+        </div>
+        <div class="item-actions">
+          <form method="POST" action="{{ url_for('send_collaboration_request') }}" style="display:inline;">
+            <input type="hidden" name="addressee_researcher_id" value="{{ r.id }}">
+            <button type="submit" class="link-edit" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Send request</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No researchers matched &ldquo;{{ q }}&rdquo;.</div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

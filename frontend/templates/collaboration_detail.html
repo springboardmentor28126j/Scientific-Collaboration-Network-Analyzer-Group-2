@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Collaboration — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>{{ collaboration.partner.email if collaboration.partner else (collaboration.researcher1.email + ' & ' + collaboration.researcher2.email) }}</h1>
+      <div class="section-sub">
+        {% if collaboration.partner and collaboration.partner.department %}{{ collaboration.partner.department }}{% endif %}
+      </div>
+    </div>
+    <a href="{{ url_for('collaborations') }}" class="btn-inline btn-purple">Back to Collaborations</a>
+  </div>
+
+  <div class="metric-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="metric-card">
+      <div class="label">STRENGTH</div>
+      <div class="value">{{ collaboration.strength }}</div>
+      <div class="muted-text">shared publication{{ '' if collaboration.strength == 1 else 's' }}</div>
+    </div>
+    <div class="metric-card muted">
+      <div class="label">FIRST COLLABORATION</div>
+      <div class="value" style="font-size:18px;">{{ collaboration.first_collaboration or '—' }}</div>
+    </div>
+    <div class="metric-card muted">
+      <div class="label">LAST COLLABORATION</div>
+      <div class="value" style="font-size:18px;">{{ collaboration.last_collaboration or '—' }}</div>
+    </div>
+  </div>
+
+  <h2 style="font-size:15px; margin-top:28px;">Shared publications</h2>
+  {% if collaboration.shared_publications %}
+  <div class="card-list">
+    {% for pub in collaboration.shared_publications %}
+    <div class="item-card pub">
+      <div>
+        <p class="item-title">{{ pub.title }}{% if pub.year %} <span style="font-weight:400; color:var(--muted);">({{ pub.year }})</span>{% endif %}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">No shared publications recorded yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

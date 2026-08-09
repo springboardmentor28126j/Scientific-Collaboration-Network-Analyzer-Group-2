@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}New Project{% endblock %}
+{% block content %}
+
+<div class="container">
+  <div class="section-header">
+    <h1>New Project</h1>
+  </div>
+
+  <form method="POST">
+    <label>Title</label>
+    <input type="text" name="title" required value="{{ form.get('title', '') }}">
+
+    <label>Description</label>
+    <textarea name="description" rows="4">{{ form.get('description', '') }}</textarea>
+
+    <div class="field-row">
+      <div>
+        <label>Start date</label>
+        <input type="date" name="start_date" value="{{ form.get('start_date', '') }}">
+      </div>
+      <div>
+        <label>End date</label>
+        <input type="date" name="end_date" value="{{ form.get('end_date', '') }}">
+      </div>
+    </div>
+
+    <button type="submit" class="btn-inline btn-purple" style="margin-top:16px;">Create Project</button>
+  </form>
+</div>
+{% endblock %}

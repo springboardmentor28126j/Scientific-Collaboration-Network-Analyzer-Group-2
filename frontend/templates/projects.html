@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Projects{% endblock %}
+{% block content %}
+
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Projects</h1>
+      <p class="section-sub">Projects you lead or are a member of.</p>
+    </div>
+    <a class="btn-inline btn-purple" href="{{ url_for('new_project') }}">New Project</a>
+  </div>
+
+  {% if projects %}
+    <div class="card-list">
+      {% for p in projects %}
+      <div class="item-card">
+        <div>
+          <p class="item-title">{{ p.title }}</p>
+          <p class="item-sub">
+            Status: {{ p.status }}
+            {% if p.start_date %} · Starts {{ p.start_date }}{% endif %}
+            {% if p.end_date %} · Ends {{ p.end_date }}{% endif %}
+          </p>
+        </div>
+        <div class="item-actions">
+          <a class="item-link" href="{{ url_for('project_detail', project_id=p.id) }}">View →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">You're not on any projects yet. Start one!</div>
+  {% endif %}
+</div>
+{% endblock %}

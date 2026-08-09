@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }}{% endblock %}
+{% block content %}
+
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>{{ project.title }}</h1>
+      <p class="section-sub">Status: {{ project.status }}</p>
+    </div>
+  </div>
+
+  {% if project.description %}<p>{{ project.description }}</p>{% endif %}
+
+  <h3>Members</h3>
+  <table class="admin-table">
+    <thead><tr><th>Researcher ID</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for m in project.members %}
+      <tr>
+        <td>{{ m.researcher_id }}</td>
+        <td>{{ m.role }}</td>
+        <td>
+          {{ m.status }}
+          {% if m.status == "pending" and m.researcher_id == my_researcher_id %}
+            <form method="POST" action="{{ url_for('respond_project_invite', project_id=project.id, member_id=m.id) }}" style="display:inline;">
+              <input type="hidden" name="accept" value="1">
+              <button type="submit" class="btn-inline btn-teal">Accept</button>
+            </form>
+            <form method="POST" action="{{ url_for('respond_project_invite', project_id=project.id, member_id=m.id) }}" style="display:inline;">
+              <input type="hidden" name="accept" value="0">
+              <button type="submit" class="btn-inline">Decline</button>
+            </form>
+          {% endif %}
+        </td>
+        <td>
+          {% if is_lead and m.role != "lead" %}
+            <form method="POST" action="{{ url_for('remove_project_member', project_id=project.id, member_id=m.id) }}">
+              <button type="submit" class="link-delete" style="background:none;border:none;cursor:pointer;">Remove</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if is_lead %}
+    <h3>Invite a researcher</h3>
+    <form method="GET" class="toolbar">
+      <input type="text" name="q" placeholder="Search by email, department, or skills..." value="{{ q }}">
+      <button type="submit" class="btn-inline">Search</button>
+    </form>
+
+    {% if search_results %}
+      <div class="card-list" style="margin-top:12px;">
+        {% for r in search_results %}
+          <div class="item-card">
+            <p class="item-title">{{ r.user.email if r.user else "Researcher #" ~ r.id }}</p>
+            <p class="item-sub">Researcher ID: {{ r.id }}{% if r.department %} · {{ r.department }}{% endif %}</p>
+          <form method="POST" action="{{ url_for('invite_project_member', project_id=project.id) }}">
+            <input type="hidden" name="researcher_id" value="{{ r.id }}">
+            <button type="submit" class="btn-inline btn-purple">Invite</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

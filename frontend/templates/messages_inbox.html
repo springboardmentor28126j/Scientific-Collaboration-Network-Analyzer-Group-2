@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Messages — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Messages</h1>
+      <div class="section-sub">Conversations tied to your projects and collaborations</div>
+    </div>
+  </div>
+
+  {% if items %}
+  <div class="card-list">
+    {% for c in items %}
+    <a href="{{ url_for('project_messages', project_id=c.scope_id) if c.scope_type == 'project' else url_for('collaboration_messages', collaboration_id=c.scope_id) }}"
+       class="item-card {{ 'pub' if not c.unread_count else 'conf' }}" style="text-decoration:none; color:inherit; {{ '' if not c.unread_count else 'border-left: 3px solid #534AB7;' }}">
+      <div>
+        <p class="item-title" style="font-weight: {{ '700' if c.unread_count else '400' }};">
+          {{ c.scope_label }}
+          <span class="pill" style="margin-left:6px;">{{ c.scope_type }}</span>
+        </p>
+        <div class="item-sub">{{ c.last_message_preview }}</div>
+      </div>
+      <div class="item-actions">
+        {% if c.unread_count %}
+        <span class="pill pill-purple">{{ c.unread_count }} new</span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">No conversations yet -- start one from a project or collaboration page.</div>
+  {% endif %}
+</div>
+{% endblock %}

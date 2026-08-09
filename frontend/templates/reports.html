@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Reports</h1>
+      <p class="section-sub">Live analytics across users, researchers, publications, and conferences.</p>
+    </div>
+    <div class="toolbar">
+      <a class="btn-inline btn-purple" href="{{ url_for('download_report_excel') }}">Download Excel</a>
+      <a class="btn-inline btn-teal" href="{{ url_for('download_report_pdf') }}">Download PDF</a>
+    </div>
+  </div>
+
+  <div class="card-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+    <div class="item-card"><p class="item-sub">Total Users</p><p class="item-title">{{ dashboard.total_users }}</p></div>
+    <div class="item-card"><p class="item-sub">Total Researchers</p><p class="item-title">{{ dashboard.total_researchers }}</p></div>
+    <div class="item-card"><p class="item-sub">Total Institutions</p><p class="item-title">{{ dashboard.total_institutions }}</p></div>
+    <div class="item-card"><p class="item-sub">Total Publications</p><p class="item-title">{{ dashboard.total_publications }}</p></div>
+    <div class="item-card"><p class="item-sub">Total Conferences</p><p class="item-title">{{ dashboard.total_conferences }}</p></div>
+    <div class="item-card"><p class="item-sub">Total Collaborations</p><p class="item-title">{{ dashboard.total_collaborations }}</p></div>
+  </div>
+
+  <h3>Institution Report</h3>
+  <table class="admin-table">
+    <thead><tr><th>Institution</th><th>Researchers</th></tr></thead>
+    <tbody>
+      {% for row in institution_report %}
+      <tr><td>{{ row.institution_name }}</td><td>{{ row.researcher_count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+<h3>Collaboration Requests by Status</h3>
+  <table class="admin-table">
+    <thead><tr><th>Status</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for row in collaboration_status %}
+      <tr><td style="text-transform:capitalize;">{{ row.request_status }}</td><td>{{ row.request_count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Top Collaborations</h3>
+  <table class="admin-table">
+    <thead><tr><th>Researcher 1</th><th>Researcher 2</th><th>Shared Publications</th></tr></thead>
+    <tbody>
+      {% for row in top_collaborations %}
+      <tr><td>{{ row.researcher1_email }}</td><td>{{ row.researcher2_email }}</td><td>{{ row.strength }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Publications by Year</h3>
+  <table class="admin-table">
+    <thead><tr><th>Year</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for row in publication_year %}
+      <tr><td>{{ row.year }}</td><td>{{ row.publication_count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Publications by Type</h3>
+  <table class="admin-table">
+    <thead><tr><th>Type</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for row in publication_type %}
+      <tr><td>{{ row.publication_type or "Not specified" }}</td><td>{{ row.publication_count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Publications by Status</h3>
+  <table class="admin-table">
+    <thead><tr><th>Status</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for row in publication_status %}
+      <tr><td>{{ row.publication_status }}</td><td>{{ row.publication_count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Conference Types</h3>
+  <table class="admin-table">
+    <thead><tr><th>Type</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for row in conference_type %}
+      <tr><td>{{ row.conference_type or "Not specified" }}</td><td>{{ row.conference_count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>User Roles</h3>
+  <table class="admin-table">
+    <thead><tr><th>Role</th><th>Total Users</th></tr></thead>
+    <tbody>
+      {% for row in user_roles %}
+      <tr><td>{{ row.role }}</td><td>{{ row.total_users }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Researchers by Department</h3>
+  <table class="admin-table">
+    <thead><tr><th>Department</th><th>Total Researchers</th></tr></thead>
+    <tbody>
+      {% for row in departments %}
+      <tr><td>{{ row.department or "Not specified" }}</td><td>{{ row.total_researchers }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Research Interests</h3>
+  <table class="admin-table">
+    <thead><tr><th>Interest</th><th>Total Researchers</th></tr></thead>
+    <tbody>
+      {% for row in interests %}
+      <tr><td>{{ row.research_interest }}</td><td>{{ row.total_researchers }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Skills</h3>
+  <table class="admin-table">
+    <thead><tr><th>Skill</th><th>Total Researchers</th></tr></thead>
+    <tbody>
+      {% for row in skills %}
+      <tr><td>{{ row.skill }}</td><td>{{ row.total_researchers }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

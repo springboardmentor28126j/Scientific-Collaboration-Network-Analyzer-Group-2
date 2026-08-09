@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.routes.notifications import create_notification
 from app.api.deps import get_current_user
+from app.core.audit import log_audit
 from app.db.session import get_db
 from app.models.institution import Institution
 from app.models.publication import Publication
@@ -77,6 +79,22 @@ def create_reviewer_assignment(
     db.add(assignment)
     db.commit()
     db.refresh(assignment)
+    log_audit(
+        db,
+        actor_user_id=current_user.id,
+        action="reviewer_assigned",
+        entity_type="reviewer_assignment",
+        entity_id=assignment.id,
+        details=f"reviewer_user_id={payload.reviewer_user_id}",
+    )
+    scope_label = f"institution #{payload.institution_id}" if payload.institution_id else f"publication #{payload.publication_id}"
+    create_notification(
+        db,
+        recipient_user_id=payload.reviewer_user_id,
+        type="reviewer_assigned",
+        message=f"You've been assigned to review submissions for {scope_label}",
+        link="/publications/review",
+    )
     return assignment
 
 
@@ -124,6 +142,13 @@ def delete_reviewer_assignment(
                 detail="You can only manage reviewers for an institution you administer",
             )
 
+    log_audit(
+        db,
+        actor_user_id=current_user.id,
+        action="reviewer_unassigned",
+        entity_type="reviewer_assignment",
+        entity_id=assignment.id,
+    )
     db.delete(assignment)
     db.commit()
     

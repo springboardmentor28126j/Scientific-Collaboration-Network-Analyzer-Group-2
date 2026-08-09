@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}My Profile — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1>Reviewer Profile</h1>
+  
+  <div class="stat-grid" style="margin-top:20px;">
+    <div class="stat-card stat-blue">
+      <span class="icon">🆔</span>
+      <div class="num" style="font-size:20px;">#{{ user_id }}</div>
+      <div class="label">Reviewer ID</div>
+    </div>
+    <div class="stat-card stat-orange">
+      <span class="icon">⏳</span>
+      <div class="num">{{ pending_count }}</div>
+      <div class="label">Pending in Your Queue</div>
+    </div>
+    <div class="stat-card stat-purple">
+      <span class="icon">🏛️</span>
+      <div class="num">{{ assignments|length }}</div>
+      <div class="label">Active Assignments</div>
+    </div>
+  </div>
+
+  <p style="font-size:13px; color:var(--muted); margin-top:8px;">{{ email }}</p>
+
+  <h2 style="font-size:15px; margin-top:28px;">My assignments</h2>
+  {% if assignments %}
+  <div class="card-list">
+    {% for a in assignments %}
+    <div class="item-card conf">
+      <div>
+        {% if a.institution_name %}
+        <p class="item-title">Institution-wide: {{ a.institution_name }}</p>
+        <div class="item-sub">You can review any submitted publication authored at this institution.</div>
+        {% else %}
+        <p class="item-title">Single publication assignment</p>
+        <div class="item-sub">Publication #{{ a.publication_id }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">No review assignments yet. A System Admin or Institution Admin needs to assign you before you can review.</div>
+  {% endif %}
+
+  {% if types_seen or venues_seen %}
+  <h2 style="font-size:15px; margin-top:28px;">Fields you're currently reviewing</h2>
+  <p style="font-size:13px; color:var(--muted); margin-top:-6px;">Based on the types and venues of publications waiting in your queue right now.</p>
+  <div class="quick-links">
+    {% for t in types_seen %}<span class="pill pill-purple" style="text-transform:capitalize;">{{ t }}</span>{% endfor %}
+    {% for v in venues_seen %}<span class="pill pill-teal">{{ v }}</span>{% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

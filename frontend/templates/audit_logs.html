@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Audit Logs</h1>
+      <p class="section-sub">{{ total }} events recorded</p>
+    </div>
+  </div>
+
+  <form method="GET" class="toolbar">
+    <input type="text" name="action" placeholder="Filter by action (e.g. user_login)" value="{{ action }}">
+    <input type="text" name="entity_type" placeholder="Filter by entity type (e.g. user)" value="{{ entity_type }}">
+    <button type="submit" class="btn-inline">Filter</button>
+    <a class="btn-inline" href="{{ url_for('audit_logs') }}">Clear</a>
+  </form>
+
+  <table class="admin-table">
+    <thead>
+      <tr><th>When</th><th>Actor</th><th>Action</th><th>Entity</th><th>Details</th></tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.created_at }}</td>
+        <td>{{ log.actor_email or "System" }}</td>
+        <td>{{ log.action }}</td>
+        <td>{% if log.entity_type %}{{ log.entity_type }}{% if log.entity_id %} #{{ log.entity_id }}{% endif %}{% endif %}</td>
+        <td>{{ log.details or "" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No audit events yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="toolbar" style="margin-top:12px;">
+    {% if page > 1 %}<a class="btn-inline" href="{{ url_for('audit_logs', action=action, entity_type=entity_type, page=page-1) }}">&larr; Previous</a>{% endif %}
+    <span class="section-sub">Page {{ page }}</span>
+    {% if logs|length == 50 %}<a class="btn-inline" href="{{ url_for('audit_logs', action=action, entity_type=entity_type, page=page+1) }}">Next &rarr;</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

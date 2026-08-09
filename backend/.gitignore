@@ -1,0 +1,6 @@
+
+# Generated/runtime files
+.DS_Store
+backend/dashboard_report.pdf
+backend/dashboard_report.xlsx
+backend/uploads/

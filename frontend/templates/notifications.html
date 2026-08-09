@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Notifications — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Notifications</h1>
+      <div class="section-sub">Updates on your collaborations, reviews, and publications</div>
+    </div>
+    {% if items %}
+    <form method="POST" action="{{ url_for('mark_all_notifications_read') }}">
+      <button type="submit" class="btn-inline btn-purple">Mark all as read</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if items %}
+  <div class="card-list">
+    {% for n in items %}
+    <div class="item-card {{ 'pub' if not n.is_read else 'conf' }}" style="{{ '' if n.is_read else 'border-left: 3px solid #534AB7;' }}">
+      <div>
+        <p class="item-title" style="font-weight: {{ '700' if not n.is_read else '400' }};">{{ n.message }}</p>
+        <div class="item-sub">{{ n.created_at[:16].replace('T', ' ') }}{% if not n.is_read %} &middot; <span class="pill pill-purple">New</span>{% endif %}</div>
+      </div>
+      <div class="item-actions">
+        {% if n.link %}
+        <form method="POST" action="{{ url_for('mark_notification_read', notification_id=n.id) }}" style="display:inline;">
+          <input type="hidden" name="next" value="{{ n.link }}">
+          <button type="submit" class="link-edit" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">View &rarr;</button>
+        </form>
+        {% endif %}
+        {% if not n.is_read %}
+        <form method="POST" action="{{ url_for('mark_notification_read', notification_id=n.id) }}" style="display:inline;">
+          <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Mark read</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">You're all caught up -- no notifications yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

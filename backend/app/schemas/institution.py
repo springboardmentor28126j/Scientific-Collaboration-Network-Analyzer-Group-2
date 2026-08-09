@@ -50,3 +50,10 @@ class InstitutionOut(InstitutionBase):
 
     id: int
     admin_user_id: int | None = None
+
+
+class InstitutionPublicOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str

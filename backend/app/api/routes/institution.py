@@ -11,11 +11,17 @@ from app.schemas.institution import (
     InstitutionCreate,
     InstitutionUpdate,
     InstitutionOut,
+    InstitutionPublicOut,
 )
 from app.schemas.researcher import ResearcherOut
 
 router = APIRouter()
-
+@router.get("/public", response_model=list[InstitutionPublicOut])
+def list_institutions_public(db: Session = Depends(get_db)):
+    """Unauthenticated, minimal listing -- only for the registration page's
+    'apply as Institution Admin' dropdown. Real institution management stays
+    behind the authenticated endpoints below."""
+    return db.query(Institution).order_by(Institution.name).all()
 
 def _get_institution(
     db: Session,

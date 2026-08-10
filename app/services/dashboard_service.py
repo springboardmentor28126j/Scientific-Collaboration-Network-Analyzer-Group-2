@@ -15,7 +15,7 @@ from app.schemas.dashboard import (
 class DashboardService:
     def __init__(self, session: AsyncSession):
         self.repository = DashboardRepository(session)
-    
+
     def _build_status_stats(
         self,
         counts: dict[PublicationStatus, int],
@@ -34,10 +34,9 @@ class DashboardService:
     async def get_dashboard(
         self,
         current_user: User,
-    ) -> SuperAdminDashboard | InstitutionDashboard | ResearcherDashboard| ReviewerDashboard:
+    ) -> SuperAdminDashboard | InstitutionDashboard | ResearcherDashboard | ReviewerDashboard:
 
         if current_user.role == UserRole.SUPER_ADMIN:
-
             total_publications = await self.repository.total_publications()
 
             total_institutions = await self.repository.total_institutions()
@@ -48,12 +47,15 @@ class DashboardService:
 
             status_counts = await self.repository.publication_status_counts()
 
+            top_researchers = await self.repository.top_researchers()
+
             return SuperAdminDashboard(
                 total_publications=total_publications,
                 publication_status=self._build_status_stats(status_counts),
                 total_institutions=total_institutions,
                 total_researchers=total_researchers,
                 total_reviewers=total_reviewers,
+                top_researchers=top_researchers,
             )
         elif current_user.role == UserRole.INSTITUTION_ADMIN:
             institution_id = current_user.institution_id
@@ -70,13 +72,14 @@ class DashboardService:
                 total_researchers=await self.repository.total_researchers(
                     institution_id=institution_id,
                 ),
-
                 total_reviewers=await self.repository.total_reviewers(
                     institution_id=institution_id,
                 ),
+                top_researchers = await self.repository.top_researchers(
+                    institution_id=current_user.institution_id,
+                ),
             )
         elif current_user.role == UserRole.RESEARCHER:
-
             my_publications = await self.repository.researcher_publications(
                 current_user.id,
             )

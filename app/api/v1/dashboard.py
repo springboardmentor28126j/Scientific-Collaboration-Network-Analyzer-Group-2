@@ -4,7 +4,12 @@ from app.core.dependencies import get_current_user
 from app.api.deps import get_dashboard_service
 
 from app.models.user import User
-from app.schemas.dashboard import ReviewerDashboard, SuperAdminDashboard, InstitutionDashboard, ResearcherDashboard
+from app.schemas.dashboard import (
+    ReviewerDashboard,
+    SuperAdminDashboard,
+    InstitutionDashboard,
+    ResearcherDashboard,
+)
 from app.services.dashboard_service import DashboardService
 
 
@@ -17,10 +22,7 @@ router = APIRouter(
 @router.get(
     "",
     response_model=(
-        SuperAdminDashboard
-        | InstitutionDashboard
-        | ResearcherDashboard
-        | ReviewerDashboard
+        SuperAdminDashboard | InstitutionDashboard | ResearcherDashboard | ReviewerDashboard
     ),
 )
 async def get_dashboard(

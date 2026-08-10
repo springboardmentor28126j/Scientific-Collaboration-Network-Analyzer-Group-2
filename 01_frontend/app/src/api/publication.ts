@@ -23,21 +23,84 @@ export interface ListPublicationsParams {
   order?: "asc" | "desc";
 }
 
+export interface CatalogPublication {
+  id: string;
+  title: string;
+  publication_type: string;
+  doi: string | null;
+  published_at: string;
+}
+
+export interface CatalogPublicationDetail {
+  id: string;
+  title: string;
+  abstract?: string;
+  authors: string;
+  institution_name?: string;
+  publication_name: string | null;
+  year: number;
+  doi: string | null;
+  url: string;
+  publication_type: string;
+}
+
+export interface ListCatalogParams {
+  page?: number;
+  size?: number;
+  search?: string;
+  publication_type?: string;
+  sort_by?: string;
+  order?: "asc" | "desc";
+}
+
+export interface CatalogSearchItem {
+  id: string;
+  title: string;
+  doi: string | null;
+  publication_type: string;
+  published_at: string;
+}
+
+export interface ReferenceRead {
+  id: string;
+  reference_order: number;
+  title: string;
+  authors: string;
+  publication_name: string | null;
+  year: number;
+  doi: string | null;
+  url: string | null;
+}
+
+export interface ReferenceCreate {
+  title: string;
+  authors: string;
+  publication_name?: string | null;
+  year: number;
+  doi?: string | null;
+  url?: string | null;
+}
+
+export interface ReferenceUpdate extends ReferenceCreate {
+  reference_order?: number;
+}
+
 export async function listPublications(params?: ListPublicationsParams): Promise<PaginatedResponse<PublicationRead>> {
-  const url = new URL(`${API_BASE_URL}/api/v1/publications`);
-  
+  const searchParams = new URLSearchParams();
   if (params) {
-    if (params.page) url.searchParams.append("page", params.page.toString());
-    if (params.size) url.searchParams.append("size", params.size.toString());
-    if (params.search) url.searchParams.append("search", params.search);
-    if (params.status) url.searchParams.append("status", params.status);
-    if (params.publication_type) url.searchParams.append("publication_type", params.publication_type);
-    if (params.institution_id) url.searchParams.append("institution_id", params.institution_id);
-    if (params.sort_by) url.searchParams.append("sort_by", params.sort_by);
-    if (params.order) url.searchParams.append("order", params.order);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        searchParams.append(key, String(value));
+      }
+    });
   }
 
-  const response = await fetch(url.toString(), {
+  const queryString = searchParams.toString();
+  const url = queryString 
+    ? `${API_BASE_URL}/api/v1/publications?${queryString}`
+    : `${API_BASE_URL}/api/v1/publications`;
+
+  const response = await fetch(url, {
     headers: getHeaders(),
   });
   return handleResponse<PaginatedResponse<PublicationRead>>(response);
@@ -166,6 +229,72 @@ export async function updateConference(publication_id: string, data: ConferenceC
     body: JSON.stringify(data),
   });
   return handleResponse<ConferenceRead>(response);
+}
+
+export async function getCatalogPublications(params: ListCatalogParams): Promise<PaginatedResponse<CatalogPublication>> {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.append(key, String(value));
+    }
+  });
+
+  const queryString = searchParams.toString();
+  const url = queryString 
+    ? `${API_BASE_URL}/api/v1/publications/catalog?${queryString}`
+    : `${API_BASE_URL}/api/v1/publications/catalog`;
+
+  const response = await fetch(url, {
+    headers: getHeaders(),
+  });
+  return handleResponse<PaginatedResponse<CatalogPublication>>(response);
+}
+
+export async function getCatalogPublication(id: string): Promise<CatalogPublicationDetail> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/publications/catalog/${id}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse<CatalogPublicationDetail>(response);
+}
+
+export async function searchCatalog(query: string): Promise<CatalogSearchItem[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/publications/catalog/search?search=${encodeURIComponent(query)}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse<CatalogSearchItem[]>(response);
+}
+
+export async function listReferences(publicationId: string): Promise<ReferenceRead[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/publications/${publicationId}/references`, {
+    headers: getHeaders(),
+  });
+  return handleResponse<ReferenceRead[]>(response);
+}
+
+export async function addReference(publicationId: string, data: ReferenceCreate): Promise<ReferenceRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/publications/${publicationId}/references`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<ReferenceRead>(response);
+}
+
+export async function updateReference(publicationId: string, referenceId: string, data: ReferenceUpdate): Promise<ReferenceRead> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/publications/${publicationId}/references/${referenceId}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<ReferenceRead>(response);
+}
+
+export async function deleteReference(publicationId: string, referenceId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/publications/${publicationId}/references/${referenceId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  return handleResponse<void>(response);
 }
 
 export async function getConference(publication_id: string): Promise<ConferenceRead> {

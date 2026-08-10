@@ -11,6 +11,7 @@ from app.models.review_assignment import ReviewAssignment
 from app.models.user import User, UserRole
 
 from app.schemas.publication_filter import PublicationFilter
+from app.schemas.publication_catalog_filter import PublicationCatalogFilter
 
 
 class PublicationRepository:
@@ -115,6 +116,16 @@ class PublicationRepository:
 
         return query
 
+    def _apply_catalog_visibility(self, query):
+        return query.where(
+            Publication.status.in_(
+                [
+                    PublicationStatus.PUBLISHED,
+                    PublicationStatus.ARCHIVED,
+                ]
+            )
+        )
+
     async def create(self, **fields) -> Publication:
         publication = Publication(**fields)
         self.session.add(publication)
@@ -133,7 +144,7 @@ class PublicationRepository:
         )
         return list(result.scalars().all())
 
-    async def list(
+    async def list_publications(
         self,
         current_user: User,
         filters: PublicationFilter,
@@ -226,3 +237,96 @@ class PublicationRepository:
         await self.session.flush()
 
         return publication
+
+    async def list_catalog(
+        self,
+        filters: PublicationCatalogFilter,
+    ) -> tuple[list[Publication], int]:
+        query = select(Publication).options(
+            selectinload(Publication.creator),
+            selectinload(Publication.authors),
+            selectinload(Publication.institution),
+        )
+
+        query = self._apply_catalog_visibility(query)
+
+        query = self._apply_search(query, filters)
+
+        query = self._apply_sort(query, filters)
+
+        # publication_type filter
+        if filters.publication_type:
+            query = query.where(Publication.publication_type == filters.publication_type)
+
+        count_query = select(func.count()).select_from(query.order_by(None).subquery())
+
+        total = await self.session.scalar(count_query)
+
+        offset = (filters.page - 1) * filters.size
+
+        query = query.offset(offset).limit(filters.size)
+
+        result = await self.session.execute(query)
+
+        items = result.scalars().unique().all()
+
+        return list(items), total or 0
+
+    async def search_catalog(
+        self,
+        search: str,
+    ) -> list[Publication]:
+
+        if not search.strip():
+            return []
+
+        query = select(Publication).where(
+            Publication.status.in_(
+                [
+                    PublicationStatus.PUBLISHED,
+                    PublicationStatus.ARCHIVED,
+                ]
+            )
+        )
+
+        like = f"%{search}%"
+
+        query = query.where(
+            or_(
+                Publication.title.ilike(like),
+                Publication.doi.ilike(like),
+            )
+        )
+
+        query = query.order_by(Publication.title.asc()).limit(20)
+
+        result = await self.session.execute(query)
+
+        return list(result.scalars().all())
+
+    async def get_catalog_publication(
+        self,
+        publication_id: uuid.UUID,
+    ) -> Publication | None:
+        result = await self.session.execute(
+            select(Publication)
+            .options(
+                selectinload(Publication.creator),
+                selectinload(Publication.institution),
+                selectinload(Publication.conference),
+                selectinload(Publication.authors).selectinload(
+                    PublicationAuthor.researcher,
+                ),
+            )
+            .where(
+                Publication.id == publication_id,
+                Publication.status.in_(
+                    [
+                        PublicationStatus.PUBLISHED,
+                        PublicationStatus.ARCHIVED,
+                    ]
+                ),
+            )
+        )
+
+        return result.scalar_one_or_none()

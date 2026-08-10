@@ -54,6 +54,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { publicationTypes } from "@/lib/schemas";
+import { PublicationReferences } from "@/components/PublicationReferences";
 import {
   ArrowLeft,
   FileText,
@@ -658,6 +659,8 @@ export default function PublicationDetail() {
               </div>
             </CardContent>
           </Card>
+
+          <PublicationReferences publicationId={publication.id} readOnly={!(isDraft && isCreator)} />
 
           {isSuperAdmin && (
             <Card>

@@ -17,8 +17,15 @@ import {
   submitEditorialDecision,
   archivePublication,
   downloadPublicationPdf,
+  getCatalogPublications,
+  getCatalogPublication,
+  listReferences,
+  addReference,
+  updateReference,
+  deleteReference,
+  searchCatalog,
 } from "@/api/publication";
-import type { ListPublicationsParams } from "@/api/publication";
+import type { ListPublicationsParams, ListCatalogParams, ReferenceCreate, ReferenceUpdate } from "@/api/publication";
 import { listResearchers } from "@/api/user";
 import { toast } from "sonner";
 import type {
@@ -236,6 +243,22 @@ export function useCreateConference() {
   });
 }
 
+export function useCatalogPublications(params: ListCatalogParams) {
+  return useQuery({
+    queryKey: ["catalog", params],
+    queryFn: () => getCatalogPublications(params),
+    placeholderData: (previousData) => previousData,
+  });
+}
+
+export function useCatalogPublication(id: string) {
+  return useQuery({
+    queryKey: ["catalog", id],
+    queryFn: () => getCatalogPublication(id),
+    enabled: !!id,
+  });
+}
+
 export function useUpdateConference() {
   const queryClient = useQueryClient();
 
@@ -248,6 +271,69 @@ export function useUpdateConference() {
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update conference details");
     },
+  });
+}
+
+export function useReferences(publicationId: string) {
+  return useQuery({
+    queryKey: ["references", publicationId],
+    queryFn: () => listReferences(publicationId),
+    enabled: !!publicationId,
+  });
+}
+
+export function useAddReference(publicationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: ReferenceCreate) => addReference(publicationId, data),
+    onSuccess: () => {
+      toast.success("Reference added successfully");
+      queryClient.invalidateQueries({ queryKey: ["references", publicationId] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUpdateReference(publicationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ referenceId, data }: { referenceId: string; data: ReferenceUpdate }) =>
+      updateReference(publicationId, referenceId, data),
+    onSuccess: () => {
+      toast.success("Reference updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["references", publicationId] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useDeleteReference(publicationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (referenceId: string) => deleteReference(publicationId, referenceId),
+    onSuccess: () => {
+      toast.success("Reference removed successfully");
+      queryClient.invalidateQueries({ queryKey: ["references", publicationId] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useSearchCatalog(query: string) {
+  return useQuery({
+    queryKey: ["catalog-search", query],
+    queryFn: () => searchCatalog(query),
+    enabled: query.length >= 3,
+    staleTime: 30000,
   });
 }
 

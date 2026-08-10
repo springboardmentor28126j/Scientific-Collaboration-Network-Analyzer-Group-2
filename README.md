@@ -1,95 +1,381 @@
 # Scientific Research Management System — Backend
 
-Production-grade FastAPI backend
+Production-grade FastAPI backend for a **Research Management System** that streamlines the complete lifecycle of academic research publications, from submission to publication.
 
-## Stack
+---
 
-FastAPI · PostgreSQL (asyncpg) · SQLAlchemy 2.0 (async) · Alembic · Pydantic v2
-· `uv` · Docker · Cloudinary · fastapi-mail · MailCatcher (dev) · pytest
+## Features
 
-## Local development
+### Authentication & Authorization
 
-**Prerequisites:** Docker, Docker Compose. `uv` only needed if you want to run
-things outside Docker.
+- JWT-based authentication
+- Email verification
+- Password reset via email
+- Role-Based Access Control (RBAC)
+- Secure password hashing
+- Verified account enforcement
 
-1. Copy the env file and fill in real values where needed (Cloudinary keys at
-   minimum; mail/DB defaults already point at the Docker services):
+---
 
-   ```bash
-   cp .env.example .env
-   ```
+### User Management
 
-2. Start everything:
+- Multi-role user system
+  - Super Admin
+  - Institution Admin
+  - Researcher
+  - Reviewer
+- Institution-based user management
+- User profile management
+- Account activation and verification
 
-   ```bash
-   docker compose up --build
-   ```
+---
 
-   This brings up:
-   - `app` — the API, at http://localhost:8000 (docs at `/docs`)
-   - `db` — Postgres, at localhost:5432
-   - `mailcatcher` — SMTP on 1025, web UI at http://localhost:1080 (every
-     verification/reset email sent by the app shows up here)
+### Institution Management
 
-3. Run migrations (first time, and after pulling new migrations):
+- Create and manage institutions
+- Institution administrators
+- Institution-wise researchers and reviewers
 
-   ```bash
-   docker compose exec app alembic upgrade head
-   ```
+---
 
-4. On startup, the app automatically creates the platform superuser from the
-   `SUPERUSER_EMAIL` / `SUPERUSER_PASSWORD` values in `.env`, if it doesn't
-   already exist. There's no API endpoint for creating a superuser — this is
-   the only path.
+### Publication Management
 
-## Running without Docker
+- Create research publications
+- Upload publication PDFs (Cloudinary)
+- Update and delete draft publications
+- Publication lifecycle management
 
-```bash
-uv sync --extra dev
-source .venv/bin/activate
-alembic upgrade head
-uvicorn app.main:app --reload
+Publication workflow:
+
+```
+Draft
+   ↓
+Submitted
+   ↓
+Under Review
+   ↓
+Revision Required
+   ↓
+Accepted
+   ↓
+Published
+   ↓
+Archived
 ```
 
-You'll need a local Postgres and either a local MailCatcher (`gem install
-mailcatcher` or the Docker image run standalone) or real SMTP creds in `.env`.
+- DOI support
+- Publication history tracking
+- Publication download for verified users
 
-## Creating a new migration
+---
+
+### Publication Authors
+
+- Multiple authors per publication
+- Author ordering
+- Corresponding author support
+- Co-author management
+
+---
+
+### Conference Publications
+
+Support for conference-specific metadata:
+
+- Conference name
+- Venue
+- Country
+- City
+- Publication date
+- Proceedings
+- ISBN
+- ISSN
+- Publisher
+- Conference outcome
+
+---
+
+### Review Management
+
+- Reviewer assignment
+- Multiple reviewers per publication
+- Review submission
+- Editorial decisions
+- Review recommendations
+
+Review decisions include:
+
+- Accept
+- Minor Revision
+- Major Revision
+- Reject
+
+---
+
+### Publication Reference Management
+
+Researchers can:
+
+- Add references
+- Update references
+- Delete references
+- List references
+
+Each publication supports multiple references.
+
+Reference metadata includes:
+
+- Title
+- Authors
+- Publication name
+- DOI
+- URL
+- Publication year
+
+---
+
+### Publication Library
+
+Browse publicly available research papers.
+
+Supports:
+
+- Published publications
+- Archived publications
+- Pagination
+- Searching
+- Sorting
+- Publication type filtering
+
+Dedicated endpoints for:
+
+- Browse publications
+- Search publications
+- Publication details lookup
+- PDF download
+
+---
+
+### Dashboard & Analytics
+
+#### Super Admin Dashboard
+
+- Total publications
+- Publication status statistics
+- Total institutions
+- Total researchers
+- Total reviewers
+- Top researchers leaderboard
+
+#### Institution Admin Dashboard
+
+- Institution publication statistics
+- Researchers
+- Reviewers
+- Top researchers within institution
+
+#### Researcher Dashboard
+
+- My publications
+- Co-authored publications
+- Publication status overview
+
+#### Reviewer Dashboard
+
+- Assigned reviews
+- Pending reviews
+- Completed reviews
+
+---
+
+### Search & Filtering
+
+Supports searching by:
+
+- Publication title
+- DOI
+- Publication type
+
+Supports:
+
+- Pagination
+- Sorting
+- Filtering
+- Search suggestions
+
+---
+
+### File Storage
+
+- Cloudinary integration
+- PDF uploads
+- Secure PDF downloads
+- Cloud-based file storage
+
+---
+
+### REST API
+
+RESTful APIs for:
+
+- Authentication
+- Users
+- Institutions
+- Publications
+- Publication Authors
+- Publication References
+- Conference Details
+- Reviews
+- Dashboard Analytics
+
+---
+
+## Tech Stack
+
+FastAPI · PostgreSQL (asyncpg) · SQLAlchemy 2.0 (async) · Alembic · Pydantic v2 · `uv` · Docker · Cloudinary · fastapi-mail · MailCatcher (dev) · pytest
+
+---
+
+## Local Development
+
+**Prerequisites:** Docker, Docker Compose. `uv` is only needed if you want to run the application outside Docker.
+
+### 1. Copy environment variables
 
 ```bash
-docker compose exec app alembic revision --autogenerate -m "describe the change"
+cp .env.example .env
+```
+
+Fill in the required environment variables (Cloudinary credentials at minimum).
+
+---
+
+### 2. Start the application
+
+```bash
+docker compose up --build
+```
+
+Services started:
+
+- **API:** http://localhost:8000
+- **Swagger UI:** http://localhost:8000/docs
+- **ReDoc:** http://localhost:8000/redoc
+- **PostgreSQL:** localhost:5432
+- **MailCatcher SMTP:** localhost:1025
+- **MailCatcher UI:** http://localhost:1080
+
+---
+
+### 3. Apply database migrations
+
+```bash
 docker compose exec app alembic upgrade head
 ```
 
-Always review autogenerated migrations before applying — Alembic doesn't
-catch everything (e.g. column renames look like drop+add).
+---
 
-## Tests
+### 4. Super Admin
+
+On startup, the application automatically creates the platform Super Admin using:
+
+- `SUPERUSER_EMAIL`
+- `SUPERUSER_PASSWORD`
+
+if it does not already exist.
+
+---
+
+## Running Without Docker
+
+```bash
+uv sync --extra dev
+
+source .venv/bin/activate
+
+alembic upgrade head
+
+uvicorn app.main:app --reload
+```
+
+You'll need:
+
+- PostgreSQL
+- MailCatcher (or SMTP credentials)
+- Cloudinary credentials
+
+---
+
+## Creating Migrations
+
+```bash
+docker compose exec app alembic revision --autogenerate -m "describe the change"
+
+docker compose exec app alembic upgrade head
+```
+
+Always review autogenerated migrations before applying.
+
+---
+
+## Running Tests
 
 ```bash
 docker compose -f docker-compose.test.yml up -d db_test mailcatcher_test
+
 uv run pytest --cov=app
 ```
 
-Or, if you have a local Postgres available for tests, point `DATABASE_URL` at
-it and just run `pytest` directly. Cloudinary and email sends are mocked in
-tests — nothing hits real external services.
+Or simply:
 
-## API docs
+```bash
+pytest
+```
 
-Once running, interactive docs are at:
+Cloudinary uploads and email sending are mocked during testing.
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+---
 
-## Deploying to Render.com
+## API Documentation
 
-1. Create a new **Web Service**, pointing at this repo, build type "Docker".
-2. Add a **Managed Postgres** instance; Render injects `DATABASE_URL`
-   automatically if you link it, or copy the connection string manually into
-   the service's environment variables.
-3. Set all other `.env.example` variables in Render's dashboard (real SMTP
-   provider instead of MailCatcher, real Cloudinary keys, a strong
-   `SECRET_KEY`, etc).
-4. Add `alembic upgrade head` as a **Pre-Deploy Command** so migrations run
-   before the new instance takes traffic.
+Swagger UI
+
+http://localhost:8000/docs
+
+ReDoc
+
+http://localhost:8000/redoc
+
+---
+
+## Deployment (Render)
+
+1. Create a new **Web Service** using Docker.
+2. Create a **Managed PostgreSQL** database.
+3. Configure all environment variables from `.env.example`.
+4. Use
+
+```bash
+alembic upgrade head
+```
+
+as the **Pre-Deploy Command**.
+
+---
+
+## Future Improvements
+
+- Citation analytics
+- Citation graph
+- Publication recommendations
+- ORCID integration
+- Google Scholar integration
+- Email notifications
+- AI-powered paper recommendations
+- Research collaboration analytics
+
+---
+
+## License
+
+This project was developed as part of an academic Research Management System and can be extended for institutional or enterprise research workflows.

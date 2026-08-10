@@ -1,7 +1,6 @@
 import uuid
 
 from fastapi import UploadFile
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
@@ -9,7 +8,11 @@ from app.schemas.publication import PublicationCreate, PublicationUpdate
 from app.schemas.publication_decision import PublicationDecisionCreate, EditorialDecision
 from app.schemas.publication import PublicationRead
 from app.schemas.publication_filter import PublicationFilter
+from app.schemas.publication_catalog import PublicationCatalogItem
+from app.schemas.publication_catalog_filter import PublicationCatalogFilter
 from app.schemas.pagination import PaginatedResponse
+from app.schemas.publication_reference_lookup import PublicationReferenceLookup
+from app.schemas.publication_catalog import PublicationCatalogSearchItem, PublicationCatalogItem
 from app.services.cloudinary_service import CloudinaryService
 from app.services.publication_history_service import PublicationHistoryService
 from app.models.publication import Publication, PublicationStatus
@@ -90,7 +93,7 @@ class PublicationService:
         filters: PublicationFilter,
     ) -> PaginatedResponse[PublicationRead]:
 
-        items, total = await self.publications.list(
+        items, total = await self.publications.list_publications(
             current_user=current_user,
             filters=filters,
         )
@@ -339,7 +342,7 @@ class PublicationService:
         await self.session.refresh(publication)
 
         return publication
-    
+
     async def download_publication(
         self,
         publication_id: uuid.UUID,
@@ -354,8 +357,82 @@ class PublicationService:
             raise NotFoundError("Publication PDF not found.")
 
         if not current_user.is_verified:
-            raise ForbiddenError(
-                "Only verified users can download publications."
-            )
+            raise ForbiddenError("Only verified users can download publications.")
 
         return publication.pdf_url
+
+    async def list_catalog(
+        self,
+        filters: PublicationCatalogFilter,
+    ) -> PaginatedResponse[PublicationCatalogItem]:
+
+        publications, total = await self.publications.list_catalog(
+            filters=filters,
+        )
+
+        return PaginatedResponse.create(
+            items=publications,
+            page=filters.page,
+            size=filters.size,
+            total=total,
+        )
+
+    async def search_catalog(
+        self,
+        search: str,
+    ) -> list[PublicationCatalogSearchItem]:
+        return await self.publications.search_catalog(
+            search,
+        )
+    
+
+    async def get_catalog_publication(
+        self,
+        publication_id: uuid.UUID,
+    ) -> PublicationReferenceLookup:
+
+        publication = await self.publications.get_catalog_publication(
+            publication_id,
+        )
+
+        if publication is None:
+            raise NotFoundError("Publication not found.")
+
+        ordered_authors = sorted(
+            publication.authors,
+            key=lambda author: author.author_order,
+        )
+
+        authors = [publication.creator.full_name]
+
+        authors.extend(
+            author.researcher.full_name
+            for author in ordered_authors
+        )
+
+        authors = ", ".join(dict.fromkeys(authors))
+
+        publication_name = None
+
+        if publication.conference:
+            publication_name = (
+                publication.conference.proceedings_name
+                or publication.conference.conference_name
+            )
+
+        return PublicationReferenceLookup(
+            id=publication.id,
+            title=publication.title,
+            abstract=publication.abstract,
+            authors=authors,
+            institution_name=publication.institution.name,
+            publication_name=publication_name,
+            year=(
+                publication.published_at.year
+                if publication.published_at
+                else None
+            ),
+            doi=publication.doi,
+            url=publication.pdf_url,
+            publication_type=publication.publication_type,
+        )

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Admin Dashboard</h1>
+      <div class="section-sub">Platform-wide user, institution, and content overview</div>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="label">TOTAL USERS</div>
+      <div class="value">{{ stats.total_users }}</div>
+      <div class="muted-text">{{ stats.active_users }} active &middot; {{ stats.inactive_users }} inactive</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">RESEARCHERS</div>
+      <div class="value">{{ stats.role_counts.researcher }}</div>
+      <div class="muted-text">Authoring publications</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">INSTITUTION ADMINS</div>
+      <div class="value">{{ stats.role_counts.institution_admin }}</div>
+      <div class="muted-text">Managing institutions</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">REVIEWERS</div>
+      <div class="value">{{ stats.role_counts.reviewer }}</div>
+      <div class="muted-text">Approving submissions</div>
+    </div>
+    <div class="metric-card muted">
+      <div class="label">SYSTEM ADMINS</div>
+      <div class="value">{{ stats.role_counts.system_admin }}</div>
+      <div class="muted-text">Platform administrators</div>
+    </div>
+    <div class="metric-card muted">
+      <div class="label">INSTITUTIONS</div>
+      <div class="value">{{ stats.total_institutions if stats.total_institutions is not none else "—" }}</div>
+      <div class="muted-text"><a class="view-link" href="{{ url_for('institution') }}">View institutions &rarr;</a></div>
+    </div>
+    <div class="metric-card muted">
+      <div class="label">CONFERENCES</div>
+      <div class="value">{{ stats.total_conferences if stats.total_conferences is not none else "—" }}</div>
+      <div class="muted-text"><a class="view-link" href="{{ url_for('conferences') }}">View conferences &rarr;</a></div>
+    </div>
+    <div class="metric-card muted">
+      <div class="label">PUBLICATIONS</div>
+      <div class="value">{{ stats.total_publications if stats.total_publications is not none else "—" }}</div>
+      <div class="muted-text"><a class="view-link" href="{{ url_for('publications') }}">View publications &rarr;</a></div>
+    </div>
+  </div>
+
+  <div class="section-header" style="margin-top:8px;">
+    <div>
+      <h2 style="font-size:16px; margin:0;">Users</h2>
+      <div class="section-sub">Change a user's role or activate/deactivate their account</div>
+    </div>
+  </div>
+
+  <table class="admin-table">
+    <tr>
+      <th>ID</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Status</th>
+      <th>Change role</th>
+      <th>Account</th>
+    </tr>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.id }}</td>
+      <td>{{ u.email }}</td>
+      <td><span class="pill {{ u.role_pill_class }}">{{ u.role_label }}</span></td>
+      <td>
+        <span class="status-dot {{ 'on' if u.is_active else 'off' }}"></span>{{ "Active" if u.is_active else "Inactive" }}
+      </td>
+      <td>
+        <form method="POST" action="{{ url_for('admin_update_user', user_id=u.id) }}" style="display:flex; gap:6px; align-items:center;">
+          <select name="role">
+            <option value="researcher" {% if u.role == 'researcher' %}selected{% endif %}>Researcher</option>
+            <option value="institution_admin" {% if u.role == 'institution_admin' %}selected{% endif %}>Institution Admin</option>
+            <option value="reviewer" {% if u.role == 'reviewer' %}selected{% endif %}>Reviewer</option>
+            <option value="system_admin" {% if u.role == 'system_admin' %}selected{% endif %}>System Admin</option>
+          </select>
+          <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0; padding:6px 12px;">Save</button>
+        </form>
+      </td>
+      <td>
+        <form method="POST" action="{{ url_for('admin_update_user', user_id=u.id) }}" style="display:inline;">
+          <input type="hidden" name="is_active" value="{{ 'false' if u.is_active else 'true' }}">
+          <button type="submit" class="btn-inline" style="background:#fff; color:{{ 'var(--danger)' if u.is_active else 'var(--accent-2)' }}; border:1px solid var(--border); margin:0; padding:6px 12px;">
+            {{ "Deactivate" if u.is_active else "Activate" }}
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

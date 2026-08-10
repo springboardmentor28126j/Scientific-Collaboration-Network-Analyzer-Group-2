@@ -12,11 +12,44 @@
       {% if session.get('token') %}
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('profile') }}">Profile</a>
+        {% if current_role not in ['reviewer', 'system_admin'] %}
+        <a href="{{ url_for('publications') }}">Publications</a>
+        {% endif %}
+        {% if current_role not in ['system_admin', 'reviewer'] %}
+        <a href="{{ url_for('citations') }}">Citations</a>
+        {% endif %}
+        {% if current_role != 'reviewer' %}
+        <a href="{{ url_for('citation_insights') }}">Citation Insights</a>
+        {% endif %}
+        {% if current_role not in ['reviewer', 'system_admin'] %}
+        <a href="{{ url_for('collaborations') }}">Collaborations</a>
+        <a href="{{ url_for('projects') }}">Projects</a>
+        {% endif %}
+        <a href="{{ url_for('conferences') }}">Conferences</a>
+        {% if current_role != 'system_admin' %}
+        <a href="{{ url_for('conference_history') }}">My Conferences</a>
+        {% endif %}
+        <a href="{{ url_for('institution') }}">Institutions</a>
+        {% if current_role != 'reviewer' %}
+        <a href="{{ url_for('reports') }}">Reports</a>
+        {% endif %}
+        {% if current_role == 'reviewer' %}
+        <a href="{{ url_for('review_queue') }}">Review Queue</a>
+        <a href="{{ url_for('reviewed_publications') }}">Review History</a>
+        {% endif %}
+        {% if current_role == 'system_admin' %}
+        <a href="{{ url_for('admin_users') }}">Manage Users</a>
+        <a href="{{ url_for('assign_reviewers') }}">Assign Reviewers</a>
+        <a href="{{ url_for('audit_log') }}">Audit Log</a>
+        {% endif %}
       {% endif %}
     </div>
     <div>
       {% if session.get('token') %}
-        <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{ url_for('notifications') }}" class="nav-bell" title="Notifications">
+          🔔{% if unread_notification_count %}<span class="nav-badge">{{ unread_notification_count if unread_notification_count < 100 else '99+' }}</span>{% endif %}
+        </a>
+        <a href="{{ url_for('logout') }}" class="nav-logout">Logout</a>
       {% else %}
         <a href="{{ url_for('login') }}">Login</a>
         <a href="{{ url_for('register') }}">Register</a>

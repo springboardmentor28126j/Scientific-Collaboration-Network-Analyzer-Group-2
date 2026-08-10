@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Assign Reviewers — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Assign Reviewers</h1>
+      <div class="section-sub">Grant a Reviewer permission to review submissions from an institution, or one specific paper</div>
+    </div>
+  </div>
+
+  {% if not reviewers %}
+  <div class="empty-state" style="margin-bottom:24px;">No users have the Reviewer role yet. Set someone's role to Reviewer on the <a href="{{ url_for('admin_users') }}">Manage Users</a> page first.</div>
+  {% else %}
+  <div style="background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:24px;">
+    <h2 style="font-size:15px; margin-top:0;">New assignment</h2>
+    <form method="POST" action="{{ url_for('create_reviewer_assignment') }}">
+      <label for="reviewer_user_id">Reviewer</label>
+      <select id="reviewer_user_id" name="reviewer_user_id" required>
+        <option value="">-- Select a reviewer --</option>
+        {% for r in reviewers %}
+        <option value="{{ r.id }}">{{ r.email }}</option>
+        {% endfor %}
+      </select>
+
+      <label style="margin-top:14px;">Scope</label>
+      <div style="display:flex; gap:20px; margin-bottom:10px;">
+        <label style="font-weight:400;"><input type="radio" name="scope" value="institution" checked onclick="toggleScope('institution')"> Whole institution</label>
+        <label style="font-weight:400;"><input type="radio" name="scope" value="publication" onclick="toggleScope('publication')"> One publication</label>
+      </div>
+
+      <div id="institution-field">
+        <label for="institution_id">Institution</label>
+        <select id="institution_id" name="institution_id">
+          <option value="">-- Select an institution --</option>
+          {% for inst in institutions %}
+          <option value="{{ inst.id }}">{{ inst.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div id="publication-field" style="display:none;">
+        <label for="publication_id">Submitted publication</label>
+        <select id="publication_id" name="publication_id">
+          <option value="">-- Select a submitted publication --</option>
+          {% for pub in submitted_publications %}
+          <option value="{{ pub.id }}">{{ pub.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" style="background:#534AB7; margin-top:14px;">Assign</button>
+    </form>
+  </div>
+
+  <script>
+    function toggleScope(scope) {
+      document.getElementById("institution-field").style.display = scope === "institution" ? "block" : "none";
+      document.getElementById("publication-field").style.display = scope === "publication" ? "block" : "none";
+    }
+  </script>
+  {% endif %}
+
+  <h2 style="font-size:15px;">Current assignments</h2>
+  {% if assignments %}
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Reviewer</th>
+        <th>Scope</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in assignments %}
+      <tr>
+        <td>{{ a.reviewer_email }}</td>
+        <td>
+          {% if a.institution_name %}
+            <span class="pill pill-blue">Institution: {{ a.institution_name }}</span>
+          {% else %}
+            <span class="pill pill-purple">Publication: {{ a.publication_title or ('#' + a.publication_id|string) }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('delete_reviewer_assignment', assignment_id=a.id) }}" onsubmit="return confirm('Remove this assignment?');" style="display:inline;">
+            <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">No reviewer assignments yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

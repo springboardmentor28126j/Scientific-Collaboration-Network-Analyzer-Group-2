@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Audit Log — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Audit Log</h1>
+      <div class="section-sub">{{ pagination.total }} event{{ '' if pagination.total == 1 else 's' }} recorded</div>
+    </div>
+    <form method="GET" action="{{ url_for('audit_log') }}" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <select name="action">
+        <option value="">All actions</option>
+        {% for a in actions %}
+        <option value="{{ a }}" {% if request.args.get('action') == a %}selected{% endif %}>{{ a.replace('_', ' ') | capitalize }}</option>
+        {% endfor %}
+      </select>
+      <select name="entity_type">
+        <option value="">All entity types</option>
+        {% for et in ['user', 'publication', 'project', 'collaboration'] %}
+        <option value="{{ et }}" {% if request.args.get('entity_type') == et %}selected{% endif %}>{{ et | capitalize }}</option>
+        {% endfor %}
+      </select>
+      <input type="number" name="user_id" placeholder="User ID" value="{{ request.args.get('user_id', '') }}" style="width:110px;">
+      <input type="date" name="date_from" value="{{ request.args.get('date_from', '') }}" title="From date">
+      <input type="date" name="date_to" value="{{ request.args.get('date_to', '') }}" title="To date">
+      <select name="page_size">
+        {% for n in [10, 25, 50, 100] %}
+        <option value="{{ n }}" {% if pagination.per_page == n %}selected{% endif %}>{{ n }} / page</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0;">Apply</button>
+      <a href="{{ url_for('audit_log') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Clear</a>
+    </form>
+  </div>
+
+  {% if logs %}
+  <table class="admin-table">
+    <tr>
+      <th>Time</th>
+      <th>User</th>
+      <th>Action</th>
+      <th>Entity</th>
+      <th>Details</th>
+    </tr>
+    {% for log in logs %}
+    <tr>
+      <td>{{ log.created_at }}</td>
+      <td>{{ log.user_email or ('User #' + log.user_id | string if log.user_id else 'System') }}</td>
+      <td><span class="pill pill-blue">{{ log.action.replace('_', ' ') | capitalize }}</span></td>
+      <td>{{ (log.entity_type | capitalize) if log.entity_type else '—' }}{% if log.entity_id %} #{{ log.entity_id }}{% endif %}</td>
+      <td style="color:var(--muted);">{{ log.details or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">No audit events match these filters.</div>
+  {% endif %}
+</div>
+{% endblock %}

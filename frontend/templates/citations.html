@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Citations — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Manage Citations</h1>
+      <div class="section-sub">Record which of your papers cite other work</div>
+    </div>
+    <a href="{{ url_for('citation_insights') }}" class="btn-inline btn-teal">View Citation Insights</a>
+  </div>
+
+  {% if my_publications %}
+  <div style="background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:24px;">
+    <h2 style="font-size:15px; margin-top:0;">Add a citation</h2>
+    <form method="POST" action="{{ url_for('citations') }}">
+      <label for="citing_publication_id">Your publication (the one doing the citing)</label>
+      <select id="citing_publication_id" name="citing_publication_id" required>
+        <option value="">-- Select one of your publications --</option>
+        {% for pub in my_publications %}
+        <option value="{{ pub.id }}">{{ pub.title }}{% if pub.year %} ({{ pub.year }}){% endif %}</option>
+        {% endfor %}
+      </select>
+
+      <label for="cited_publication_id">Cited paper — pick if it's already in SCNA</label>
+      <select id="cited_publication_id" name="cited_publication_id">
+        <option value="">-- Not in SCNA / enter details below --</option>
+        {% for pub in all_publications %}
+        <option value="{{ pub.id }}">{{ pub.title }}{% if pub.year %} ({{ pub.year }}){% endif %}</option>
+        {% endfor %}
+      </select>
+
+      <p style="font-size:13px; color:var(--muted); margin:14px 0 0;">Or, if the cited paper isn't in SCNA, describe it here instead:</p>
+      <div class="field-row">
+        <div>
+          <label for="cited_title">External paper title</label>
+          <input type="text" id="cited_title" name="cited_title" placeholder="Title of the paper being cited">
+        </div>
+        <div>
+          <label for="cited_authors">Authors</label>
+          <input type="text" id="cited_authors" name="cited_authors" placeholder="e.g. Smith, J. et al.">
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label for="cited_year">Year</label>
+          <input type="number" id="cited_year" name="cited_year">
+        </div>
+        <div>
+          <label for="cited_venue">Venue</label>
+          <input type="text" id="cited_venue" name="cited_venue">
+        </div>
+      </div>
+
+      <button type="submit">Add citation</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="empty-state">Add a publication of your own first — you can only record citations for papers you've authored.</div>
+  {% endif %}
+
+  <h2 style="font-size:15px;">Citations you've added</h2>
+  {% if my_citations %}
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Citing (yours)</th>
+        <th>Cites</th>
+        <th>Added</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in my_citations %}
+      <tr>
+        <td>{{ c.citing_publication.title }}</td>
+        <td>
+          {% if c.cited_publication %}
+            {{ c.cited_publication.title }}{% if c.cited_publication.year %} ({{ c.cited_publication.year }}){% endif %}
+            <span class="pill pill-blue">In SCNA</span>
+          {% else %}
+            {{ c.cited_title }}{% if c.cited_year %} ({{ c.cited_year }}){% endif %}
+            <span class="pill pill-gray">External</span>
+          {% endif %}
+        </td>
+        <td>{{ c.created_at[:10] }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('delete_citation', citation_id=c.id) }}" onsubmit="return confirm('Delete this citation?');" style="display:inline;">
+            <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">No citations recorded yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

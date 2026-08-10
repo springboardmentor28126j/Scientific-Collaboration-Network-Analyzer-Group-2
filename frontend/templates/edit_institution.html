@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Institution{% endblock %}
+
+{% block content %}
+
+<div class="container wide">
+
+    <h1>Edit Institution</h1>
+
+    <form method="POST" action="{{ url_for('update_institution', institution_id=institution.id) }}">
+
+        <label>Name</label>
+        <input
+            type="text"
+            name="name"
+            value="{{ institution.name }}"
+            required
+        >
+
+        <label>Short Name</label>
+        <input
+            type="text"
+            name="short_name"
+            value="{{ institution.short_name or '' }}"
+        >
+
+        <label>Institution Type</label>
+        <input
+            type="text"
+            name="institution_type"
+            value="{{ institution.institution_type or '' }}"
+        >
+
+        <label>Email</label>
+        <input
+            type="email"
+            name="email"
+            value="{{ institution.email }}"
+            required
+        >
+
+        <label>Phone</label>
+        <input
+            type="text"
+            name="phone"
+            value="{{ institution.phone or '' }}"
+        >
+
+        <label>Website</label>
+        <input
+            type="text"
+            name="website"
+            value="{{ institution.website or '' }}"
+        >
+
+        <label>Address</label>
+        <textarea name="address">{{ institution.address or '' }}</textarea>
+
+        <label>City</label>
+        <input
+            type="text"
+            name="city"
+            value="{{ institution.city }}"
+            required
+        >
+
+        <label>State</label>
+        <input
+            type="text"
+            name="state"
+            value="{{ institution.state }}"
+            required
+        >
+
+        <label>Country</label>
+        <input
+            type="text"
+            name="country"
+            value="{{ institution.country }}"
+            required
+        >
+
+        <label>Postal Code</label>
+        <input
+            type="text"
+            name="postal_code"
+            value="{{ institution.postal_code or '' }}"
+        >
+
+        <label>Status</label>
+
+        <select name="status">
+
+            <option value="Active"
+                {% if institution.status == "Active" %}selected{% endif %}>
+                Active
+            </option>
+
+            <option value="Inactive"
+                {% if institution.status == "Inactive" %}selected{% endif %}>
+                Inactive
+            </option>
+
+        </select>
+
+        {% if current_role == 'system_admin' %}
+        <label>Assign Institution Admin</label>
+        <select name="admin_user_id">
+            <option value="">— Unassigned —</option>
+            {% for admin in institution_admins %}
+            <option value="{{ admin.id }}" {% if institution.admin_user_id == admin.id %}selected{% endif %}>
+                {{ admin.email }}
+            </option>
+            {% endfor %}
+        </select>
+        {% if not institution_admins %}
+        <p class="muted-link" style="text-align:left; margin-top:4px;">
+            No users have the Institution Admin role yet. Promote one on the
+            Admin page first (coming soon).
+        </p>
+        {% endif %}
+        {% endif %}
+
+        <button type="submit">
+            Update Institution
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

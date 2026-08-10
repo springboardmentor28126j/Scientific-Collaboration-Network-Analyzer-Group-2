@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <a class="muted-link" href="{{ url_for('profile') }}">&larr; Back to profile</a>
+  <h1 style="margin-top:10px;">Edit profile</h1>
+  <form method="POST" action="{{ url_for('profile_edit') }}">
+    <label for="department">Department</label>
+    <input type="text" id="department" name="department" value="{{ researcher.department or '' }}">
+
+    <label for="institution_id">Institution ID</label>
+    <input type="number" id="institution_id" name="institution_id" value="{{ researcher.institution_id or '' }}" placeholder="Optional — created in a later module">
+
+    <label for="research_interests">Research Interests</label>
+    <textarea id="research_interests" name="research_interests">{{ researcher.research_interests or '' }}</textarea>
+
+    <label for="skills">Skills</label>
+    <textarea id="skills" name="skills">{{ researcher.skills or '' }}</textarea>
+
+    <label for="affiliations">Affiliations</label>
+    <textarea id="affiliations" name="affiliations">{{ researcher.affiliations or '' }}</textarea>
+
+    <button type="submit">Save profile</button>
+  </form>
+</div>
+{% endblock %}

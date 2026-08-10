@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Add Conference — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1>Add conference</h1>
+  {% if not my_institutions %}
+    <div class="flash error">
+      You don't administer any institution yet, so you can't create a conference.
+      Ask a System Admin to assign you as an Institution Admin for your organization first.
+    </div>
+  {% endif %}
+  <form method="POST">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="institution_id">Hosting institution</label>
+    <select id="institution_id" name="institution_id" required {% if not my_institutions %}disabled{% endif %}>
+      <option value="">Select an institution</option>
+      {% for inst in my_institutions %}
+      <option value="{{ inst.id }}">{{ inst.name }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="location">Location</label>
+    <input type="text" id="location" name="location">
+
+    <label for="website_link">Website link</label>
+    <input type="url" id="website_link" name="website_link" placeholder="https://...">
+
+    <label for="conference_type">Type</label>
+    <select id="conference_type" name="conference_type">
+      <option value="">Not specified</option>
+      <option value="in_person">In person</option>
+      <option value="virtual">Virtual</option>
+      <option value="hybrid">Hybrid</option>
+    </select>
+
+    <div class="field-row">
+      <div>
+        <label for="start_date">Start date</label>
+        <input type="date" id="start_date" name="start_date" required>
+      </div>
+      <div>
+        <label for="end_date">End date</label>
+        <input type="date" id="end_date" name="end_date">
+      </div>
+    </div>
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description"></textarea>
+
+    <div style="display:flex; gap:10px; margin-top:24px;">
+      <button type="submit" style="margin:0;">Save conference</button>
+      <a href="{{ url_for('conferences') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

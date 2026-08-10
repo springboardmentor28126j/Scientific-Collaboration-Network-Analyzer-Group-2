@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Notifications — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Notifications</h1>
+      <div class="section-sub">
+        {{ pagination.total }} total{% if unread_count %}, {{ unread_count }} unread{% endif %}
+      </div>
+    </div>
+    {% if unread_count %}
+    <form method="POST" action="{{ url_for('mark_all_notifications_read') }}">
+      <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Mark all as read</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if notification_items %}
+  <div class="card-list">
+    {% for n in notification_items %}
+    <div class="notification-item {{ 'unread' if not n.is_read else 'read' }}">
+      <div style="flex:1;">
+        <p class="item-title">
+          {% if not n.is_read %}<span class="unread-dot"></span>{% endif %}
+          {{ n.message }}
+        </p>
+        <div class="item-sub">{{ n.type.replace('_', ' ') | capitalize }} &middot; {{ n.created_at }}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        {% if not n.is_read %}
+        <form method="POST" action="{{ url_for('mark_notification_read', notification_id=n.id) }}">
+          {% if n.link_url %}<input type="hidden" name="link_url" value="{{ n.link_url }}">{% endif %}
+          <button type="submit" class="link-edit" style="background:none; border:none; cursor:pointer; font-size:12px; font-weight:600;">
+            {{ 'View' if n.link_url else 'Mark read' }}
+          </button>
+        </form>
+        {% elif n.link_url %}
+        <a href="{{ n.link_url }}" class="item-link link-edit">View</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">No notifications yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

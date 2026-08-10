@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Collaboration Network — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Collaboration Network</h1>
+      <div class="section-sub">Your collaboration graph, centered on you</div>
+    </div>
+    <form method="GET" action="{{ url_for('collaboration_network') }}" class="toolbar">
+      <label for="depth" style="margin:0; display:inline;">Depth</label>
+      <select id="depth" name="depth" onchange="this.form.submit()">
+        <option value="1" {{ 'selected' if depth == 1 else '' }}>1 hop</option>
+        <option value="2" {{ 'selected' if depth == 2 else '' }}>2 hops</option>
+        <option value="3" {{ 'selected' if depth == 3 else '' }}>3 hops</option>
+      </select>
+    </form>
+  </div>
+
+  {% if network.nodes %}
+  <p style="font-size:13px; color:var(--muted); margin-top:-6px;">Drag to explore, scroll to zoom. The highlighted dot is you.</p>
+  <div id="collaboration-network" style="height:520px; border:1px solid var(--border); border-radius:10px; background:#fff;"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/10.1.0/standalone/umd/vis-network.min.js"></script>
+  <script>
+    const graphData = {{ network | tojson }};
+    const nodes = new vis.DataSet(graphData.nodes.map(function (n) {
+      return {
+        id: n.researcher_id,
+        label: n.label.length > 28 ? n.label.slice(0, 28) + "…" : n.label,
+        title: n.label + (n.department ? " — " + n.department : ""),
+        color: n.is_center ? { background: "#534AB7", border: "#26215C" } : { background: "#CECBF6", border: "#534AB7" },
+        shape: "dot",
+        size: n.is_center ? 22 : 16
+      };
+    }));
+    const edges = new vis.DataSet(graphData.edges.map(function (e, i) {
+      return {
+        id: i,
+        from: e.researcher1_id,
+        to: e.researcher2_id,
+        width: Math.min(1 + e.strength, 8),
+        color: { color: "#b7b2e6" }
+      };
+    }));
+    const container = document.getElementById("collaboration-network");
+    const network = new vis.Network(container, { nodes: nodes, edges: edges }, {
+      physics: { stabilization: true, barnesHut: { gravitationalConstant: -4000, springLength: 140 } },
+      interaction: { hover: true },
+      edges: { smooth: { type: "continuous" } }
+    });
+  </script>
+  {% else %}
+  <div class="empty-state">You don't have any collaborations yet, so there's nothing to visualize.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -2,24 +2,36 @@
 {% block title %}Researcher Profile — SCNA{% endblock %}
 {% block content %}
 <div class="container wide">
-  <h1>Researcher Profile</h1>
-  <form method="POST" action="{{ url_for('profile') }}">
-    <label for="department">Department</label>
-    <input type="text" id="department" name="department" value="{{ researcher.department or '' }}">
+  <div class="section-header">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div class="profile-avatar">{{ user.email[0] | upper }}</div>
+      <div>
+        <h1 style="margin:0;">{{ user.email }}</h1>
+        <span class="pill pill-purple">{{ user.role | replace('_', ' ') | capitalize }}</span>
+      </div>
+    </div>
+    <a href="{{ url_for('profile_edit') }}" class="btn-inline btn-purple">Edit profile</a>
+  </div>
 
-    <label for="institution_id">Institution ID</label>
-    <input type="number" id="institution_id" name="institution_id" value="{{ researcher.institution_id or '' }}" placeholder="Optional — created in a later module">
-
-    <label for="research_interests">Research Interests</label>
-    <textarea id="research_interests" name="research_interests">{{ researcher.research_interests or '' }}</textarea>
-
-    <label for="skills">Skills</label>
-    <textarea id="skills" name="skills">{{ researcher.skills or '' }}</textarea>
-
-    <label for="affiliations">Affiliations</label>
-    <textarea id="affiliations" name="affiliations">{{ researcher.affiliations or '' }}</textarea>
-
-    <button type="submit">Save profile</button>
-  </form>
+  <div class="profile-field">
+    <span class="k">Department</span>
+    <span class="v">{{ researcher.department or "—" }}</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Institution ID</span>
+    <span class="v">{{ researcher.institution_id or "—" }}</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Research Interests</span>
+    <span class="v">{{ researcher.research_interests or "—" }}</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Skills</span>
+    <span class="v">{{ researcher.skills or "—" }}</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Affiliations</span>
+    <span class="v">{{ researcher.affiliations or "—" }}</span>
+  </div>
 </div>
 {% endblock %}

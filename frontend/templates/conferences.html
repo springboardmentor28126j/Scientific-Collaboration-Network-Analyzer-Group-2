@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Conferences — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Conferences</h1>
+      <div class="section-sub">{{ total_count }} conference{{ '' if total_count == 1 else 's' }}</div>
+    </div>
+    <div class="toolbar">
+      <form method="GET" action="{{ url_for('conferences') }}" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input type="text" name="q" placeholder="Search name" value="{{ request.args.get('q', '') }}">
+        <input type="number" name="year" placeholder="Year" value="{{ request.args.get('year', '') }}" style="width:90px;">
+        <select name="sort_by">
+          <option value="start_date" {% if sort_by == 'start_date' %}selected{% endif %}>Sort: Start date</option>
+          <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort: Name</option>
+          <option value="conference_type" {% if sort_by == 'conference_type' %}selected{% endif %}>Sort: Type</option>
+          <option value="location" {% if sort_by == 'location' %}selected{% endif %}>Sort: Location</option>
+        </select>
+        <select name="sort_order">
+          <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Ascending</option>
+          <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Descending</option>
+        </select>
+        <select name="per_page">
+          {% for n in range(1, 11) %}
+          <option value="{{ n }}" {% if pagination.per_page == n %}selected{% endif %}>{{ n }} / page</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0;">Apply</button>
+      </form>
+      {% if current_role in ['institution_admin', 'system_admin'] %}
+      <a href="{{ url_for('add_conference') }}" class="btn-inline btn-teal">+ Add conference</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if conferences %}
+  <div class="card-list">
+    {% for c in conferences %}
+    <div class="item-card conf">
+      <div>
+        <div>
+          {% if c.start_date %}<span class="pill pill-blue">{{ c.start_date }}{% if c.end_date %} &ndash; {{ c.end_date }}{% endif %}</span>{% endif %}
+          {% if c.conference_type %}<span class="pill pill-purple">{{ c.conference_type.replace('_', ' ') | capitalize }}</span>{% endif %}
+          {% if c.id in my_status_by_conference %}
+          <span class="pill {{ my_status_by_conference[c.id].css_class }}">{{ my_status_by_conference[c.id].label }}</span>
+          {% endif %}
+        </div>
+        <p class="item-title">{{ c.name }}</p>
+        <div class="item-sub">{{ c.location or "Location TBA" }}</div>
+        <a href="{{ url_for('conference_detail', conference_id=c.id) }}" class="item-link">View details &amp; agenda &rarr;</a>
+      </div>
+      <div class="item-actions">
+        <a href="{{ url_for('conference_detail', conference_id=c.id) }}" class="link-edit">View</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">No conferences yet. Add your first one to get started.</div>
+  {% endif %}
+</div>
+{% endblock %}

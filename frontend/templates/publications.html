@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Publications — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Publications</h1>
+      <div class="section-sub">{{ total_count }} publication{{ '' if total_count == 1 else 's' }}</div>
+    </div>
+    <div class="toolbar">
+      <form method="GET" action="{{ url_for('publications') }}" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input type="text" name="q" placeholder="Search title or venue" value="{{ request.args.get('q', '') }}">
+        <input type="number" name="year" placeholder="Year" value="{{ request.args.get('year', '') }}" style="width:90px;">
+        <select name="sort_by">
+          <option value="year" {% if sort_by == 'year' %}selected{% endif %}>Sort: Year</option>
+          <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort: Title</option>
+          <option value="venue" {% if sort_by == 'venue' %}selected{% endif %}>Sort: Venue</option>
+          <option value="status" {% if sort_by == 'status' %}selected{% endif %}>Sort: Status</option>
+        </select>
+        <select name="sort_order">
+          <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Descending</option>
+          <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Ascending</option>
+        </select>
+        <select name="per_page">
+          {% for n in range(1, 11) %}
+          <option value="{{ n }}" {% if pagination.per_page == n %}selected{% endif %}>{{ n }} / page</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0;">Apply</button>
+      </form>
+      <a href="{{ url_for('add_publication') }}" class="btn-inline btn-purple">+ Add publication</a>
+    </div>
+  </div>
+
+  {% if publications %}
+  <div class="card-list">
+    {% for pub in publications %}
+    <div class="item-card pub">
+      <div>
+        <div>
+         {% if pub.year %}<span class="pill pill-purple">{{ pub.year }}</span>{% endif %}
+         {% if pub.venue %}<span class="pill pill-purple">{{ pub.venue }}</span>{% endif %}
+         <span class="pill pill-teal">{{ pub.status | capitalize }}</span>
+        </div>
+        <p class="item-title">{{ pub.title }}</p>
+        <div class="item-sub">{{ pub.authors|length }} author{{ '' if pub.authors|length == 1 else 's' }}</div>
+        {% if pub.doi_link %}<a href="{{ pub.doi_link }}" class="item-link" target="_blank" rel="noopener">View DOI &rarr;</a>{% endif %}
+      </div>
+      <div class="item-actions">
+        <a href="{{ url_for('edit_publication', publication_id=pub.id) }}" class="link-edit">Edit</a>
+        <form method="POST" action="{{ url_for('delete_publication', publication_id=pub.id) }}" onsubmit="return confirm('Delete this publication?');" style="display:inline;">
+          <button type="submit" class="link-delete" style="all:unset; cursor:pointer;">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">No publications yet. Add your first one to get started.</div>
+  {% endif %}
+</div>
+{% endblock %}

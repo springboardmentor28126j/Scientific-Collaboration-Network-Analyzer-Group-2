@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if project else 'New' }} Project — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <h1>{{ 'Edit project' if project else 'New project' }}</h1>
+  <form method="POST">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" required value="{{ project.title if project else '' }}">
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description">{{ project.description if project else '' }}</textarea>
+
+    <div class="field-row">
+      <div>
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          {% set current_status = project.status if project else 'planned' %}
+          <option value="planned" {% if current_status == 'planned' %}selected{% endif %}>Planned</option>
+          <option value="ongoing" {% if current_status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+          <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+          <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      <div>
+        <label for="institution_id">Institution</label>
+        <select id="institution_id" name="institution_id">
+          <option value="">Not specified</option>
+          {% for inst in institutions %}
+          <option value="{{ inst.id }}" {% if project and project.institution_id == inst.id %}selected{% endif %}>{{ inst.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label for="start_date">Start date</label>
+        <input type="date" id="start_date" name="start_date" value="{{ project.start_date if project else '' }}">
+      </div>
+      <div>
+        <label for="end_date">End date</label>
+        <input type="date" id="end_date" name="end_date" value="{{ project.end_date if project else '' }}">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:24px;">
+      <button type="submit" style="margin:0;">{{ 'Save changes' if project else 'Create project' }}</button>
+      <a href="{{ url_for('projects') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

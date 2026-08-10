@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Reports — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Reports &amp; Analytics</h1>
+      <div class="section-sub">
+        {% if summary %}
+          {{ "Platform-wide" if summary.scope == "system" else ("Your institution" if summary.scope == "institution" else "Your own") }} statistics
+        {% else %}
+          Statistics
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if summary %}
+  <div class="metric-grid">
+    {% if summary.researcher_count is not none %}
+    <div class="metric-card">
+      <div class="label">RESEARCHERS</div>
+      <div class="value">{{ summary.researcher_count }}</div>
+    </div>
+    {% endif %}
+    {% if summary.institution_count is not none %}
+    <div class="metric-card muted">
+      <div class="label">INSTITUTIONS</div>
+      <div class="value">{{ summary.institution_count }}</div>
+    </div>
+    {% endif %}
+    <div class="metric-card">
+      <div class="label">PUBLICATIONS</div>
+      <div class="value">{{ summary.publication_count }}</div>
+      <div class="muted-text">{{ summary.published_publication_count }} published</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">PROJECTS</div>
+      <div class="value">{{ summary.project_count }}</div>
+      <div class="muted-text">{{ summary.active_project_count }} active</div>
+    </div>
+    {% if summary.conference_count is not none %}
+    <div class="metric-card muted">
+      <div class="label">CONFERENCES</div>
+      <div class="value">{{ summary.conference_count }}</div>
+    </div>
+    {% endif %}
+    {% if summary.collaboration_count is not none %}
+    <div class="metric-card muted">
+      <div class="label">COLLABORATIONS</div>
+      <div class="value">{{ summary.collaboration_count }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty-state">Could not load summary statistics right now.</div>
+  {% endif %}
+
+  <!-- Publications -->
+  <div class="section-header" style="margin-top:28px;">
+    <div>
+      <h2 style="font-size:16px; margin:0;">Publications</h2>
+      <div class="section-sub">{{ pub_report.total if pub_report else 0 }} total</div>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('export_report', report_type='publications', fmt='excel') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export Excel</a>
+      <a href="{{ url_for('export_report', report_type='publications', fmt='pdf') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export PDF</a>
+    </div>
+  </div>
+  {% if pub_report and pub_report.total > 0 %}
+  <div class="metric-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div>
+      <div class="section-sub" style="margin-bottom:8px;">By status</div>
+      {% for c in pub_report.by_status %}
+      <div class="role-bar-row">
+        <div class="role-bar-label">{{ c.key | capitalize }}</div>
+        <div class="role-bar-track"><div class="role-bar-fill" style="width:{{ (c.count / pub_report.total * 100) | round(1) }}%; background:#534AB7;"></div></div>
+        <div class="role-bar-count">{{ c.count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div>
+      <div class="section-sub" style="margin-bottom:8px;">By type</div>
+      {% for c in pub_report.by_type %}
+      <div class="role-bar-row">
+        <div class="role-bar-label">{{ c.key | capitalize }}</div>
+        <div class="role-bar-track"><div class="role-bar-fill" style="width:{{ (c.count / pub_report.total * 100) | round(1) }}%; background:#0F6E56;"></div></div>
+        <div class="role-bar-count">{{ c.count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div>
+      <div class="section-sub" style="margin-bottom:8px;">By year</div>
+      {% for c in pub_report.by_year %}
+      <div class="role-bar-row">
+        <div class="role-bar-label">{{ c.key }}</div>
+        <div class="role-bar-track"><div class="role-bar-fill" style="width:{{ (c.count / pub_report.total * 100) | round(1) }}%; background:#85B7EB;"></div></div>
+        <div class="role-bar-count">{{ c.count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">No publications in scope yet.</div>
+  {% endif %}
+
+  <!-- Projects -->
+  <div class="section-header" style="margin-top:28px;">
+    <div>
+      <h2 style="font-size:16px; margin:0;">Projects</h2>
+      <div class="section-sub">{{ project_report.total if project_report else 0 }} total</div>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('export_report', report_type='projects', fmt='excel') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export Excel</a>
+      <a href="{{ url_for('export_report', report_type='projects', fmt='pdf') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export PDF</a>
+    </div>
+  </div>
+  {% if project_report and project_report.total > 0 %}
+  <div style="max-width:480px;">
+    {% for c in project_report.by_status %}
+    <div class="role-bar-row">
+      <div class="role-bar-label">{{ c.key.replace('_', ' ') | capitalize }}</div>
+      <div class="role-bar-track"><div class="role-bar-fill" style="width:{{ (c.count / project_report.total * 100) | round(1) }}%; background:#0F6E56;"></div></div>
+      <div class="role-bar-count">{{ c.count }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">No projects in scope yet.</div>
+  {% endif %}
+
+  <!-- Collaborations -->
+  <div class="section-header" style="margin-top:28px;">
+    <div>
+      <h2 style="font-size:16px; margin:0;">Collaborations</h2>
+      <div class="section-sub">{{ collab_report.total_collaborations if collab_report else 0 }} established, {{ collab_report.total_pending_requests if collab_report else 0 }} pending requests</div>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('export_report', report_type='collaborations', fmt='excel') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export Excel</a>
+      <a href="{{ url_for('export_report', report_type='collaborations', fmt='pdf') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export PDF</a>
+    </div>
+  </div>
+  {% if collab_report and collab_report.top_collaborations %}
+  <table class="admin-table">
+    <tr><th>Researcher 1</th><th>Researcher 2</th><th>Strength</th></tr>
+    {% for t in collab_report.top_collaborations %}
+    <tr>
+      <td>{{ t.researcher1_email }}</td>
+      <td>{{ t.researcher2_email }}</td>
+      <td>{{ t.strength }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <div class="muted-text" style="margin-top:8px;">Average strength: {{ collab_report.average_strength }}</div>
+  {% else %}
+  <div class="empty-state">No collaborations in scope yet.</div>
+  {% endif %}
+
+  <!-- Institutions (System Admin / Institution Admin only) -->
+  {% if institution_report %}
+  <div class="section-header" style="margin-top:28px;">
+    <div>
+      <h2 style="font-size:16px; margin:0;">Institutions</h2>
+      <div class="section-sub">{{ institution_report.rows | length }} institution{{ '' if institution_report.rows | length == 1 else 's' }}</div>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('export_report', report_type='institutions', fmt='excel') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export Excel</a>
+      <a href="{{ url_for('export_report', report_type='institutions', fmt='pdf') }}" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border);">Export PDF</a>
+    </div>
+  </div>
+  {% if institution_report.rows %}
+  <table class="admin-table">
+    <tr><th>Institution</th><th>Researchers</th><th>Publications</th><th>Projects</th></tr>
+    {% for r in institution_report.rows %}
+    <tr>
+      <td>{{ r.name }}</td>
+      <td>{{ r.researcher_count }}</td>
+      <td>{{ r.publication_count }}</td>
+      <td>{{ r.project_count }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <div class="empty-state">No institutions in scope.</div>
+  {% endif %}
+  {% endif %}
+
+  <div class="section-header" style="margin-top:28px;">
+    <div>
+      <h2 style="font-size:16px; margin:0;">Full summary</h2>
+      <div class="section-sub">Every metric on this page in one export</div>
+    </div>
+    <div class="toolbar">
+      <a href="{{ url_for('export_report', report_type='summary', fmt='excel') }}" class="btn-inline btn-teal">Export Excel</a>
+      <a href="{{ url_for('export_report', report_type='summary', fmt='pdf') }}" class="btn-inline btn-purple">Export PDF</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

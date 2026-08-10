@@ -10,13 +10,6 @@
     <label for="password">Password</label>
     <input type="password" id="password" name="password" required minlength="8">
 
-    <label for="role">Role</label>
-    <select id="role" name="role">
-      <option value="researcher" selected>Researcher</option>
-      <option value="institution_admin">Institution Admin</option>
-      <option value="reviewer">Reviewer</option>
-    </select>
-
     <button type="submit">Create account</button>
   </form>
   <span class="muted-link">Already have an account? <a href="{{ url_for('login') }}">Login</a></span>

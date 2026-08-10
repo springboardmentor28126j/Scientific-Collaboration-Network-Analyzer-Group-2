@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}My Review History — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>My Review History</h1>
+      <div class="section-sub">Every publication you've reviewed, with your decision</div>
+    </div>
+    <a href="{{ url_for('review_queue') }}" class="btn-inline btn-purple">Back to Review Queue</a>
+  </div>
+
+  <div class="toolbar" style="margin-bottom:16px;">
+    <a href="{{ url_for('reviewed_publications') }}" class="btn-inline {{ 'btn-purple' if not decision else '' }}" style="{{ '' if not decision else 'background:#fff; color:var(--muted); border:1px solid var(--border);' }}">All</a>
+    <a href="{{ url_for('reviewed_publications', decision='approved') }}" class="btn-inline {{ 'btn-teal' if decision == 'approved' else '' }}" style="{{ '' if decision == 'approved' else 'background:#fff; color:var(--muted); border:1px solid var(--border);' }}">Approved</a>
+    <a href="{{ url_for('reviewed_publications', decision='rejected') }}" class="btn-inline" style="{{ 'background:#E5484D; color:#fff;' if decision == 'rejected' else 'background:#fff; color:var(--muted); border:1px solid var(--border);' }}">Rejected</a>
+  </div>
+
+  {% if items %}
+  <div class="card-list">
+    {% for pub in items %}
+    <div class="item-card pub">
+      <div>
+        <p class="item-title">{{ pub.title }}{% if pub.year %} <span style="font-weight:400; color:var(--muted);">({{ pub.year }})</span>{% endif %}</p>
+        <div class="item-sub">
+          Reviewed {{ pub.reviewed_at[:10] if pub.reviewed_at else '' }}
+          {% if pub.review_comment %} &middot; &ldquo;{{ pub.review_comment }}&rdquo;{% endif %}
+        </div>
+      </div>
+      <div class="item-actions">
+        <span class="pill {{ 'pill-teal' if pub.status == 'published' else 'pill-gray' }}">{{ 'Approved' if pub.status == 'published' else 'Rejected' }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">You haven't reviewed anything yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

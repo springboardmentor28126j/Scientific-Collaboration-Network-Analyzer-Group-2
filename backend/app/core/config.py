@@ -15,5 +15,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours, fine for dev/demo
 
+    # Outbound email (collaboration-request notifications, etc.). If
+    # SMTP_HOST is left blank, send_email() logs a 'would have sent'
+    # warning instead of trying to connect -- lets the app run in dev
+    # without real SMTP credentials configured.
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
+    SMTP_FROM_EMAIL: str = "noreply@scna.local"
+    SMTP_FROM_NAME: str = "SCNA"
+
 
 settings = Settings()

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Institution Management{% endblock %}
+
+{% block content %}
+
+<div class="container wide">
+
+    <h1>Institution Management</h1>
+
+    {% if current_role == 'system_admin' %}
+    <h2>Create Institution</h2>
+
+    <form method="POST">
+
+        <label>Name</label>
+        <input type="text" name="name" required>
+
+        <label>Short Name</label>
+        <input type="text" name="short_name">
+
+        <label>Institution Type</label>
+        <input type="text" name="institution_type">
+
+        <label>Email</label>
+        <input type="email" name="email" required>
+
+        <label>Phone</label>
+        <input type="text" name="phone">
+
+        <label>Website</label>
+        <input type="text" name="website">
+
+        <label>Address</label>
+        <textarea name="address"></textarea>
+
+        <label>City</label>
+        <input type="text" name="city" required>
+
+        <label>State</label>
+        <input type="text" name="state" required>
+
+        <label>Country</label>
+        <input type="text" name="country" required>
+
+        <label>Postal Code</label>
+        <input type="text" name="postal_code">
+
+        <button type="submit">
+            Create Institution
+        </button>
+
+    </form>
+
+    <hr>
+    {% endif %}
+
+<h2>Search Institution</h2>
+
+
+<form method="GET" action="{{ url_for('institution') }}">
+
+
+    <input
+        type="text"
+        name="search"
+        placeholder="Enter institution name"
+        value="{{ search or '' }}"
+    >
+
+
+    <button type="submit">
+        Search
+    </button>
+
+</form>
+
+<br>
+
+
+    <h2>Available Institutions</h2>
+    <p><strong>Total Institutions:</strong> {{ institutions|length }}</p>
+
+    {% if institutions %}
+
+        <table style="width:100%;border-collapse:collapse">
+
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>City</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+
+            {% for institution in institutions %}
+
+            <tr>
+
+                <td>{{ institution.id }}</td>
+
+                <td>{{ institution.name }}</td>
+
+                <td>{{ institution.city }}</td>
+
+                <td>{{ institution.email }}</td>
+
+                 <td>
+        {% if current_role == 'system_admin' or institution.admin_user_id == current_user_id %}
+        <a href="{{ url_for('edit_institution', institution_id=institution.id) }}">
+            Edit
+        </a>
+        {% endif %}
+
+        {% if current_role == 'system_admin' %}
+         <form
+        method="POST"
+        action="{{ url_for('delete_institution', institution_id=institution.id) }}"
+        style="display:inline;"
+    >
+
+        <button
+            type="submit"
+            onclick="return confirm('Are you sure you want to delete this institution?')"
+            style="
+                background:none;
+                border:none;
+                color:red;
+                cursor:pointer;
+                padding:0;
+                margin-left:10px;
+            "
+        >
+            Delete
+        </button>
+
+    </form>
+    {% endif %}
+    </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+    {% else %}
+
+        <p>No institutions available.</p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

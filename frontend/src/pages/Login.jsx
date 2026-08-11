@@ -1,20 +1,44 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { login } from '../services/authService';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [role, setRole] = useState('researcher'); // Default role: researcher
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [role, setRole] = useState('researcher');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem('token', 'dummy-auth-token');
-    localStorage.setItem('userRole', role); // Storing selected role
-    navigate('/dashboard');
+    setError('');
+
+    // 🚀 FIX: Direct DOM se values read kar rahe hain taaki Autofill bug na aaye
+    const form = e.target;
+    const email = form.email.value.trim();
+    const password = form.password.value;
+
+    if (!email || !password) {
+      setError('Please enter email and password.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Real API Call
+      const data = await login({ email, password });
+      
+      // Save Token and Role
+      localStorage.setItem('token', data.access_token || 'token_received');
+      localStorage.setItem('userRole', role);
+      
+      // Redirect to Dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Login failed. Invalid Email or Password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,8 +60,7 @@ export default function Login() {
           maxWidth: '430px' 
         }}
       >
-        
-        {/* Home Button */}
+        {/* Back Button */}
         <div className="mb-4">
           <Link 
             to="/" 
@@ -58,7 +81,10 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Role Selection Tabs */}
+        {/* Error Alert Box */}
+        {error && <div className="alert alert-danger py-2 small mb-3">{error}</div>}
+
+        {/* Role Tabs */}
         <div className="d-flex rounded-3 p-1 mb-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
           <button
             type="button"
@@ -87,8 +113,6 @@ export default function Login() {
             <input 
               type="email" 
               name="email"
-              value={formData.email}
-              onChange={handleChange}
               className="form-control text-white border-0 py-2 px-3" 
               placeholder={role === 'admin' ? 'admin@scna.edu' : 'researcher@university.edu'} 
               style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
@@ -106,8 +130,6 @@ export default function Login() {
             <input 
               type="password" 
               name="password"
-              value={formData.password}
-              onChange={handleChange}
               className="form-control text-white border-0 py-2 px-3" 
               placeholder="••••••••" 
               style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
@@ -117,6 +139,7 @@ export default function Login() {
 
           <button 
             type="submit" 
+            disabled={loading}
             className="btn w-100 fw-bold py-2 mb-3 shadow"
             style={{ 
               backgroundColor: '#0284c7', 
@@ -125,11 +148,11 @@ export default function Login() {
               border: 'none'
             }}
           >
-            Sign In as {role === 'admin' ? 'Admin' : 'Researcher'}
+            {loading ? 'Signing In...' : `Sign In as ${role === 'admin' ? 'Admin' : 'Researcher'}`}
           </button>
         </form>
 
-        {/* Register Link Option */}
+        {/* Register Link */}
         <div className="text-center mt-3 pt-3">
           <p className="small text-light opacity-90 mb-0">
             Don't have an account?{' '}

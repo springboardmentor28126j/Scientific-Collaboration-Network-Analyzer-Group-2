@@ -1,70 +1,42 @@
 from sqlalchemy.orm import Session
-
-from app.core.security import (
-    hash_password,
-    verify_password,
-    create_access_token,
-)
-
-from app.models.user import User
-
-from app.repositories.user_repository import UserRepository
-
+# ⚠️ Apne project ke hisab se User model ka import path check kar lena:
+from app.models.user import User  
 from app.schemas.user import UserCreate
+from app.core.security import hash_password, verify_password, create_access_token
 
 
 class AuthService:
 
     @staticmethod
-    def register(
-        db: Session,
-        user_data: UserCreate,
-    ):
-
-        existing_user = UserRepository.get_by_email(
-            db,
-            user_data.email,
-        )
-
+    def register(db: Session, user_data: UserCreate):
+        # 1. Duplicate email check
+        existing_user = db.query(User).filter(User.email == user_data.email).first()
         if existing_user:
-            raise ValueError("Email already exists")
+            raise ValueError("Email already registered")
 
-        user = User(
+        # 2. Hash password safely using security.py (with 72 bytes limit fix)
+        hashed_pwd = hash_password(user_data.password)
+
+        # 3. Save User to DB
+        new_user = User(
             email=user_data.email,
-            password_hash=hash_password(
-                user_data.password
-            ),
-            role=user_data.role,
+            password_hash=hashed_pwd,
+            role=getattr(user_data, 'role', 'RESEARCHER')
         )
 
-        return UserRepository.create(
-            db,
-            user,
-        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
 
     @staticmethod
-    def login(
-        db: Session,
-        email: str,
-        password: str,
-    ):
-
-        user = UserRepository.get_by_email(
-            db,
-            email,
-        )
-
+    def login(db: Session, email: str, password: str):
+        user = db.query(User).filter(User.email == email).first()
         if not user:
             return None
 
-        if not verify_password(
-            password,
-            user.password_hash,
-        ):
+        # Verify password safely
+        if not verify_password(password, user.password_hash):
             return None
 
-        token = create_access_token(
-            str(user.email)
-        )
-
-        return token
+        return create_access_token(subject=user.email)

@@ -9,6 +9,9 @@ from app.api.routes.departments import router as department_router
 from app.api.routes import reports
 
 
+from app.api.routes.publications import router as publication_router
+from app.api.routes.conferences import router as conference_router
+
 app = FastAPI(
     title="Scientific Collaboration Network Analyzer",
     version="1.0.0",
@@ -29,6 +32,8 @@ app.include_router(researcher_router)
 app.include_router(institution_router)
 app.include_router(department_router)
 app.include_router(network_router)
+app.include_router(publication_router)
+app.include_router(conference_router)
 app.include_router(reports.router)
 
 

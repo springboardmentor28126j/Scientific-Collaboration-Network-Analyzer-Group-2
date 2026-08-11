@@ -1,31 +1,25 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
-
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-
+import bcrypt
+from jose import jwt
 from app.core.config import settings
 
-# Password hashing context setup
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
-)
 
 def hash_password(password: str) -> str:
-    """Password ko bcrypt se hash karta hai."""
-    return pwd_context.hash(password)
+    """Native bcrypt hashing (No Passlib bug, 72 bytes safe)."""
+    pwd_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 
-def verify_password(
-    plain_password: str,
-    hashed_password: str,
-) -> bool:
-    """User ke password ko database ke hashed password se verify karta hai."""
-    return pwd_context.verify(
-        plain_password,
-        hashed_password,
-    )
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Native bcrypt verification."""
+    try:
+        pwd_bytes = plain_password.encode('utf-8')[:72]
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(pwd_bytes, hashed_bytes)
+    except Exception:
+        return False
 
 
 def create_access_token(

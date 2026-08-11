@@ -34,7 +34,7 @@ import PublicationDetails from './pages/publications/PublicationDetails';
 import CreatePublication from './pages/publications/CreatePublication';
 import EditPublication from './pages/publications/EditPublication';
 
-// Helper component to conditionally show Navbar (login/register par hide karne ke liye)
+// Helper component to conditionally show Navbar
 function Layout({ children }) {
   const location = useLocation();
   const hideNavbarOn = ['/login', '/register', '/forgot-password', '/'];
@@ -59,7 +59,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Dashboard */}
+          {/* Dashboard & Reports */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reports" element={<Reports />} />
 
@@ -86,6 +86,7 @@ export default function App() {
           <Route path="/publications/create" element={<CreatePublication />} />
           <Route path="/publications/:id" element={<PublicationDetails />} />
           <Route path="/publications/:id/edit" element={<EditPublication />} />
+          <Route path="/publications/edit/:id" element={<EditPublication />} />
         </Routes>
       </Layout>
     </Router>

@@ -32,6 +32,9 @@ from app.models.institution_collaboration_request import InstitutionCollaboratio
 from app.routers import institution_collaboration_requests
 from app.models.project_timeline import ProjectTimeline
 from app.routers import project_timelines
+from app.models import audit_log
+from app.routers import audit_logs
+from app.models.audit_log import AuditLog
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -74,6 +77,7 @@ app.include_router(
     institution_collaboration_requests.router
 )
 app.include_router(project_timelines.router)
+app.include_router(audit_logs.router)
 
 @app.get("/")
 def home():

@@ -14,11 +14,13 @@ from app.schemas.user import (
 from app import crud
 
 from app.core.security import verify_password
+
 from app.core.auth import (
     create_access_token,
     decode_access_token,
     oauth2_scheme
 )
+
 
 router = APIRouter(
     prefix="/auth",
@@ -26,23 +28,34 @@ router = APIRouter(
 )
 
 
+# ==========================================
+# DATABASE DEPENDENCY
+# ==========================================
+
 def get_db():
     db = SessionLocal()
+
     try:
         yield db
+
     finally:
         db.close()
 
 
-# -----------------------------
-# Register
-# -----------------------------
-@router.post("/register", response_model=UserResponse)
+# ==========================================
+# REGISTER
+# ==========================================
+
+@router.post(
+    "/register",
+    response_model=UserResponse
+)
 def register(
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
 
+    # Check whether email already exists
     existing_user = crud.get_user_by_email(
         db,
         user.email
@@ -55,21 +68,24 @@ def register(
             detail="Email already registered"
         )
 
+    # Create new user
     return crud.create_user(
         db,
         user
     )
 
 
-# -----------------------------
-# Login (Frontend)
-# -----------------------------
+# ==========================================
+# LOGIN - FRONTEND
+# ==========================================
+
 @router.post("/login")
 def login(
     user: UserLogin,
     db: Session = Depends(get_db)
 ):
 
+    # Find user
     db_user = crud.get_user_by_email(
         db,
         user.email
@@ -82,16 +98,20 @@ def login(
             detail="Invalid email or password"
         )
 
-    if not verify_password(
+    # Verify password
+    password_valid = verify_password(
         user.password,
         db_user.hashed_password
-    ):
+    )
+
+    if not password_valid:
 
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
+    # Create JWT token
     token = create_access_token(
         {
             "sub": db_user.email
@@ -99,25 +119,26 @@ def login(
     )
 
     return {
-
         "access_token": token,
         "token_type": "bearer",
         "username": db_user.username,
         "full_name": db_user.full_name,
         "role": db_user.role
-
     }
 
 
-# -----------------------------
-# Login (Swagger OAuth2)
-# -----------------------------
+# ==========================================
+# LOGIN - SWAGGER / OAUTH2
+# ==========================================
+
 @router.post("/token")
 def get_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
 
+    # Swagger sends username field.
+    # In our application username is the user's email.
     db_user = crud.get_user_by_email(
         db,
         form_data.username
@@ -130,16 +151,20 @@ def get_token(
             detail="Invalid email or password"
         )
 
-    if not verify_password(
+    # Verify password
+    password_valid = verify_password(
         form_data.password,
         db_user.hashed_password
-    ):
+    )
+
+    if not password_valid:
 
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
+    # Create JWT token
     token = create_access_token(
         {
             "sub": db_user.email
@@ -147,28 +172,45 @@ def get_token(
     )
 
     return {
-
         "access_token": token,
         "token_type": "bearer"
-
     }
 
 
-# -----------------------------
-# Current User
-# -----------------------------
-@router.get("/me", response_model=UserResponse)
+# ==========================================
+# CURRENT USER
+# ==========================================
+
+@router.get(
+    "/me",
+    response_model=UserResponse
+)
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
 
-    payload = decode_access_token(
-        token
-    )
+    # Decode JWT
+    payload = decode_access_token(token)
 
+    if not payload:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    # Get email from JWT
     email = payload.get("sub")
 
+    if not email:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    # Find user
     user = crud.get_user_by_email(
         db,
         email
@@ -184,9 +226,10 @@ def get_current_user(
     return user
 
 
-# -----------------------------
-# Update Profile
-# -----------------------------
+# ==========================================
+# UPDATE PROFILE
+# ==========================================
+
 @router.put(
     "/update-profile",
     response_model=UserResponse
@@ -197,12 +240,27 @@ def update_profile(
     db: Session = Depends(get_db)
 ):
 
-    payload = decode_access_token(
-        token
-    )
+    # Decode JWT
+    payload = decode_access_token(token)
 
+    if not payload:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    # Get email from token
     email = payload.get("sub")
 
+    if not email:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    # Find logged-in user
     db_user = crud.get_user_by_email(
         db,
         email
@@ -215,6 +273,7 @@ def update_profile(
             detail="User not found"
         )
 
+    # Update profile
     return crud.update_user(
         db,
         db_user,

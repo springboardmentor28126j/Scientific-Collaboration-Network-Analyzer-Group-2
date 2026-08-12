@@ -2053,3 +2053,97 @@ def update_institution_collaboration_request(
     db.refresh(db_request)
 
     return db_request
+# ============================
+# AUDIT LOG CRUD
+# ============================
+
+from app.models.audit_log import AuditLog
+from app.schemas.audit_log import AuditLogCreate
+
+
+def get_all_audit_logs(db: Session):
+
+    return (
+        db.query(AuditLog)
+        .order_by(AuditLog.created_at.desc())
+        .all()
+    )
+
+
+def get_audit_logs_by_user(
+    db: Session,
+    user_id: int
+):
+
+    return (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.user_id == user_id
+        )
+        .order_by(
+            AuditLog.created_at.desc()
+        )
+        .all()
+    )
+
+
+def create_audit_log(
+    db: Session,
+    log: AuditLogCreate
+):
+
+    new_log = AuditLog(
+        **log.model_dump()
+    )
+
+    db.add(new_log)
+    db.commit()
+    db.refresh(new_log)
+
+    return new_log
+# ============================
+# AUDIT LOG CRUD
+# ============================
+
+def create_audit_log(
+    db: Session,
+    user_id: int,
+    action: str,
+    module: str,
+    description: str
+):
+
+    audit_log = AuditLog(
+        user_id=user_id,
+        action=action,
+        module=module,
+        description=description
+    )
+
+    db.add(audit_log)
+    db.commit()
+    db.refresh(audit_log)
+
+    return audit_log
+
+
+def get_all_audit_logs(db: Session):
+
+    return (
+        db.query(AuditLog)
+        .order_by(AuditLog.created_at.desc())
+        .all()
+    )
+
+
+def get_audit_logs_by_user(
+    db: Session,
+    user_id: int
+):
+
+    return (
+        db.query(AuditLog)
+        .filter(AuditLog.user_id == user_id)
+        .order_by(AuditLog.created_at.desc())
+        .all()
+    )

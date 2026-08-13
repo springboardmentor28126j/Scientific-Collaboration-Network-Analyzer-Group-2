@@ -415,8 +415,6 @@ Use this order for your Friday presentation:
 8. **Reviewer workflow** — as Publisher/Admin assign a Reviewer; sign in as Reviewer; add comments and submit a decision.
 9. **Notifications/Audit** — show that a major action appears in the notification system and audit log.
 
-For a one-page speaking guide, see [docs/PRESENTATION_GUIDE.md](docs/PRESENTATION_GUIDE.md).
-
 ## Troubleshooting
 
 ### Backend fails to start with a database connection error

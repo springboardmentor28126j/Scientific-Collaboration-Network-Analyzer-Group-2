@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field
+import re
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import Optional, List
 from datetime import date
 
@@ -7,7 +9,24 @@ class UserCreate(BaseModel):
     name: str
     email: str
     password: str
+    confirm_password: str
     role: str
+
+    @model_validator(mode="after")
+    def validate_password(self):
+        if self.password != self.confirm_password:
+            raise ValueError("Password and confirm password must match")
+        if len(self.password) < 8:
+            raise ValueError("Password must contain at least 8 characters")
+        if not re.search(r"[A-Z]", self.password):
+            raise ValueError("Password must include at least one uppercase letter")
+        if not re.search(r"[a-z]", self.password):
+            raise ValueError("Password must include at least one lowercase letter")
+        if not re.search(r"\d", self.password):
+            raise ValueError("Password must include at least one number")
+        if not re.search(r"[^A-Za-z0-9]", self.password):
+            raise ValueError("Password must include at least one special character")
+        return self
 
 class UserLogin(BaseModel):
     email: str
@@ -16,6 +35,21 @@ class UserLogin(BaseModel):
 
 class UserApproval(BaseModel):
     approved_role: str
+    researcher_id: Optional[int] = None
+    institution_id: Optional[int] = None
+
+
+class UserRejection(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class UserAssignment(BaseModel):
+    researcher_id: Optional[int] = None
+    institution_id: Optional[int] = None
+
+
+class UserStatusChange(BaseModel):
+    account_status: str
 
 
 class AnnouncementCreate(BaseModel):
@@ -46,8 +80,7 @@ class AuthorResponse(BaseModel):
     id: int
     full_name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # ---------------- PUBLICATIONS ----------------
 class PublicationCreate(BaseModel):
@@ -69,16 +102,14 @@ class PublicationResponse(BaseModel):
     status: str
     doi: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PublicationWithAuthors(BaseModel):
     id: int
     title: str
     authors: List[AuthorResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PublicationAuthorAssign(BaseModel):
     publication_id: int
@@ -98,8 +129,7 @@ class ConferenceResponse(BaseModel):
     start_date: date
     end_date: date
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ConferenceParticipationCreate(BaseModel):
     researcher_id: int
@@ -112,8 +142,7 @@ class ConferenceParticipationResponse(BaseModel):
     conference_id: int
     presentation_title: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CollaborationCreate(BaseModel):
@@ -131,8 +160,7 @@ class CollaborationResponse(BaseModel):
     publication_id: Optional[int] = None
     status: str = "pending"
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CitationCreate(BaseModel):
@@ -145,8 +173,7 @@ class CitationResponse(BaseModel):
     citing_publication_id: int
     cited_publication_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectCreate(BaseModel):
@@ -162,3 +189,14 @@ class ProjectCreate(BaseModel):
 class ProjectAssignmentCreate(BaseModel):
     researcher_id: int
     role: str = "Member"
+
+
+class ReviewAssignmentCreate(BaseModel):
+    publication_id: int
+    reviewer_id: int
+    due_date: Optional[date] = None
+
+
+class ReviewDecision(BaseModel):
+    decision: str
+    comments: str = Field(min_length=3, max_length=2000)

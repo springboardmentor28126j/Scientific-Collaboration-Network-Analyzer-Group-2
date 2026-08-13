@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from app import crud, schemas, auth
 from app.database import get_db
 from app.notification_service import notify_all_users
+from app.permissions import require_roles
+from app.audit import record as record_audit
 
 router = APIRouter(
     prefix="/conferences",
@@ -11,8 +13,9 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=schemas.ConferenceResponse)
-def create_conference(conference: schemas.ConferenceCreate, db: Session = Depends(get_db)):
+def create_conference(conference: schemas.ConferenceCreate, manager: models.User = Depends(require_roles("admin", "system admin", "institution admin")), db: Session = Depends(get_db)):
     created = crud.create_conference(db, conference)
+    record_audit(db, action="created", entity_type="conference", entity_id=created.id, user_id=manager.id, details=created.name)
     notify_all_users(db, notification_type="conference", title="New conference scheduled", message=f"{created.name} was added to the conference calendar.", link="pages/conferences.html")
     return created
 
@@ -28,8 +31,10 @@ def get_conference(conference_id: int, db: Session = Depends(get_db)):
     return conf
 
 @router.post("/participation", response_model=schemas.ConferenceParticipationResponse)
-def register_participation(participation: schemas.ConferenceParticipationCreate, db: Session = Depends(get_db)):
-    return crud.register_participation(db, participation)
+def register_participation(participation: schemas.ConferenceParticipationCreate, manager: models.User = Depends(require_roles("admin", "system admin", "institution admin", "researcher")), db: Session = Depends(get_db)):
+    created = crud.register_participation(db, participation)
+    record_audit(db, action="registered", entity_type="conference", entity_id=participation.conference_id, user_id=manager.id, details=f"Researcher {participation.researcher_id}")
+    return created
 
 
 @router.get("/{conference_id}/participants", response_model=list[schemas.ConferenceParticipationResponse])

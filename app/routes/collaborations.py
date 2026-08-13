@@ -9,6 +9,7 @@ from app import crud, schemas, models, auth
 from app.models import Publication, Researcher, Collaboration
 from app.notification_service import notify_all_users
 from app.audit import record as record_audit
+from app.permissions import current_user, scoped_collaborations_query, SYSTEM_ADMIN_ROLES
 
 
 router = APIRouter(
@@ -240,14 +241,14 @@ def get_advanced_network(db: Session = Depends(get_db)):
     response_model=list[schemas.CollaborationResponse]
 )
 def get_collaborations(
-    db: Session = Depends(get_db)
+    user: models.User = Depends(current_user), db: Session = Depends(get_db)
 ):
-    return crud.get_collaborations(db)
+    return scoped_collaborations_query(db, user).all()
 
 
 @router.get("/detailed")
-def get_detailed_collaborations(db: Session = Depends(get_db)):
-    records = db.query(Collaboration).options(
+def get_detailed_collaborations(user: models.User = Depends(current_user), db: Session = Depends(get_db)):
+    records = scoped_collaborations_query(db, user).options(
         joinedload(Collaboration.researcher1).joinedload(Researcher.institution),
         joinedload(Collaboration.researcher2).joinedload(Researcher.institution),
         joinedload(Collaboration.publication),
@@ -335,7 +336,7 @@ def create_collaboration(
 
 
 @router.post("/{collaboration_id}/decision")
-def decide_collaboration(collaboration_id: int, decision: str, db: Session = Depends(get_db)):
+def decide_collaboration(collaboration_id: int, decision: str, user: models.User = Depends(current_user), db: Session = Depends(get_db)):
     record = crud.get_collaboration_by_id(db, collaboration_id)
     if not record:
         raise HTTPException(status_code=404, detail="Collaboration not found")
@@ -343,11 +344,22 @@ def decide_collaboration(collaboration_id: int, decision: str, db: Session = Dep
         raise HTTPException(status_code=400, detail="This collaboration request has already been decided")
     if decision not in {"accepted", "rejected"}:
         raise HTTPException(status_code=400, detail="Decision must be accepted or rejected")
+    # Only a linked participant, an institution administrator for a participant's
+    # institution, or a system administrator may decide a request.
+    participant_ids = {record.researcher1_id, record.researcher2_id}
+    participant_institutions = {
+        item.institution_id for item in db.query(Researcher).filter(Researcher.id.in_(participant_ids)).all()
+    }
+    allowed = user.role.lower() in SYSTEM_ADMIN_ROLES or user.researcher_id in participant_ids or (
+        user.role.lower() == "institution admin" and user.institution_id in participant_institutions
+    )
+    if not allowed:
+        raise HTTPException(status_code=403, detail="Only a collaboration participant or responsible administrator can decide this request")
     record.status = decision
     record.responded_at = datetime.now(timezone.utc)
     db.commit()
     notify_all_users(db, notification_type="collaboration", title=f"Collaboration request {decision}", message=f"A collaboration request was {decision}.", link="pages/network.html" if decision == "accepted" else "pages/collaborations.html", email=False)
-    record_audit(db, action=decision, entity_type="collaboration", entity_id=record.id)
+    record_audit(db, action=decision, entity_type="collaboration", entity_id=record.id, user_id=user.id)
     return {"message": f"Collaboration request {decision}", "id": record.id, "status": record.status}
 @router.post("/add")
 def add_collaboration(

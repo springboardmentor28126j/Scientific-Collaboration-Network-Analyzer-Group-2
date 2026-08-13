@@ -235,6 +235,10 @@ password:
 document.getElementById("registerPassword").value,
 
 
+confirm_password:
+document.getElementById("confirmPassword").value,
+
+
 role:
 document.getElementById("role").value
 
@@ -246,6 +250,16 @@ document.getElementById("role").value
 
 const messageBox =
 document.getElementById("registerMessage");
+
+const password = data.password;
+const passwordOk = password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password) && /[^A-Za-z0-9]/.test(password);
+
+if (!passwordOk || password !== data.confirm_password) {
+messageBox.className="alert alert-danger";
+messageBox.classList.remove("d-none");
+messageBox.innerHTML = password !== data.confirm_password ? "Passwords do not match." : "Password must be 8+ characters and include uppercase, lowercase, a number, and a special character.";
+return;
+}
 
 
 
@@ -351,4 +365,21 @@ messageBox.innerHTML=
 
 
 
+}
+
+
+const registerPasswordInput = document.getElementById("registerPassword");
+const confirmPasswordInput = document.getElementById("confirmPassword");
+const passwordFeedback = document.getElementById("passwordFeedback");
+if (registerPasswordInput && confirmPasswordInput && passwordFeedback) {
+const showPasswordFeedback = () => {
+const value = registerPasswordInput.value;
+const checks = [value.length >= 8, /[A-Z]/.test(value), /[a-z]/.test(value), /\d/.test(value), /[^A-Za-z0-9]/.test(value)];
+const complete = checks.every(Boolean);
+const matches = !confirmPasswordInput.value || value === confirmPasswordInput.value;
+passwordFeedback.className = `form-text ${complete && matches ? 'text-success' : 'text-muted'}`;
+passwordFeedback.textContent = complete ? (matches ? 'Strong password ready.' : 'Passwords do not match.') : `Password strength: ${checks.filter(Boolean).length}/5 requirements met.`;
+};
+registerPasswordInput.addEventListener("input", showPasswordFeedback);
+confirmPasswordInput.addEventListener("input", showPasswordFeedback);
 }

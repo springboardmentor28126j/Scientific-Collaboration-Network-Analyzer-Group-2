@@ -3,9 +3,10 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from app.database import engine, Base
+from app.migrations import apply_compatibility_migrations
 import app.models
 from app.routes import users, researchers, institutions, publications, conferences
-from app.routes import collaborations, dashboard, reports, citations, projects, notifications
+from app.routes import collaborations, dashboard, reports, citations, projects, notifications, audit_logs, reviews, administration
 
 
 app = FastAPI(title="Scientific Collaboration Network Analyzer")
@@ -28,6 +29,7 @@ app.add_middleware(
 
 
 Base.metadata.create_all(bind=engine)
+apply_compatibility_migrations(engine)
 
 
 
@@ -42,6 +44,9 @@ app.include_router(reports.router)
 app.include_router(citations.router)
 app.include_router(projects.router)
 app.include_router(notifications.router)
+app.include_router(audit_logs.router)
+app.include_router(reviews.router)
+app.include_router(administration.router)
 
 @app.get("/")
 def root():

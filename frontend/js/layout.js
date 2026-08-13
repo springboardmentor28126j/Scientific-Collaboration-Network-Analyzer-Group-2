@@ -12,17 +12,17 @@
   };
   const inPagesFolder = window.location.pathname.includes("/pages/");
   const current = window.location.pathname.split("/").pop();
-  const allLinks = [["dashboard.html","bi-speedometer2","Dashboard"],["pages/researchers.html","bi-people","Researchers"],["pages/institutions.html","bi-building","Institutions"],["pages/publications.html","bi-journal-text","Publications"],["pages/collaborations.html","bi-people-fill","Collaborations"],["pages/projects.html","bi-folder2-open","Projects"],["pages/conferences.html","bi-calendar-event","Conferences"],["pages/citations.html","bi-quote","Citations"],["pages/report.html","bi-file-earmark-bar-graph","Reports"]];
+  const allLinks = [["dashboard.html","bi-speedometer2","Dashboard"],["pages/researchers.html","bi-people","Researchers"],["pages/institutions.html","bi-building","Institutions"],["pages/publications.html","bi-journal-text","Publications"],["pages/reviews.html","bi-clipboard-check","Reviews"],["pages/collaborations.html","bi-people-fill","Collaborations"],["pages/projects.html","bi-folder2-open","Projects"],["pages/conferences.html","bi-calendar-event","Conferences"],["pages/citations.html","bi-quote","Citations"],["pages/report.html","bi-file-earmark-bar-graph","Reports"]];
   const currentRole = (localStorage.getItem("role") || "Researcher").toLowerCase();
   const isSystemAdmin = ["admin", "system admin"].includes(currentRole);
   const roleDashboard = {"researcher":"researcher-dashboard.html","institution admin":"institution-dashboard.html","publisher":"publisher-dashboard.html","reviewer":"reviewer-dashboard.html"}[currentRole];
-  const isAdminOnlyPage = ["dashboard.html", "admin-notifications.html", "admin-approvals.html"].includes(current);
+  const isAdminOnlyPage = ["dashboard.html", "admin-notifications.html", "admin-approvals.html", "admin-accounts.html", "audit-logs.html", "data-quality.html"].includes(current);
   if (!isSystemAdmin && roleDashboard && isAdminOnlyPage) {
     window.location.replace(inPagesFolder ? roleDashboard : `pages/${roleDashboard}`);
     return;
   }
-  const allowedLabels = isSystemAdmin ? null : (currentRole === "institution admin" ? ["Dashboard","Researchers","Institutions","Publications","Conferences","Reports"] : currentRole === "publisher" ? ["Dashboard","Publications","Citations","Reports"] : currentRole === "reviewer" ? ["Dashboard","Publications","Citations","Reports"] : ["Dashboard","Publications","Conferences","Reports"]);
-  const links = allowedLabels ? allLinks.filter(([, , label]) => allowedLabels.includes(label)) : allLinks;
+  const allowedLabels = isSystemAdmin ? null : (currentRole === "institution admin" ? ["Dashboard","Researchers","Institutions","Publications","Reviews","Conferences","Reports"] : currentRole === "publisher" ? ["Dashboard","Publications","Reviews","Citations","Reports"] : currentRole === "reviewer" ? ["Dashboard","Reviews","Publications","Citations","Reports"] : ["Dashboard","Publications","Conferences","Reports"]);
+  const links = allowedLabels ? allLinks.filter(([, , label]) => allowedLabels.includes(label)) : [...allLinks, ["pages/audit-logs.html","bi-shield-check","Audit log"], ["pages/data-quality.html","bi-clipboard2-check","Data quality"]];
   const hrefFor = href => inPagesFolder ? (href === "dashboard.html" ? "../dashboard.html" : href.replace(/^pages\//, "")) : href;
   const filenameFor = href => href.replace(/^pages\//, "");
   const profileHref = inPagesFolder ? "../profile.html" : "profile.html";
@@ -46,7 +46,7 @@
   const userMenu = document.createElement("div");
   userMenu.id = "appUserMenu";
   userMenu.className = "dropdown";
-  userMenu.innerHTML = `<button class="btn btn-light dropdown-toggle shadow-sm" data-bs-toggle="dropdown"><i class="bi bi-person-circle"></i> <span>${userName}</span></button><ul class="dropdown-menu dropdown-menu-end shadow"><li><a class="dropdown-item" href="${profileHref}"><i class="bi bi-person me-2"></i>View Profile</a></li>${isAdmin ? `<li><a class="dropdown-item" href="${inPagesFolder ? "admin-approvals.html" : "pages/admin-approvals.html"}"><i class="bi bi-person-check me-2"></i>Account approvals</a></li>` : ""}<li><hr class="dropdown-divider"></li><li><button class="dropdown-item text-danger" id="globalLogout"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button></li></ul>`;
+  userMenu.innerHTML = `<button class="btn btn-light dropdown-toggle shadow-sm" data-bs-toggle="dropdown"><i class="bi bi-person-circle"></i> <span>${userName}</span></button><ul class="dropdown-menu dropdown-menu-end shadow"><li><a class="dropdown-item" href="${profileHref}"><i class="bi bi-person me-2"></i>View Profile</a></li>${isAdmin ? `<li><a class="dropdown-item" href="${inPagesFolder ? "admin-approvals.html" : "pages/admin-approvals.html"}"><i class="bi bi-person-check me-2"></i>Account approvals</a></li><li><a class="dropdown-item" href="${inPagesFolder ? "admin-accounts.html" : "pages/admin-accounts.html"}"><i class="bi bi-people me-2"></i>Account directory</a></li>` : ""}<li><hr class="dropdown-divider"></li><li><button class="dropdown-item text-danger" id="globalLogout"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button></li></ul>`;
   const topActions = document.createElement("div");
   topActions.id = "appTopActions";
   topActions.className = "app-navbar-actions";
@@ -59,7 +59,13 @@
     announcementButton.innerHTML = '<i class="bi bi-send"></i>';
     topActions.append(notificationMenu, announcementButton, userMenu);
   } else {
-    topActions.append(notificationMenu, userMenu);
+  topActions.append(notificationMenu, userMenu);
+  }
+  if (!document.getElementById("sharedTableTools")) {
+    const tableTools = document.createElement("script");
+    tableTools.id = "sharedTableTools";
+    tableTools.src = inPagesFolder ? "../js/table-tools.js" : "js/table-tools.js";
+    document.head.append(tableTools);
   }
   document.body.prepend(sidebar);
   const appNavbar = document.querySelector("nav.navbar");
@@ -77,7 +83,7 @@
   };
   applyState(localStorage.getItem("sidebarCollapsed") === "true");
   toggle.addEventListener("click", () => { const collapsed = !document.body.classList.contains("sidebar-collapsed"); applyState(collapsed); localStorage.setItem("sidebarCollapsed", collapsed); });
-  document.getElementById("globalLogout").addEventListener("click", () => { localStorage.clear(); window.location.href = loginHref; });
+  document.getElementById("globalLogout").addEventListener("click", async () => { try { await fetch("http://127.0.0.1:8000/users/logout", { method: "POST", headers: { Authorization: "Bearer " + localStorage.getItem("token") } }); } finally { localStorage.clear(); window.location.href = loginHref; } });
 
   const notificationIcons = { publication: "bi-journal-text", conference: "bi-calendar-event", project: "bi-folder2-open", collaboration: "bi-people-fill", citation: "bi-quote", report: "bi-file-earmark-bar-graph", approval: "bi-person-check" };
   const notificationList = document.getElementById("notificationList");

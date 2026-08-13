@@ -24,8 +24,17 @@ class User(Base):
     role = Column(String, nullable=False)
     requested_role = Column(String, nullable=True)
     account_status = Column(String, nullable=False, default="active")
+    # A user account is explicitly linked to its working scope.  This prevents
+    # dashboards and permissions from relying on an email-address guess.
+    researcher_id = Column(Integer, ForeignKey("researchers.id"), nullable=True, unique=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
+    rejection_reason = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    researcher = relationship("Researcher", foreign_keys=[researcher_id])
+    institution = relationship("Institution", foreign_keys=[institution_id])
 
 
 class Notification(Base):
@@ -221,6 +230,8 @@ class AuditLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_role = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
     action = Column(String, nullable=False)
     entity_type = Column(String, nullable=False)
     entity_id = Column(Integer, nullable=True)
@@ -228,6 +239,24 @@ class AuditLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User")
+
+
+class ReviewAssignment(Base):
+    __tablename__ = "review_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    publication_id = Column(Integer, ForeignKey("publications.id"), nullable=False, index=True)
+    reviewer_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    assigned_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(String, nullable=False, default="pending")
+    comments = Column(String, nullable=True)
+    due_date = Column(Date, nullable=True)
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    publication = relationship("Publication")
+    reviewer = relationship("User", foreign_keys=[reviewer_id])
+    assigned_by = relationship("User", foreign_keys=[assigned_by_id])
 
 
 # ---------------- PROJECTS ----------------

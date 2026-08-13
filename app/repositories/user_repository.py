@@ -114,3 +114,12 @@ class UserRepository:
         result = await self.session.execute(stmt)
         print(result)
         return list(result.scalars().all())
+
+    async def get_all_active_user_ids(self) -> list[uuid.UUID]:
+        result = await self.session.execute(
+            select(User.id).where(
+                User.is_active.is_(True),
+            )
+        )
+
+        return list(result.scalars().all())

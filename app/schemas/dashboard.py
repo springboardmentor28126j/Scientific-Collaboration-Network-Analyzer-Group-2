@@ -1,11 +1,13 @@
 import uuid
 from pydantic import BaseModel
 
+
 class TopResearcher(BaseModel):
     id: uuid.UUID
     full_name: str
     institution_name: str | None = None
     published_papers: int
+
 
 class PublicationStatusStats(BaseModel):
     draft: int

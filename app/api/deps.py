@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session
 from app.services.auth_service import AuthService
 from app.services.institution_service import InstitutionService
+from app.services.notification_service import NotificationService
 from app.services.publication_conference_service import PublicationConferenceService
 from app.services.publication_conference_service import PublicationConferenceService
 from app.services.publication_reference_service import PublicationReferenceService
@@ -78,3 +79,9 @@ def get_publication_reference_service(
     session: AsyncSession = Depends(get_session),
 ) -> PublicationReferenceService:
     return PublicationReferenceService(session)
+
+
+def get_notification_service(
+    session: AsyncSession = Depends(get_session),
+) -> NotificationService:
+    return NotificationService(session)

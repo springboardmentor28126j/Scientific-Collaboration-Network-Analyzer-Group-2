@@ -15,21 +15,27 @@ from app.schemas.publication_reference_lookup import PublicationReferenceLookup
 from app.schemas.publication_catalog import PublicationCatalogSearchItem, PublicationCatalogItem
 from app.services.cloudinary_service import CloudinaryService
 from app.services.publication_history_service import PublicationHistoryService
+from app.services.notification_service import NotificationService
 from app.models.publication import Publication, PublicationStatus
 from app.models.publication_history import PublicationHistoryAction
 from app.models.user import User, UserRole
 from app.repositories.publication_repository import PublicationRepository
 from app.repositories.publication_author_repository import PublicationAuthorRepository
 from app.repositories.review_assignment_repository import ReviewAssignmentRepository
+from app.repositories.user_repository import UserRepository
 
 
 class PublicationService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
         self.publications = PublicationRepository(session)
         self.author_repository = PublicationAuthorRepository(session)
         self.review_assignments = ReviewAssignmentRepository(session)
         self.history = PublicationHistoryService(session)
+
+        self.users = UserRepository(session)
+        self.notifications = NotificationService(session)
 
     async def create_publication(
         self,
@@ -295,13 +301,21 @@ class PublicationService:
         if publication.status != PublicationStatus.ACCEPTED:
             raise ConflictError("Only accepted publications can be published.")
 
-        publication = await self.publications.publish(publication)
-
         await self.history.log(
             publication_id=publication.id,
             performed_by=current_user.id,
             action=PublicationHistoryAction.PUBLISHED,
             description="Publication published.",
+        )
+
+        publication = await self.publications.publish(publication)
+
+        user_ids = await self.users.get_all_active_user_ids()
+
+        await self.notifications.notify_publication_published(
+            user_ids=user_ids,
+            publication_id=publication.id,
+            publication_title=publication.title,
         )
 
         await self.session.commit()
@@ -384,7 +398,6 @@ class PublicationService:
         return await self.publications.search_catalog(
             search,
         )
-    
 
     async def get_catalog_publication(
         self,
@@ -405,10 +418,7 @@ class PublicationService:
 
         authors = [publication.creator.full_name]
 
-        authors.extend(
-            author.researcher.full_name
-            for author in ordered_authors
-        )
+        authors.extend(author.researcher.full_name for author in ordered_authors)
 
         authors = ", ".join(dict.fromkeys(authors))
 
@@ -416,8 +426,7 @@ class PublicationService:
 
         if publication.conference:
             publication_name = (
-                publication.conference.proceedings_name
-                or publication.conference.conference_name
+                publication.conference.proceedings_name or publication.conference.conference_name
             )
 
         return PublicationReferenceLookup(
@@ -427,11 +436,7 @@ class PublicationService:
             authors=authors,
             institution_name=publication.institution.name,
             publication_name=publication_name,
-            year=(
-                publication.published_at.year
-                if publication.published_at
-                else None
-            ),
+            year=(publication.published_at.year if publication.published_at else None),
             doi=publication.doi,
             url=publication.pdf_url,
             publication_type=publication.publication_type,

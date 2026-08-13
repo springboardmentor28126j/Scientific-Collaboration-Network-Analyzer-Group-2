@@ -9,20 +9,24 @@ from app.models.user import User, UserRole
 from app.repositories.publication_conference_repository import (
     PublicationConferenceRepository,
 )
+from app.repositories.user_repository import UserRepository
 from app.repositories.publication_repository import PublicationRepository
 from app.schemas.publication_conference import (
     PublicationConferenceCreate,
     PublicationConferenceUpdate,
 )
 from app.services.publication_history_service import PublicationHistoryService
+from app.services.notification_service import NotificationService
 
 
 class PublicationConferenceService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+        self.users = UserRepository(session)
         self.publications = PublicationRepository(session)
         self.conferences = PublicationConferenceRepository(session)
         self.history = PublicationHistoryService(session)
+        self.notifications = NotificationService(session)
 
     async def create_conference(
         self,
@@ -55,6 +59,15 @@ class PublicationConferenceService:
             action=PublicationHistoryAction.CONFERENCE_CREATED,
             description="Conference details added.",
         )
+
+        user_ids = await self.users.get_all_active_user_ids()
+
+        await self.notifications.notify_conference_created(
+            user_ids=user_ids,
+            publication_id=publication.id,
+            publication_title=publication.title,
+        )
+
         await self.session.commit()
         await self.session.refresh(conference)
 

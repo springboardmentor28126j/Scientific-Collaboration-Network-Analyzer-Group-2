@@ -13,6 +13,7 @@ from app.models.review import Review, ReviewDecision
 from app.models.publication_history import PublicationHistory, PublicationHistoryAction
 from app.models.publication_conference import PublicationConference, ConferenceOutcome
 from app.models.publication_reference import PublicationReference
+from app.models.notification import Notification
 
 __all__ = [
     "Institution",
@@ -30,6 +31,7 @@ __all__ = [
     "ReviewAssignmentStatus",
     "Review",
     "ReviewDecision",
+    "Notification",
     "EmailVerificationToken",
     "PasswordResetToken",
     "VerificationPurpose",

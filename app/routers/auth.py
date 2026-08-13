@@ -78,7 +78,6 @@ def register(
 # ==========================================
 # LOGIN - FRONTEND
 # ==========================================
-
 @router.post("/login")
 def login(
     user: UserLogin,
@@ -91,8 +90,8 @@ def login(
         user.email
     )
 
+    # User not found
     if not db_user:
-
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
@@ -104,7 +103,16 @@ def login(
         db_user.hashed_password
     )
 
+    # Wrong password
     if not password_valid:
+
+        crud.create_audit_log(
+            db=db,
+            user_id=db_user.id,
+            action="LOGIN_FAILED",
+            module="Authentication",
+            description=f"Failed login attempt for user {db_user.username}"
+        )
 
         raise HTTPException(
             status_code=401,
@@ -116,6 +124,15 @@ def login(
         {
             "sub": db_user.email
         }
+    )
+
+    # Successful login audit
+    crud.create_audit_log(
+        db=db,
+        user_id=db_user.id,
+        action="LOGIN",
+        module="Authentication",
+        description=f"User {db_user.username} logged in successfully"
     )
 
     return {
@@ -274,8 +291,20 @@ def update_profile(
         )
 
     # Update profile
-    return crud.update_user(
-        db,
-        db_user,
-        updated_user
+    # Update profile
+    updated_profile = crud.update_user(
+    db,
+    db_user,
+    updated_user
     )
+
+# Create audit log
+    crud.create_audit_log(
+    db=db,
+    user_id=db_user.id,
+    action="PROFILE_UPDATED",
+    module="User Profile",
+    description=f"User {db_user.username} updated profile information"
+    )
+
+    return updated_profile

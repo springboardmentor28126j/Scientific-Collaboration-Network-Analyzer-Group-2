@@ -2087,20 +2087,6 @@ def get_audit_logs_by_user(
     )
 
 
-def create_audit_log(
-    db: Session,
-    log: AuditLogCreate
-):
-
-    new_log = AuditLog(
-        **log.model_dump()
-    )
-
-    db.add(new_log)
-    db.commit()
-    db.refresh(new_log)
-
-    return new_log
 # ============================
 # AUDIT LOG CRUD
 # ============================

@@ -183,3 +183,19 @@
     transform:translateY(-2px);
 
 }
+.audit-nav-btn {
+    border: none;
+    background: #eff6ff;
+    color: #1d4ed8;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .3s;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.audit-nav-btn:hover {
+    background: #dbeafe;
+    transform: translateY(-2px);
+}

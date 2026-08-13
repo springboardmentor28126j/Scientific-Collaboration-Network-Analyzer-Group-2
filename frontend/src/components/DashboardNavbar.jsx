@@ -42,6 +42,12 @@ function DashboardNavbar() {
                     Online
 
                 </div>
+                <button
+    className="audit-nav-btn"
+    onClick={() => navigate("/audit-logs")}
+>
+    Audit Logs
+</button>
 
                 <div className="profile-box">
 

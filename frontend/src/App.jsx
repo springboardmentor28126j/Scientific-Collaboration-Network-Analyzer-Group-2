@@ -30,6 +30,7 @@ import Timeline from "./pages/Timeline";
 import Citation from "./pages/Citation";
 import InstitutionCollaboration from "./pages/InstitutionCollaboration";
 import PublicationReport from "./pages/PublicationReport";
+import AuditLogs from "./pages/AuditLogs";
 import Reports from "./pages/Reports";
 import ResearchReport from "./pages/ResearchReport";
 import InstitutionReport from "./pages/InstitutionReport";
@@ -158,6 +159,7 @@ function App() {
     path="/reports"
     element={<Reports />}
 />
+<Route path="/audit-logs" element={<AuditLogs />} />
 <Route
     path="/reports/research"
     element={<ResearchReport />}

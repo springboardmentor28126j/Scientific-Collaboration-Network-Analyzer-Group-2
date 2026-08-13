@@ -26,6 +26,7 @@ from app.schemas.review_assignment import (
 
 from app.models.publication_history import PublicationHistoryAction
 from app.services.publication_history_service import PublicationHistoryService
+from app.services.notification_service import NotificationService
 
 
 class ReviewAssignmentService:
@@ -35,6 +36,7 @@ class ReviewAssignmentService:
         self.publications = PublicationRepository(session)
         self.users = UserRepository(session)
         self.history = PublicationHistoryService(session)
+        self.notifications = NotificationService(session)
 
     def _to_read_schema(
         self,
@@ -108,6 +110,12 @@ class ReviewAssignmentService:
             performed_by=current_user.id,
             action=PublicationHistoryAction.REVIEWER_ASSIGNED,
             description=f"Reviewer '{reviewer.full_name}' assigned.",
+        )
+
+        await self.notifications.notify_reviewer_assigned(
+            user_id=reviewer.id,
+            publication_id=publication.id,
+            publication_title=publication.title,
         )
 
         await self.session.commit()

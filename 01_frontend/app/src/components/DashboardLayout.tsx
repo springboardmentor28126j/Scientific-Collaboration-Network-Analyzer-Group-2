@@ -7,19 +7,20 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
-  FlaskConical,
-  LayoutDashboard,
-  Building2,
-  Users,
   LogOut,
   Menu,
   Shield,
-  UserCircle,
+  FlaskConical,
   ChevronRight,
+  LayoutDashboard,
+  Users,
   BookOpen,
   ClipboardCheck,
   FileText,
+  Building2,
+  UserCircle,
 } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 
 interface NavItem {
   label: string;
@@ -187,8 +188,11 @@ export default function DashboardLayout() {
       </Sheet>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
-        <div className="p-6 lg:p-8">
+      <main className="flex-1 lg:ml-64 flex flex-col min-h-screen relative">
+        <header className="h-16 border-b bg-white dark:bg-slate-800 flex items-center justify-end px-6 sticky top-0 z-30">
+          <NotificationBell />
+        </header>
+        <div className="p-6 lg:p-8 flex-1">
           <Outlet />
         </div>
       </main>

@@ -11,6 +11,7 @@ from app.repositories.publication_repository import PublicationRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.publication_author import PublicationAuthorCreate, PublicationAuthorRead
 from app.models.publication_history import PublicationHistoryAction
+from app.services.notification_service import NotificationService
 from app.services.publication_history_service import PublicationHistoryService
 
 
@@ -21,6 +22,7 @@ class PublicationAuthorService:
         self.authors = PublicationAuthorRepository(session)
         self.users = UserRepository(session)
         self.history = PublicationHistoryService(session)
+        self.notifications = NotificationService(session)
 
     def _to_read_schema(self, author: PublicationAuthor) -> PublicationAuthorRead:
         return PublicationAuthorRead(
@@ -87,6 +89,12 @@ class PublicationAuthorService:
             performed_by=current_user.id,
             action=PublicationHistoryAction.AUTHOR_ADDED,
             description=f"Added author '{researcher.full_name}'.",
+        )
+
+        await self.notifications.notify_coauthor_added(
+            user_id=payload.researcher_id,
+            publication_id=publication.id,
+            publication_title=publication.title,
         )
 
         await self.session.commit()

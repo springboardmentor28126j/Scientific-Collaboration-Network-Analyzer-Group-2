@@ -75,7 +75,7 @@ class DashboardService:
                 total_reviewers=await self.repository.total_reviewers(
                     institution_id=institution_id,
                 ),
-                top_researchers = await self.repository.top_researchers(
+                top_researchers=await self.repository.top_researchers(
                     institution_id=current_user.institution_id,
                 ),
             )

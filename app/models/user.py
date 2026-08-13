@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.publication_author import PublicationAuthor
     from app.models.review_assignment import ReviewAssignment
     from app.models.publication_history import PublicationHistory
+    from app.models.notification import Notification
 
 
 class UserRole(StrEnum):
@@ -74,4 +75,9 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         "PublicationHistory",
         foreign_keys="PublicationHistory.performed_by",
         back_populates="user",
+    )
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )

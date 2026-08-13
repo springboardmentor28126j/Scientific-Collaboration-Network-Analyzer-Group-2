@@ -1,0 +1,39 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: scna-backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend-uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/health').status==200 else sys.exit(1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: scna-frontend
+    env_file:
+      - ./frontend/.env
+    environment:
+      # Overrides BACKEND_URL from frontend/.env (which stays 127.0.0.1:8000
+      # for local non-Docker dev). Inside the compose network, the backend
+      # is reachable at the service name "backend", not localhost.
+      - BACKEND_URL=http://backend:8000
+    ports:
+      - "5000:5000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  backend-uploads:

@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours, fine for dev/demo
 
+    # Base URL of the Flask frontend, used to build links embedded in
+    # outbound emails (e.g. the password-reset link). Override via .env
+    # once the frontend has a real deployed URL.
+    FRONTEND_URL: str = "http://127.0.0.1:5000"
+
     # Outbound email (collaboration-request notifications, etc.). If
     # SMTP_HOST is left blank, send_email() logs a 'would have sent'
     # warning instead of trying to connect -- lets the app run in dev
@@ -26,6 +31,14 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     SMTP_FROM_EMAIL: str = "noreply@scna.local"
     SMTP_FROM_NAME: str = "SCNA"
+
+    # reCAPTCHA v2 checkbox on /login. The secret key is used server-side
+    # to verify the token the widget hands back. Defaults to Google's
+    # official public test keys (always pass, work on any host including
+    # localhost) so login works out of the box in dev -- swap both this
+    # and the frontend's RECAPTCHA_SITE_KEY env var for real keys from
+    # https://www.google.com/recaptcha/admin before a real deployment.
+    RECAPTCHA_SECRET_KEY: str = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
 
 
 settings = Settings()

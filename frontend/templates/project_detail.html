@@ -51,17 +51,30 @@
           <span class="pill {{ 'pill-teal' if m.role_in_project == 'lead' else 'pill-gray' }}">
             {{ m.role_in_project.replace('_', ' ') | capitalize }}
           </span>
+          <span class="pill {{ 'pill-teal' if m.status == 'accepted' else ('pill-blue' if m.status == 'pending' else 'pill-gray') }}">
+            {{ m.status | capitalize }}
+          </span>
         </div>
         <p class="item-title">{{ m.researcher.user.email if m.researcher and m.researcher.user else 'Researcher #' + m.researcher_id | string }}</p>
         {% if m.researcher and m.researcher.department %}<div class="item-sub">{{ m.researcher.department }}</div>{% endif %}
       </div>
-      {% if is_lead_or_admin and m.role_in_project != 'lead' %}
       <div class="item-actions">
-        <form method="POST" action="{{ url_for('remove_project_member', project_id=project.id, researcher_id=m.researcher_id) }}" onsubmit="return confirm('Remove this member from the project?');">
-          <button type="submit" class="link-edit" style="background:none; border:none; color:var(--danger); cursor:pointer;">Remove</button>
+        {% if m.status == 'pending' and m.researcher_id == current_researcher_id %}
+        <form method="POST" action="{{ url_for('respond_project_invite', project_id=project.id) }}" style="display:inline;">
+          <input type="hidden" name="accept" value="1">
+          <button type="submit" class="btn-inline btn-teal">Accept</button>
         </form>
+        <form method="POST" action="{{ url_for('respond_project_invite', project_id=project.id) }}" style="display:inline;">
+          <input type="hidden" name="accept" value="0">
+          <button type="submit" class="btn-inline">Decline</button>
+        </form>
+        {% endif %}
+        {% if is_lead_or_admin and m.role_in_project != 'lead' %}
+        <form method="POST" action="{{ url_for('remove_project_member', project_id=project.id, researcher_id=m.researcher_id) }}" onsubmit="return confirm('Remove this {{ 'invite' if m.status == 'pending' else 'member' }}?');" style="display:inline;">
+          <button type="submit" class="link-edit" style="background:none; border:none; color:var(--danger); cursor:pointer;">{{ 'Revoke' if m.status == 'pending' else 'Remove' }}</button>
+        </form>
+        {% endif %}
       </div>
-      {% endif %}
     </div>
     {% endfor %}
   </div>
@@ -70,7 +83,7 @@
   {% endif %}
 
   {% if is_lead_or_admin %}
-  <h2 style="font-size:15px; margin-top:28px;">Add a member</h2>
+  <h2 style="font-size:15px; margin-top:28px;">Invite a researcher</h2>
   <form method="POST" action="{{ url_for('add_project_member', project_id=project.id) }}" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
     <div>
       <label for="researcher_id">Researcher ID</label>
@@ -82,9 +95,9 @@
         <option value="member">Member</option>
       </select>
     </div>
-    <button type="submit" style="margin:0;">Add member</button>
+    <button type="submit" style="margin:0;">Send invite</button>
   </form>
-  <div class="muted-text" style="margin-top:6px;">Don't know the ID? Look it up from the Collaborations directory search.</div>
+  <div class="muted-text" style="margin-top:6px;">Don't know the ID? Look it up from the Collaborations directory search. They'll need to accept before they show up as a full member.</div>
   {% endif %}
 </div>
 {% endblock %}

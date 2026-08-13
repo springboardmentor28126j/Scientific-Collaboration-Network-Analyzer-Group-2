@@ -10,8 +10,12 @@
     <label for="password">Password</label>
     <input type="password" id="password" name="password" required>
 
+    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin-top:12px;"></div>
+
     <button type="submit">Log in</button>
   </form>
+  <span class="muted-link"><a href="{{ url_for('forgot_password') }}">Forgot your password?</a></span><br>
   <span class="muted-link">No account? <a href="{{ url_for('register') }}">Register here</a></span>
 </div>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}

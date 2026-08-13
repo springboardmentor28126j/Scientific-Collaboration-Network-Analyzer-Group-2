@@ -1,0 +1,17 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.example
+uploads/
+*.db
+*.sqlite3
+.git/
+.gitignore
+README.md
+check_full_schema.py
+check_notifications.py
+check_project_members_columns.py
+check_tables.py
+check_vocab.py

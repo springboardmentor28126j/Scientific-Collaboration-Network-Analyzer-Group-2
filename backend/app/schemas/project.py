@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.project import ProjectRole, ProjectStatus
+from app.models.project import ProjectMemberStatus, ProjectRole, ProjectStatus
 
 
 class ProjectMemberOut(BaseModel):
@@ -10,12 +10,19 @@ class ProjectMemberOut(BaseModel):
 
     researcher_id: int
     role_in_project: ProjectRole
+    status: ProjectMemberStatus
+    invited_by_id: int | None = None
+    responded_at: datetime | None = None
     joined_at: datetime
 
 
 class ProjectMemberAdd(BaseModel):
     researcher_id: int
     role_in_project: ProjectRole = ProjectRole.MEMBER
+
+
+class ProjectMemberRespond(BaseModel):
+    accept: bool
 
 
 class ProjectBase(BaseModel):

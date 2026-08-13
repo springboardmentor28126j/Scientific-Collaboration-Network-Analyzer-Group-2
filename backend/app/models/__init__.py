@@ -13,9 +13,10 @@ from app.models.collaboration import (
     Collaboration,
     CollaborationPublication,
 )
-from app.models.project import Project, ProjectMember, ProjectStatus, ProjectRole
+from app.models.project import Project, ProjectMember, ProjectStatus, ProjectRole, ProjectMemberStatus
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
+from app.models.auth_token import AuthToken, AuthTokenType
 
 __all__ = [
     "User",
@@ -36,6 +37,9 @@ __all__ = [
     "ProjectMember",
     "ProjectStatus",
     "ProjectRole",
+    "ProjectMemberStatus",
     "AuditLog",
     "Notification",
+    "AuthToken",
+    "AuthTokenType",
 ]

@@ -39,6 +39,20 @@ class ProjectRole(str, enum.Enum):
     MEMBER = "member"
 
 
+class ProjectMemberStatus(str, enum.Enum):
+    """Matches the real 'projectmemberstatus' Postgres enum type already
+    present in the shared DB (project_members.status, invited_by_id,
+    responded_at columns all pre-exist there from the reference chain --
+    confirmed via a diagnostic before adding these mappings, same pattern
+    used for AuthToken/auth_tokens). An invite starts PENDING; the invitee
+    flips it to ACCEPTED or DECLINED. The lead's own row is created
+    ACCEPTED directly -- a lead never goes through the invite step."""
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+
+
 class Project(Base):
     """A funded/ongoing research project (Module 4: Collaboration Management
     -> Research projects / Project assignments). Distinct from
@@ -83,6 +97,15 @@ class Project(Base):
         "ProjectMember", back_populates="project", cascade="all, delete-orphan"
     )
 
+    @property
+    def member_ids(self) -> list[int]:
+        """Researcher ids with an ACCEPTED membership. A pending invite
+        or a declined one isn't a member yet/anymore -- used to gate
+        both project visibility and 'who's on the team' displays."""
+        return [
+            m.researcher_id for m in self.members if m.status == ProjectMemberStatus.ACCEPTED
+        ]
+
 
 class ProjectMember(Base):
     """Team assignment: which researchers are on a project and in what
@@ -108,7 +131,20 @@ class ProjectMember(Base):
         default=ProjectRole.MEMBER,
         nullable=False,
     )
+    status: Mapped[ProjectMemberStatus] = mapped_column(
+        Enum(
+            ProjectMemberStatus,
+            values_callable=lambda enum_cls: [m.value for m in enum_cls],
+            name="projectmemberstatus",
+        ),
+        default=ProjectMemberStatus.PENDING,
+        nullable=False,
+    )
+    invited_by_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("researchers.id"), nullable=True
+    )
+    responded_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     joined_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     project: Mapped["Project"] = relationship("Project", back_populates="members")
-    researcher: Mapped["Researcher"] = relationship("Researcher")
+    researcher: Mapped["Researcher"] = relationship("Researcher", foreign_keys=[researcher_id])

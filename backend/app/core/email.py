@@ -20,10 +20,17 @@ def send_email(to_email: str, subject: str, body: str) -> bool:
     callers can log the return value but should never let it affect the
     HTTP response, since email delivery is inherently best-effort."""
     if not settings.SMTP_HOST:
+        # No SMTP configured (typical for local dev) -- print the full
+        # email to the console instead of silently dropping it, so links
+        # embedded in the body (password reset, email verification, etc.)
+        # are still usable without needing to query the DB directly.
         logger.warning(
-            "SMTP_HOST not configured -- would have sent email to %s: %s",
+            "SMTP_HOST not configured -- would have sent email to %s\n"
+            "Subject: %s\n"
+            "---\n%s\n---",
             to_email,
             subject,
+            body,
         )
         return False
 

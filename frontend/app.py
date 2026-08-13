@@ -6,13 +6,23 @@ and store the JWT access token in the Flask session.
 """
 import os
 
-import requests
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g, Response
+import requests
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
+
+# reCAPTCHA v2 checkbox on /login. This is Google's official public TEST
+# site key -- always passes, works on any host including localhost.
+# Replace with your own site key from google.com/recaptcha/admin before
+# a real deployment (must match the RECAPTCHA_SECRET_KEY the backend
+# verifies against -- see backend/.env.example).
+RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY", "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI")
 
 
 def _auth_headers() -> dict:
@@ -206,14 +216,24 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "")
         password = request.form.get("password", "")
+        recaptcha_response = request.form.get("g-recaptcha-response", "")
         try:
             resp = requests.post(
                 f"{BACKEND_URL}/auth/login",
-                data={"username": email, "password": password},
+                data={
+                    "username": email,
+                    "password": password,
+                    "g_recaptcha_response": recaptcha_response,
+                },
                 timeout=10,
             )
         except requests.RequestException:
             flash("Could not reach the backend. Is it running on BACKEND_URL?", "error")
+            return redirect(url_for("login"))
+
+        if resp.status_code == 400:
+            detail = resp.json().get("detail", "Please complete the captcha and try again.") if resp.content else "Please complete the captcha and try again."
+            flash(detail, "error")
             return redirect(url_for("login"))
 
         if resp.status_code != 200:
@@ -226,7 +246,7 @@ def login():
         flash("Logged in successfully.", "success")
         return redirect(url_for("dashboard"))
 
-    return render_template("login.html")
+    return render_template("login.html", recaptcha_site_key=RECAPTCHA_SITE_KEY)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -253,6 +273,53 @@ def register():
         return redirect(url_for("login"))
 
     return render_template("register.html")
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        try:
+            requests.post(f"{BACKEND_URL}/auth/forgot-password", json={"email": email}, timeout=10)
+        except requests.RequestException:
+            pass
+        # Always the same message, whether or not the account exists --
+        # matches the backend's non-enumerating response.
+        flash("If that email is registered, a reset link has been sent.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+    token = request.args.get("token", "") if request.method == "GET" else request.form.get("token", "")
+
+    if request.method == "POST":
+        new_password = request.form.get("password", "")
+        try:
+            resp = requests.post(
+                f"{BACKEND_URL}/auth/reset-password",
+                json={"token": token, "new_password": new_password},
+                timeout=10,
+            )
+        except requests.RequestException:
+            flash("Could not reach the backend. Is it running on BACKEND_URL?", "error")
+            return render_template("reset_password.html", token=token)
+
+        if resp.status_code == 200:
+            flash("Password updated. Please log in.", "success")
+            return redirect(url_for("login"))
+
+        detail = resp.json().get("detail", "Could not reset password.") if resp.content else "Could not reset password."
+        flash(detail, "error")
+        return render_template("reset_password.html", token=token)
+
+    if not token:
+        flash("Missing reset token.", "error")
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html", token=token)
 
 
 @app.route("/dashboard")
@@ -1712,6 +1779,9 @@ def project_detail(project_id):
         session.clear()
         flash("Session expired. Please log in again.", "error")
         return redirect(url_for("login"))
+    if resp.status_code == 403:
+        flash("You're not part of this project.", "error")
+        return redirect(url_for("projects"))
     if resp.status_code != 200:
         flash("Project not found.", "error")
         return redirect(url_for("projects"))
@@ -1752,6 +1822,7 @@ def project_detail(project_id):
         members=members,
         institution=institution,
         is_lead_or_admin=is_lead_or_admin,
+        current_researcher_id=my_researcher_id,
         status_pill_class=PROJECT_STATUS_PILL_CLASS,
     )
 
@@ -1797,10 +1868,34 @@ def add_project_member(project_id):
         flash("Session expired. Please log in again.", "error")
         return redirect(url_for("login"))
     if resp.status_code != 200:
-        detail = resp.json().get("detail", "Could not add member.") if resp.content else "Could not add member."
+        detail = resp.json().get("detail", "Could not send invite.") if resp.content else "Could not send invite."
         flash(detail, "error")
     else:
-        flash("Member added to project.", "success")
+        flash("Invite sent.", "success")
+    return redirect(url_for("project_detail", project_id=project_id))
+
+
+@app.route("/projects/<int:project_id>/members/respond", methods=["POST"])
+def respond_project_invite(project_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    accept = request.form.get("accept") == "1"
+    resp = requests.post(
+        f"{BACKEND_URL}/projects/{project_id}/members/respond",
+        json={"accept": accept},
+        headers=_auth_headers(),
+        timeout=10,
+    )
+    if resp.status_code == 401:
+        session.clear()
+        flash("Session expired. Please log in again.", "error")
+        return redirect(url_for("login"))
+    if resp.status_code != 200:
+        detail = resp.json().get("detail", "Could not respond to invite.") if resp.content else "Could not respond to invite."
+        flash(detail, "error")
+    else:
+        flash("You've joined the project." if accept else "Invite declined.", "success")
     return redirect(url_for("project_detail", project_id=project_id))
 
 

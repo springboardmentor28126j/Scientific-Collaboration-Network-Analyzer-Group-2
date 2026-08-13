@@ -1,0 +1,381 @@
+# Scientific Research Management System — Backend
+
+Production-grade FastAPI backend for a **Research Management System** that streamlines the complete lifecycle of academic research publications, from submission to publication.
+
+---
+
+## Features
+
+### Authentication & Authorization
+
+- JWT-based authentication
+- Email verification
+- Password reset via email
+- Role-Based Access Control (RBAC)
+- Secure password hashing
+- Verified account enforcement
+
+---
+
+### User Management
+
+- Multi-role user system
+  - Super Admin
+  - Institution Admin
+  - Researcher
+  - Reviewer
+- Institution-based user management
+- User profile management
+- Account activation and verification
+
+---
+
+### Institution Management
+
+- Create and manage institutions
+- Institution administrators
+- Institution-wise researchers and reviewers
+
+---
+
+### Publication Management
+
+- Create research publications
+- Upload publication PDFs (Cloudinary)
+- Update and delete draft publications
+- Publication lifecycle management
+
+Publication workflow:
+
+```
+Draft
+   ↓
+Submitted
+   ↓
+Under Review
+   ↓
+Revision Required
+   ↓
+Accepted
+   ↓
+Published
+   ↓
+Archived
+```
+
+- DOI support
+- Publication history tracking
+- Publication download for verified users
+
+---
+
+### Publication Authors
+
+- Multiple authors per publication
+- Author ordering
+- Corresponding author support
+- Co-author management
+
+---
+
+### Conference Publications
+
+Support for conference-specific metadata:
+
+- Conference name
+- Venue
+- Country
+- City
+- Publication date
+- Proceedings
+- ISBN
+- ISSN
+- Publisher
+- Conference outcome
+
+---
+
+### Review Management
+
+- Reviewer assignment
+- Multiple reviewers per publication
+- Review submission
+- Editorial decisions
+- Review recommendations
+
+Review decisions include:
+
+- Accept
+- Minor Revision
+- Major Revision
+- Reject
+
+---
+
+### Publication Reference Management
+
+Researchers can:
+
+- Add references
+- Update references
+- Delete references
+- List references
+
+Each publication supports multiple references.
+
+Reference metadata includes:
+
+- Title
+- Authors
+- Publication name
+- DOI
+- URL
+- Publication year
+
+---
+
+### Publication Library
+
+Browse publicly available research papers.
+
+Supports:
+
+- Published publications
+- Archived publications
+- Pagination
+- Searching
+- Sorting
+- Publication type filtering
+
+Dedicated endpoints for:
+
+- Browse publications
+- Search publications
+- Publication details lookup
+- PDF download
+
+---
+
+### Dashboard & Analytics
+
+#### Super Admin Dashboard
+
+- Total publications
+- Publication status statistics
+- Total institutions
+- Total researchers
+- Total reviewers
+- Top researchers leaderboard
+
+#### Institution Admin Dashboard
+
+- Institution publication statistics
+- Researchers
+- Reviewers
+- Top researchers within institution
+
+#### Researcher Dashboard
+
+- My publications
+- Co-authored publications
+- Publication status overview
+
+#### Reviewer Dashboard
+
+- Assigned reviews
+- Pending reviews
+- Completed reviews
+
+---
+
+### Search & Filtering
+
+Supports searching by:
+
+- Publication title
+- DOI
+- Publication type
+
+Supports:
+
+- Pagination
+- Sorting
+- Filtering
+- Search suggestions
+
+---
+
+### File Storage
+
+- Cloudinary integration
+- PDF uploads
+- Secure PDF downloads
+- Cloud-based file storage
+
+---
+
+### REST API
+
+RESTful APIs for:
+
+- Authentication
+- Users
+- Institutions
+- Publications
+- Publication Authors
+- Publication References
+- Conference Details
+- Reviews
+- Dashboard Analytics
+
+---
+
+## Tech Stack
+
+FastAPI · PostgreSQL (asyncpg) · SQLAlchemy 2.0 (async) · Alembic · Pydantic v2 · `uv` · Docker · Cloudinary · fastapi-mail · MailCatcher (dev) · pytest
+
+---
+
+## Local Development
+
+**Prerequisites:** Docker, Docker Compose. `uv` is only needed if you want to run the application outside Docker.
+
+### 1. Copy environment variables
+
+```bash
+cp .env.example .env
+```
+
+Fill in the required environment variables (Cloudinary credentials at minimum).
+
+---
+
+### 2. Start the application
+
+```bash
+docker compose up --build
+```
+
+Services started:
+
+- **API:** http://localhost:8000
+- **Swagger UI:** http://localhost:8000/docs
+- **ReDoc:** http://localhost:8000/redoc
+- **PostgreSQL:** localhost:5432
+- **MailCatcher SMTP:** localhost:1025
+- **MailCatcher UI:** http://localhost:1080
+
+---
+
+### 3. Apply database migrations
+
+```bash
+docker compose exec app alembic upgrade head
+```
+
+---
+
+### 4. Super Admin
+
+On startup, the application automatically creates the platform Super Admin using:
+
+- `SUPERUSER_EMAIL`
+- `SUPERUSER_PASSWORD`
+
+if it does not already exist.
+
+---
+
+## Running Without Docker
+
+```bash
+uv sync --extra dev
+
+source .venv/bin/activate
+
+alembic upgrade head
+
+uvicorn app.main:app --reload
+```
+
+You'll need:
+
+- PostgreSQL
+- MailCatcher (or SMTP credentials)
+- Cloudinary credentials
+
+---
+
+## Creating Migrations
+
+```bash
+docker compose exec app alembic revision --autogenerate -m "describe the change"
+
+docker compose exec app alembic upgrade head
+```
+
+Always review autogenerated migrations before applying.
+
+---
+
+## Running Tests
+
+```bash
+docker compose -f docker-compose.test.yml up -d db_test mailcatcher_test
+
+uv run pytest --cov=app
+```
+
+Or simply:
+
+```bash
+pytest
+```
+
+Cloudinary uploads and email sending are mocked during testing.
+
+---
+
+## API Documentation
+
+Swagger UI
+
+http://localhost:8000/docs
+
+ReDoc
+
+http://localhost:8000/redoc
+
+---
+
+## Deployment (Render)
+
+1. Create a new **Web Service** using Docker.
+2. Create a **Managed PostgreSQL** database.
+3. Configure all environment variables from `.env.example`.
+4. Use
+
+```bash
+alembic upgrade head
+```
+
+as the **Pre-Deploy Command**.
+
+---
+
+## Future Improvements
+
+- Citation analytics
+- Citation graph
+- Publication recommendations
+- ORCID integration
+- Google Scholar integration
+- Email notifications
+- AI-powered paper recommendations
+- Research collaboration analytics
+
+---
+
+## License
+
+This project was developed as part of an academic Research Management System and can be extended for institutional or enterprise research workflows.

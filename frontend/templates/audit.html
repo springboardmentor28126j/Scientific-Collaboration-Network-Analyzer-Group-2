@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Logs - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <a href="{{ url_for('home') }}" class="sidebar-logo" style="text-decoration: none;">🔬 SciCollab</a>
+
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏠</span> Dashboard
+                </a>
+                <a href="{{ url_for('institutions') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🏢</span> Institutions
+                </a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📄</span> Publications
+                </a>
+                <a href="{{ url_for('conferences') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🎓</span> Conferences
+                </a>
+                <a href="{{ url_for('citations') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📚</span> Citations
+                </a>
+                <a href="{{ url_for('collaborations') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🤝</span> Collaborations
+                </a>
+                <a href="{{ url_for('reports') }}" class="sidebar-link">
+                    <span class="sidebar-icon">📊</span> Reports
+                </a>
+                <a href="{{ url_for('audit_logs') }}" class="sidebar-link active">
+                    <span class="sidebar-icon">🛡️</span> Audit Logs
+                </a>
+                <a href="{{ url_for('profile') }}" class="sidebar-link">
+                    <span class="sidebar-icon">👤</span> Profile
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">{{ session.get('email') }}</div>
+                <a href="{{ url_for('logout') }}" class="sidebar-logout">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">Audit Logs</h1>
+                    <p class="dashboard-subtitle">Track all system activity for security and compliance</p>
+                </div>
+            </div>
+
+            <form method="GET" action="{{ url_for('audit_logs') }}" style="background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
+                <div>
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Search Action</label>
+                    <input type="text" name="action" value="{{ action }}" placeholder="e.g. create, delete..." 
+                        style="width: 200px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Sort By</label>
+                    <select name="sort_by" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="timestamp" {% if sort_by == 'timestamp' %}selected{% endif %}>Timestamp</option>
+                        <option value="action" {% if sort_by == 'action' %}selected{% endif %}>Action</option>
+                        <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Order</label>
+                    <select name="order" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;">
+                        <option value="desc" {% if order == 'desc' %}selected{% endif %}>Newest First</option>
+                        <option value="asc" {% if order == 'asc' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                </div>
+                <button type="submit" style="padding: 9px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Apply</button>
+            </form>
+
+            {% if logs %}
+            <div style="background: white; border-radius: 12px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f3f4f6; text-align: left;">
+                            <th style="padding: 14px 20px; font-size: 12px; color: #6b7280; text-transform: uppercase;">User</th>
+                            <th style="padding: 14px 20px; font-size: 12px; color: #6b7280; text-transform: uppercase;">Action</th>
+                            <th style="padding: 14px 20px; font-size: 12px; color: #6b7280; text-transform: uppercase;">Details</th>
+                            <th style="padding: 14px 20px; font-size: 12px; color: #6b7280; text-transform: uppercase;">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr style="border-top: 1px solid #f3f4f6;">
+                            <td style="padding: 14px 20px; font-size: 14px; color: #111827; font-weight: 600;">{{ log.user_name }}</td>
+                            <td style="padding: 14px 20px;">
+                                <span style="background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">{{ log.action }}</span>
+                            </td>
+                            <td style="padding: 14px 20px; font-size: 13px; color: #6b7280;">{{ log.details or '-' }}</td>
+                            <td style="padding: 14px 20px; font-size: 13px; color: #6b7280;">{{ log.timestamp }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="dashboard-section">
+                <div class="empty-state">
+                    <div class="empty-icon">🛡️</div>
+                    <p>No audit logs yet</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if total_pages and total_pages > 1 %}
+            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 30px;">
+                {% if current_page > 1 %}
+                <a href="{{ url_for('audit_logs', page=current_page-1, sort_by=sort_by, order=order, action=action) }}" 
+                    style="padding: 8px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #111827; font-size: 14px;">← Previous</a>
+                {% endif %}
+
+                <span style="padding: 8px 16px; background: #3b82f6; color: white; border-radius: 6px; font-size: 14px; font-weight: 600;">
+                    Page {{ current_page }} of {{ total_pages }}
+                </span>
+
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('audit_logs', page=current_page+1, sort_by=sort_by, order=order, action=action) }}" 
+                    style="padding: 8px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #111827; font-size: 14px;">Next →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </main>
+
+    </div>
+
+</body>
+</html>

@@ -40,12 +40,20 @@
                 <a href="{{ url_for('citations') }}" class="sidebar-link">
                     <span class="sidebar-icon">📚</span> Citations
                 </a>
+                <a href="{{ url_for('recommend') }}" class="sidebar-link">
+    <span class="sidebar-icon">🔍</span> Find Papers
+</a>
                 <a href="{{ url_for('reports') }}" class="sidebar-link">
     <span class="sidebar-icon">📊</span> Reports
 </a>
+
+                <a href="{{ url_for('audit_logs') }}" class="sidebar-link">
+                    <span class="sidebar-icon">🛡️</span> Audit Logs
+                </a>
                 <a href="{{ url_for('profile') }}" class="sidebar-link">
                     <span class="sidebar-icon">👤</span> Profile
                 </a>
+                
             </nav>
 
             <div class="sidebar-footer">

@@ -17,15 +17,15 @@
                     <span class="sidebar-icon">🏠</span> Dashboard
                 </a>
                 <a href="{{ url_for('institutions') }}" class="sidebar-link">
-    <span class="sidebar-icon">🏢</span> Institutions
-</a>
-                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon">🏢</span> Institutions
+                </a>
+                <a href="{{ url_for('publications') }}" class="sidebar-link">
                     <span class="sidebar-icon">📄</span> Publications
                 </a>
-                <a href="#" class="sidebar-link">
+                <a href="{{ url_for('collaborations') }}" class="sidebar-link">
                     <span class="sidebar-icon">📁</span> Active Projects
                 </a>
-                <a href="#" class="sidebar-link">
+                <a href="{{ url_for('reports') }}" class="sidebar-link">
                     <span class="sidebar-icon">📊</span> Collaboration Stats
                 </a>
             </nav>
@@ -41,54 +41,56 @@
             <div class="dashboard-header">
                 <div>
                     <h1 class="dashboard-title">Hello, {{ display_name }} 👋</h1>
-                    <p class="dashboard-subtitle">Overview of departments, publications, and collaboration activity</p>
+                    <p class="dashboard-subtitle">{{ institution_name }} — Overview of departments, publications, and collaboration activity</p>
                 </div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">🏢</div>
-                    <div class="stat-number">0</div>
+                    <div class="stat-number">{{ departments_count }}</div>
                     <div class="stat-label">Departments</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📄</div>
-                    <div class="stat-number">0</div>
+                    <div class="stat-number">{{ pub_count }}</div>
                     <div class="stat-label">Publications</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">📁</div>
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Active Projects</div>
-                </div>
-                <div class="stat-card">
                     <div class="stat-icon">📊</div>
-                    <div class="stat-number">0</div>
+                    <div class="stat-number">{{ collaborations_count }}</div>
                     <div class="stat-label">Collaborations</div>
                 </div>
             </div>
-
             <div class="dashboard-sections">
                 <div class="dashboard-section">
                     <div class="section-header">
                         <h2>Departments Overview</h2>
-                        <a href="#" class="link">Manage</a>
+                        <a href="{{ url_for('institutions') }}" class="link">Manage</a>
                     </div>
+                    {% if departments_count == 0 %}
                     <div class="empty-state">
                         <div class="empty-icon">🏢</div>
                         <p>No departments added yet</p>
                     </div>
+                    {% else %}
+                    <p style="color: #6b7280; font-size: 14px; padding: 10px 0;">{{ departments_count }} unique department(s) across registered researchers</p>
+                    {% endif %}
                 </div>
 
                 <div class="dashboard-section">
                     <div class="section-header">
                         <h2>Collaboration Statistics</h2>
-                        <a href="#" class="link">View report</a>
+                        <a href="{{ url_for('reports') }}" class="link">View report</a>
                     </div>
+                    {% if collaborations_count == 0 %}
                     <div class="empty-state">
                         <div class="empty-icon">📊</div>
                         <p>No collaboration data yet</p>
                     </div>
+                    {% else %}
+                    <p style="color: #6b7280; font-size: 14px; padding: 10px 0;">{{ collaborations_count }} active collaboration(s) recorded</p>
+                    {% endif %}
                 </div>
             </div>
 

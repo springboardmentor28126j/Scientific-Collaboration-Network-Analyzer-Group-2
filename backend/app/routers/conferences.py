@@ -15,6 +15,13 @@ def create_conference(conference: ConferenceCreate, db: Session = Depends(get_db
     db.add(new_conf)
     db.commit()
     db.refresh(new_conf)
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=1, action="create_conference", details=f"Created conference: {new_conf.name}")
+    db.add(log)
+    db.commit()
+
     return new_conf
 
 
@@ -60,8 +67,18 @@ def delete_conference(conference_id: int, db: Session = Depends(get_db)):
     conf = db.query(Conference).filter(Conference.id == conference_id).first()
     if not conf:
         raise HTTPException(status_code=404, detail="Conference not found")
+
+    conf_name = conf.name
+
     db.delete(conf)
     db.commit()
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=1, action="delete_conference", details=f"Deleted conference: {conf_name}")
+    db.add(log)
+    db.commit()
+
     return {"message": "Conference deleted successfully"}
 
 

@@ -28,6 +28,16 @@
                     <input type="password" name="password" placeholder="Password" required>
                 </div>
 
+                <!-- ===== CAPTCHA Section ===== -->
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{{ url_for('captcha_image') }}" id="captchaImg" alt="CAPTCHA" style="border-radius: 6px; border: 1px solid #ccc;">
+                    <a href="#" onclick="refreshCaptcha(); return false;" style="font-size: 13px; white-space: nowrap;">🔄 Refresh</a>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="captcha" placeholder="Enter the code above" required autocomplete="off">
+                </div>
+                <!-- ===== End CAPTCHA Section ===== -->
+
                 <div class="form-row">
                     <label class="checkbox-label">
                         <input type="checkbox" name="remember">
@@ -39,12 +49,17 @@
                 <button type="submit" class="btn-primary">Sign in</button>
             </form>
 
-            
             <div class="bottom-text">
                 Don't have an account? <a href="{{ url_for('register') }}" class="link">Sign up</a>
             </div>
         </div>
     </div>
+
+    <script>
+        function refreshCaptcha() {
+            document.getElementById("captchaImg").src = "{{ url_for('captcha_image') }}?t=" + new Date().getTime();
+        }
+    </script>
 
 </body>
 </html>

@@ -15,6 +15,13 @@ def create_institution(institution: InstitutionCreate, db: Session = Depends(get
     db.add(new_institution)
     db.commit()
     db.refresh(new_institution)
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=1, action="create_institution", details=f"Created institution: {new_institution.name}")
+    db.add(log)
+    db.commit()
+
     return new_institution
 
 
@@ -66,6 +73,13 @@ def update_institution(institution_id: int, institution_update: InstitutionCreat
 
     db.commit()
     db.refresh(inst)
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=1, action="update_institution", details=f"Updated institution: {inst.name}")
+    db.add(log)
+    db.commit()
+
     return inst
 
 
@@ -75,6 +89,15 @@ def delete_institution(institution_id: int, db: Session = Depends(get_db)):
     if not inst:
         raise HTTPException(status_code=404, detail="Institution not found")
 
+    inst_name = inst.name
+
     db.delete(inst)
     db.commit()
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=1, action="delete_institution", details=f"Deleted institution: {inst_name}")
+    db.add(log)
+    db.commit()
+
     return {"message": "Institution deleted successfully"}

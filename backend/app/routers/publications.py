@@ -25,6 +25,12 @@ def create_publication(pub: PublicationCreate, db: Session = Depends(get_db)):
     db.add(notif)
     db.commit()
 
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=new_pub.author_id, action="create_publication", details=f"Created publication: {new_pub.title}")
+    db.add(log)
+    db.commit()
+
     return new_pub
 
 
@@ -86,6 +92,13 @@ def update_publication(publication_id: int, pub_update: PublicationUpdate, db: S
 
     db.commit()
     db.refresh(pub)
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=pub.author_id, action="update_publication", details=f"Updated publication: {pub.title}")
+    db.add(log)
+    db.commit()
+
     return pub
 
 
@@ -95,8 +108,18 @@ def delete_publication(publication_id: int, db: Session = Depends(get_db)):
     if not pub:
         raise HTTPException(status_code=404, detail="Publication not found")
 
+    pub_title = pub.title
+    pub_author_id = pub.author_id
+
     db.delete(pub)
     db.commit()
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=pub_author_id, action="delete_publication", details=f"Deleted publication: {pub_title}")
+    db.add(log)
+    db.commit()
+
     return {"message": "Publication deleted successfully"}
 
 

@@ -8,6 +8,11 @@ from reportlab.lib import colors
 from io import BytesIO
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
+import random
+import string
+from PIL import Image, ImageDraw, ImageFont
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 app.secret_key = "your-secret-key-change-this"
@@ -28,12 +33,61 @@ def get_unread_count():
 def home():
     return render_template("landing.html")
 
+def generate_captcha_text(length=5):
+    """Random letters/numbers ka code banata hai"""
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(random.choice(chars) for _ in range(length))
 
+
+@app.route("/captcha-image")
+def captcha_image():
+    """Session me captcha text store karke, uski image bana ke bhejta hai"""
+    captcha_text = generate_captcha_text()
+    session["captcha_text"] = captcha_text
+
+    # Image banao
+    width, height = 160, 60
+    image = Image.new("RGB", (width, height), color=(240, 240, 240))
+    draw = ImageDraw.Draw(image)
+
+    # Font (agar system font na mile to default use hoga)
+    try:
+        font = ImageFont.truetype("arial.ttf", 32)
+    except:
+        font = ImageFont.load_default()
+
+    # Har letter ko thoda ghumate hue, alag position pe likho
+    x = 10
+    for char in captcha_text:
+        y = random.randint(5, 15)
+        color = (random.randint(0, 100), random.randint(0, 100), random.randint(0, 100))
+        draw.text((x, y), char, font=font, fill=color)
+        x += 28
+
+    # Background me noise lines daalo (thoda distortion ke liye)
+    for _ in range(6):
+        x1 = random.randint(0, width)
+        y1 = random.randint(0, height)
+        x2 = random.randint(0, width)
+        y2 = random.randint(0, height)
+        draw.line((x1, y1, x2, y2), fill=(180, 180, 180), width=1)
+
+    buffer = BytesIO()
+    image.save(buffer, "PNG")
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype="image/png")
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
+        captcha_input = request.form.get("captcha")
+
+        # ===== CAPTCHA check sabse pehle =====
+        correct_captcha = session.get("captcha_text", "")
+        if not captcha_input or captcha_input.upper() != correct_captcha.upper():
+            return render_template("login.html", error="Incorrect CAPTCHA. Please try again.")
 
         try:
             response = requests.post(
@@ -46,6 +100,8 @@ def login():
                 session["token"] = data["access_token"]
                 session["email"] = email
                 session["role"] = data.get("role", "researcher")
+                if session["role"] == "institution_admin" and "institution" not in session:
+                    return redirect(url_for("select_institution"))
                 return redirect(url_for("dashboard"))
             else:
                 return render_template("login.html", error="Invalid email or password")
@@ -54,7 +110,23 @@ def login():
             return render_template("login.html", error="Cannot connect to server")
 
     return render_template("login.html")
+@app.route("/select_institution", methods=["GET", "POST"])
+def select_institution():
+    if "token" not in session:
+        return redirect(url_for("login"))
 
+    if request.method == "POST":
+        session["institution"] = request.form.get("institution")
+        return redirect(url_for("dashboard"))
+
+    try:
+        response = requests.get(f"{API_URL}/institutions/", params={'limit': 100})
+        result = response.json() if response.status_code == 200 else {}
+        institutions_list = result.get('institutions', [])
+    except requests.exceptions.ConnectionError:
+        institutions_list = []
+
+    return render_template("select_institution.html", institutions=institutions_list)
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -132,51 +204,96 @@ def dashboard():
     display_name = session.get("email")
     try:
         response = requests.get(f"{API_URL}/researchers/")
-        if response.status_code == 200:
-            researchers = response.json()
-            if researchers:
-                display_name = researchers[-1]["full_name"]
+        researchers_list = response.json() if response.status_code == 200 else []
+        if researchers_list:
+            display_name = researchers_list[-1]["full_name"]
     except requests.exceptions.ConnectionError:
-        pass
+        researchers_list = []
 
-    # Publications count aur recent list fetch karo
-    pub_count = 0
-    recent_pubs = []
-    try:
-        response = requests.get(f"{API_URL}/publications/", params={'limit': 100})
-        if response.status_code == 200:
-            result = response.json()
-            pubs = result.get('publications', [])
-            pub_count = result.get('total', len(pubs))
-            recent_pubs = pubs[:3]  # sabse recent 3 (already sorted desc by id)
-    except requests.exceptions.ConnectionError:
-        pass
-
-    # Conferences count fetch karo
-    conf_count = 0
-    try:
-        response = requests.get(f"{API_URL}/conferences/")
-        if response.status_code == 200:
-            confs = response.json()
-            conf_count = len(confs)
-    except requests.exceptions.ConnectionError:
-        pass
-
-    # Collaborations count fetch karo
-    collaborations_count = 0
-    try:
-        response = requests.get(f"{API_URL}/collaborations/")
-        if response.status_code == 200:
-            collabs = response.json()
-            collaborations_count = len(collabs)
-    except requests.exceptions.ConnectionError:
-        pass
-
+    # ===== INSTITUTION ADMIN DASHBOARD (filtered by their institution) =====
     if role == "institution_admin":
-        return render_template("dashboard_institution.html", email=session.get("email"), display_name=display_name)
+        my_institution = session.get("institution")
+        if not my_institution:
+            return redirect(url_for("select_institution"))
+
+        # Sirf isi institution ke researchers
+        my_researchers = [r for r in researchers_list if r.get("institution") == my_institution]
+        my_researcher_ids = set(r["id"] for r in my_researchers)
+
+        # Departments (sirf isi institution ke unique departments)
+        departments = set(r.get("department") for r in my_researchers if r.get("department"))
+        departments_count = len(departments)
+
+        # Publications (sirf isi institution ke researchers ke publications)
+        pub_count = 0
+        try:
+            response = requests.get(f"{API_URL}/publications/", params={'limit': 100})
+            if response.status_code == 200:
+                result = response.json()
+                all_pubs = result.get('publications', [])
+                my_pubs = [p for p in all_pubs if p.get("author_id") in my_researcher_ids]
+                pub_count = len(my_pubs)
+        except requests.exceptions.ConnectionError:
+            pass
+
+        # Collaborations (jisme ye institution A ya B ho)
+        collaborations_count = 0
+        try:
+            response = requests.get(f"{API_URL}/collaborations/", params={'limit': 100})
+            if response.status_code == 200:
+                result = response.json()
+                all_collabs = result.get('collaborations', [])
+                my_collabs = [c for c in all_collabs if c.get("institution_a") == my_institution or c.get("institution_b") == my_institution]
+                collaborations_count = len(my_collabs)
+        except requests.exceptions.ConnectionError:
+            pass
+
+        return render_template(
+            "dashboard_institution.html",
+            email=session.get("email"),
+            display_name=display_name,
+            institution_name=my_institution,
+            departments_count=departments_count,
+            pub_count=pub_count,
+            collaborations_count=collaborations_count
+        )
+
+    # ===== SYSTEM ADMIN DASHBOARD =====
     elif role == "system_admin":
         return render_template("dashboard_admin.html", email=session.get("email"), display_name=display_name)
+
+    # ===== RESEARCHER DASHBOARD (unchanged) =====
     else:
+        pub_count = 0
+        recent_pubs = []
+        try:
+            response = requests.get(f"{API_URL}/publications/", params={'limit': 100})
+            if response.status_code == 200:
+                result = response.json()
+                pubs = result.get('publications', [])
+                pub_count = result.get('total', len(pubs))
+                recent_pubs = pubs[:3]
+        except requests.exceptions.ConnectionError:
+            pass
+
+        conf_count = 0
+        try:
+            response = requests.get(f"{API_URL}/conferences/")
+            if response.status_code == 200:
+                confs = response.json()
+                conf_count = len(confs)
+        except requests.exceptions.ConnectionError:
+            pass
+
+        collaborations_count = 0
+        try:
+            response = requests.get(f"{API_URL}/collaborations/")
+            if response.status_code == 200:
+                collabs = response.json()
+                collaborations_count = len(collabs)
+        except requests.exceptions.ConnectionError:
+            pass
+
         return render_template(
             "dashboard.html",
             email=session.get("email"),
@@ -205,7 +322,59 @@ def notifications_page():
         pass
 
     return render_template("notifications.html", notifications=notifs)
-     
+
+@app.route("/recommend", methods=["GET", "POST"])
+def recommend():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    results = []
+    query = ""
+
+    if request.method == "POST":
+        query = request.form.get("query", "").strip()
+        print(f"DEBUG: Query received = '{query}'")
+
+        if query:
+            try:
+                response = requests.get(f"{API_URL}/publications/", params={'limit': 100})
+                print(f"DEBUG: API status = {response.status_code}")
+                result = response.json() if response.status_code == 200 else {}
+                all_pubs = result.get('publications', [])
+                print(f"DEBUG: Total publications fetched = {len(all_pubs)}")
+                for p in all_pubs:
+                    print(f"DEBUG: Pub -> id={p.get('id')}, title={p.get('title')}")
+            except requests.exceptions.ConnectionError:
+                all_pubs = []
+                print("DEBUG: Connection Error while fetching publications")
+
+            if all_pubs:
+                corpus = []
+                for pub in all_pubs:
+                    text = f"{pub.get('title', '')} {pub.get('type', '')} {pub.get('doi', '')}"
+                    corpus.append(text)
+                print(f"DEBUG: Corpus = {corpus}")
+
+                documents = corpus + [query]
+
+                vectorizer = TfidfVectorizer(stop_words="english")
+                tfidf_matrix = vectorizer.fit_transform(documents)
+
+                query_vector = tfidf_matrix[-1]
+                pub_vectors = tfidf_matrix[:-1]
+                similarities = cosine_similarity(query_vector, pub_vectors).flatten()
+                print(f"DEBUG: Similarities = {similarities}")
+
+                for pub, score in zip(all_pubs, similarities):
+                    pub["match_percentage"] = round(score * 100, 1)
+
+                matched_pubs = [p for p in all_pubs if p["match_percentage"] > 0]
+                print(f"DEBUG: Matched pubs count = {len(matched_pubs)}")
+                matched_pubs.sort(key=lambda x: x["match_percentage"], reverse=True)
+
+                results = matched_pubs[:10]
+
+    return render_template("recommend.html", results=results, query=query)
 @app.route("/publications")
 def publications():
     if "token" not in session:
@@ -311,6 +480,8 @@ def delete_publication(pub_id):
         pass
 
     return redirect(url_for("publications"))
+
+
 # ===== CITATIONS ROUTES =====
 
 @app.route('/citations')
@@ -358,6 +529,7 @@ def citations():
         year=year,
         search=search
     )
+
 @app.route('/add_citation', methods=['GET', 'POST'])
 def add_citation():
     if "token" not in session:
@@ -389,12 +561,13 @@ def add_citation():
             print(f"DEBUG: Error: {str(e)}")
     
     return render_template('add_citation.html')
+
 @app.route('/edit_citation/<int:citation_id>', methods=['GET', 'POST'])
 def edit_citation(citation_id):
-    if 'access_token' not in session:
+    if 'token' not in session:
         return redirect(url_for('login'))
     
-    token = session['access_token']
+    token = session['token']
     headers = {'Authorization': f'Bearer {token}'}
     
     # Get citation
@@ -430,10 +603,10 @@ def edit_citation(citation_id):
 
 @app.route('/delete_citation/<int:citation_id>')
 def delete_citation(citation_id):
-    if 'access_token' not in session:
+    if 'token' not in session:
         return redirect(url_for('login'))
     
-    token = session['access_token']
+    token = session['token']
     headers = {'Authorization': f'Bearer {token}'}
     
     try:
@@ -442,6 +615,8 @@ def delete_citation(citation_id):
         pass
     
     return redirect(url_for('citations'))
+
+
 @app.route("/conferences")
 def conferences():
     if "token" not in session:
@@ -507,6 +682,7 @@ def add_conference():
 
     return render_template("add_conference.html")  
 
+
 @app.route("/institutions")
 def institutions():
     if "token" not in session:
@@ -541,6 +717,7 @@ def institutions():
         sort_by=sort_by,
         order=order
     )
+
 @app.route("/institutions/add", methods=["GET", "POST"])
 def add_institution():
     if "token" not in session:
@@ -572,6 +749,8 @@ def add_institution():
             return render_template("add_institution.html", error="Cannot connect to server")
 
     return render_template("add_institution.html")
+
+
 @app.route("/collaborations")
 def collaborations():
     if "token" not in session:
@@ -636,6 +815,8 @@ def add_collaboration():
             return render_template("add_collaboration.html", error="Cannot connect to server")
 
     return render_template("add_collaboration.html")
+
+
 @app.route("/reports")
 def reports():
     if "token" not in session:
@@ -665,6 +846,8 @@ def export_publications():
         )
     except requests.exceptions.ConnectionError:
         return redirect(url_for("reports"))
+
+
 @app.route('/report/<report_type>')
 def view_report(report_type):
     token = session.get('token')
@@ -788,6 +971,7 @@ def export_report_pdf(report_type):
         as_attachment=True,
         download_name=f'{report_type}_report.pdf'
     )
+
 @app.route('/report/<report_type>/export/excel')
 def export_report_excel(report_type):
     if "token" not in session:
@@ -828,6 +1012,57 @@ def export_report_excel(report_type):
         as_attachment=True,
         download_name=f'{report_type}_report.xlsx'
     )
+
+@app.route("/audit")
+def audit_logs():
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort_by', 'timestamp')
+    order = request.args.get('order', 'desc')
+    action = request.args.get('action', '')
+
+    params = {
+        'page': page,
+        'limit': 5,
+        'sort_by': sort_by,
+        'order': order
+    }
+    if action:
+        params['action'] = action
+
+    try:
+        response = requests.get(f"{API_URL}/audit/logs", params=params)
+        result = response.json() if response.status_code == 200 else {}
+    except requests.exceptions.ConnectionError:
+        result = {}
+
+    logs = result.get('logs', [])
+    total_pages = result.get('total_pages', 1)
+    current_page = result.get('page', 1)
+
+    # Researchers ka naam fetch karo taaki user identify ho sake
+    try:
+        r_response = requests.get(f"{API_URL}/researchers/")
+        researchers = r_response.json() if r_response.status_code == 200 else []
+        researcher_map = {r["id"]: r["full_name"] for r in researchers}
+    except requests.exceptions.ConnectionError:
+        researcher_map = {}
+
+    for log in logs:
+        log["user_name"] = researcher_map.get(log.get("user_id"), "System")
+
+    return render_template(
+        "audit.html",
+        logs=logs,
+        total_pages=total_pages,
+        current_page=current_page,
+        sort_by=sort_by,
+        order=order,
+        action=action
+    )
+
 @app.route("/logout")
 def logout():
     session.clear()

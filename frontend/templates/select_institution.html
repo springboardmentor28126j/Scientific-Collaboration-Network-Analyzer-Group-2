@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Institution - Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="background: #f5f5f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
+
+    <div style="background: white; border-radius: 14px; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 480px; width: 100%;">
+        
+        <p style="color: #999; font-size: 13px; margin-bottom: 10px;">One-time setup</p>
+        <h1 style="font-size: 26px; font-weight: 700; color: #111827; margin-bottom: 10px;">Select Your Institution</h1>
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 30px;">This helps us show you data specific to your institution.</p>
+
+        <form method="POST" action="{{ url_for('select_institution') }}">
+            <div style="margin-bottom: 25px;">
+                <select name="institution" required
+                    style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white; cursor: pointer;">
+                    <option value="">Select an institution</option>
+                    {% for inst in institutions %}
+                    <option value="{{ inst.name }}">{{ inst.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" style="width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                Continue to Dashboard
+            </button>
+        </form>
+
+    </div>
+
+</body>
+</html>

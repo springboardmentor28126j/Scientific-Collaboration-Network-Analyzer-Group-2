@@ -6,7 +6,9 @@ from app.database import get_db
 from app.models.collaboration import Collaboration, ProjectAssignment
 from app.schemas.collaboration import CollaborationCreate, CollaborationOut, ProjectAssignmentCreate, ProjectAssignmentOut
 from app.models.notification import Notification
+
 router = APIRouter()
+
 
 @router.post("/", response_model=CollaborationOut)
 def create_collaboration(collab: CollaborationCreate, db: Session = Depends(get_db)):
@@ -21,6 +23,12 @@ def create_collaboration(collab: CollaborationCreate, db: Session = Depends(get_
         type="collaboration"
     )
     db.add(notif)
+    db.commit()
+
+    # Audit log
+    from app.models.audit_log import AuditLog
+    log = AuditLog(user_id=1, action="create_collaboration", details=f"Created collaboration: {new_collab.project_name}")
+    db.add(log)
     db.commit()
 
     return new_collab

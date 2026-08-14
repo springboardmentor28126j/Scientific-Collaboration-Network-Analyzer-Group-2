@@ -1,12 +1,15 @@
 from datetime import date
 from typing import Optional
+
 from pydantic import BaseModel, EmailStr
 
 
-# ----------------------------
-# Base Schema
-# ----------------------------
+# ============================================================
+# BASE USER SCHEMA
+# ============================================================
+
 class UserBase(BaseModel):
+
     full_name: str
     username: str
     email: EmailStr
@@ -33,26 +36,33 @@ class UserBase(BaseModel):
     role: str = "Researcher"
 
 
-# ----------------------------
-# Register Schema
-# ----------------------------
+# ============================================================
+# REGISTER
+# ============================================================
+
 class UserCreate(UserBase):
+
     password: str
 
 
-# ----------------------------
-# Login Schema
-# ----------------------------
+# ============================================================
+# LOGIN
+# ============================================================
+
 class UserLogin(BaseModel):
 
-    email: str
-
+    email: EmailStr
     password: str
 
+    # CAPTCHA fields
+    captcha_id: str
+    captcha_answer: str
 
-# ----------------------------
-# Update Profile Schema
-# ----------------------------
+
+# ============================================================
+# UPDATE PROFILE
+# ============================================================
+
 class UserUpdate(BaseModel):
 
     full_name: Optional[str] = None
@@ -72,9 +82,10 @@ class UserUpdate(BaseModel):
     website: Optional[str] = None
 
 
-# ----------------------------
-# Response Schema
-# ----------------------------
+# ============================================================
+# RESPONSE
+# ============================================================
+
 class UserResponse(UserBase):
 
     id: int

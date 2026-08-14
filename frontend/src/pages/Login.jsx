@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
@@ -32,16 +32,36 @@ function Login() {
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaLoading, setCaptchaLoading] = useState(false);
+
+  // ==============================
+  // CAPTCHA REQUEST CONTROL
+  // ==============================
+  // Prevents an older CAPTCHA request from
+  // overwriting a newer CAPTCHA request.
+
+  const captchaRequestRef = useRef(0);
 
   // ==============================
   // LOAD CAPTCHA FROM BACKEND
   // ==============================
 
-  const loadCaptcha = async () => {
+  const loadCaptcha = async (clearMessage = true) => {
+    const requestId = ++captchaRequestRef.current;
+
     try {
-      setMessage("");
+      setCaptchaLoading(true);
+
+      if (clearMessage) {
+        setMessage("");
+      }
 
       const response = await api.get("/auth/captcha");
+
+      // Ignore old/stale CAPTCHA responses
+      if (requestId !== captchaRequestRef.current) {
+        return;
+      }
 
       console.log("CAPTCHA RESPONSE:", response.data);
 
@@ -50,14 +70,28 @@ function Login() {
       setCaptchaInput("");
 
     } catch (error) {
+      // Ignore stale request errors
+      if (requestId !== captchaRequestRef.current) {
+        return;
+      }
+
       console.error(
         "CAPTCHA LOAD ERROR:",
         error.response?.data || error
       );
 
+      setCaptchaId("");
+      setCaptchaImage("");
+      setCaptchaInput("");
+
       setMessage(
         "Unable to load CAPTCHA. Please refresh the page."
       );
+
+    } finally {
+      if (requestId === captchaRequestRef.current) {
+        setCaptchaLoading(false);
+      }
     }
   };
 
@@ -67,6 +101,8 @@ function Login() {
 
   useEffect(() => {
     loadCaptcha();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ==============================
@@ -76,12 +112,12 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    setMessage("");
-
-    // Prevent multiple requests
+    // Prevent multiple login requests
     if (loading) {
       return;
     }
+
+    setMessage("");
 
     // ==============================
     // BASIC VALIDATION
@@ -113,7 +149,7 @@ function Login() {
       setLoading(true);
 
       // ==============================
-      // SEND LOGIN REQUEST
+      // PREPARE LOGIN DATA
       // ==============================
 
       const loginData = {
@@ -130,6 +166,10 @@ function Login() {
         captcha_id: loginData.captcha_id,
         captcha_answer: loginData.captcha_answer,
       });
+
+      // ==============================
+      // SEND LOGIN REQUEST
+      // ==============================
 
       const response = await api.post(
         "/auth/login",
@@ -189,10 +229,6 @@ function Login() {
         error.response?.data || error
       );
 
-      // ==============================
-      // SHOW BACKEND ERROR
-      // ==============================
-
       const errorMessage =
         error.response?.data?.detail ||
         "Invalid email or password.";
@@ -200,10 +236,13 @@ function Login() {
       setMessage(errorMessage);
 
       // ==============================
-      // CAPTCHA IS ONE-TIME USE
+      // GENERATE NEW CAPTCHA
       // ==============================
+      // CAPTCHA is one-time use.
+      // Do NOT clear the error message while
+      // loading the new CAPTCHA.
 
-      await loadCaptcha();
+      await loadCaptcha(false);
 
     } finally {
       setLoading(false);
@@ -349,8 +388,6 @@ function Login() {
 
               <div className="captcha-row">
 
-                {/* Backend CAPTCHA */}
-
                 <div className="captcha-box">
 
                   {captchaImage ? (
@@ -361,7 +398,9 @@ function Login() {
                     />
                   ) : (
                     <span>
-                      Loading CAPTCHA...
+                      {captchaLoading
+                        ? "Loading CAPTCHA..."
+                        : "CAPTCHA unavailable"}
                     </span>
                   )}
 
@@ -373,9 +412,11 @@ function Login() {
                 <button
                   type="button"
                   className="captcha-refresh"
-                  onClick={loadCaptcha}
+                  onClick={() => loadCaptcha()}
                   title="Generate new CAPTCHA"
-                  disabled={loading}
+                  disabled={
+                    loading || captchaLoading
+                  }
                 >
 
                   <span className="refresh-icon">
@@ -383,7 +424,9 @@ function Login() {
                   </span>
 
                   <span>
-                    Refresh
+                    {captchaLoading
+                      ? "Loading..."
+                      : "Refresh"}
                   </span>
 
                 </button>
@@ -409,11 +452,15 @@ function Login() {
                     value={captchaInput}
                     onChange={(e) =>
                       setCaptchaInput(
-                        e.target.value.toUpperCase()
+                        e.target.value
+                          .toUpperCase()
                       )
                     }
                     maxLength={5}
                     autoComplete="off"
+                    disabled={
+                      loading || captchaLoading
+                    }
                     required
                   />
 
@@ -454,7 +501,9 @@ function Login() {
             <button
               type="submit"
               className="login-submit"
-              disabled={loading}
+              disabled={
+                loading || captchaLoading
+              }
             >
 
               {loading

@@ -20,6 +20,7 @@ from app.core.auth import (
     decode_access_token,
     oauth2_scheme
 )
+
 from app.services.captcha import (
     generate_captcha,
     verify_captcha
@@ -32,11 +33,12 @@ router = APIRouter(
 )
 
 
-# ==========================================
+# ============================================================
 # DATABASE DEPENDENCY
-# ==========================================
+# ============================================================
 
 def get_db():
+
     db = SessionLocal()
 
     try:
@@ -46,9 +48,9 @@ def get_db():
         db.close()
 
 
-# ==========================================
+# ============================================================
 # REGISTER
-# ==========================================
+# ============================================================
 
 @router.post(
     "/register",
@@ -59,7 +61,7 @@ def register(
     db: Session = Depends(get_db)
 ):
 
-    # Check whether email already exists
+    # Check existing email
     existing_user = crud.get_user_by_email(
         db,
         user.email
@@ -72,26 +74,26 @@ def register(
             detail="Email already registered"
         )
 
-    # Create new user
+    # Create user
     return crud.create_user(
         db,
         user
     )
-# ==========================================
-# CAPTCHA
-# ==========================================
+
+
+# ============================================================
+# GET CAPTCHA
+# ============================================================
 
 @router.get("/captcha")
 def get_captcha():
-    """
-    Generate a new CAPTCHA challenge.
-    """
 
     return generate_captcha()
 
-# ==========================================
-# LOGIN - FRONTEND + CAPTCHA
-# ==========================================
+
+# ============================================================
+# LOGIN
+# ============================================================
 
 @router.post("/login")
 def login(
@@ -99,14 +101,17 @@ def login(
     db: Session = Depends(get_db)
 ):
 
-    print("\n========== LOGIN DEBUG ==========")
-    print("EMAIL:", user.email)
-    print("CAPTCHA ID:", user.captcha_id)
-    print("CAPTCHA ANSWER:", user.captcha_answer)
+    print("\n======================================")
+    print("LOGIN REQUEST")
+    print("======================================")
 
-    # --------------------------------------
-    # Verify CAPTCHA
-    # --------------------------------------
+    print("Email:", user.email)
+    print("CAPTCHA ID:", user.captcha_id)
+    print("CAPTCHA Answer:", user.captcha_answer)
+
+    # --------------------------------------------------------
+    # 1. CAPTCHA VALIDATION
+    # --------------------------------------------------------
 
     captcha_valid = verify_captcha(
         user.captcha_id,
@@ -116,51 +121,59 @@ def login(
     print("CAPTCHA VALID:", captcha_valid)
 
     if not captcha_valid:
+
+        print("LOGIN FAILED: CAPTCHA")
+
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired CAPTCHA"
         )
 
-    # --------------------------------------
-    # Find user
-    # --------------------------------------
+    # --------------------------------------------------------
+    # 2. FIND USER
+    # --------------------------------------------------------
 
     db_user = crud.get_user_by_email(
         db,
         user.email
     )
 
-    print("USER FOUND:", db_user is not None)
+    print(
+        "USER FOUND:",
+        db_user is not None
+    )
 
     if not db_user:
+
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
-    print("USER ID:", db_user.id)
-    print("USERNAME:", db_user.username)
-
-    # --------------------------------------
-    # Verify password
-    # --------------------------------------
+    # --------------------------------------------------------
+    # 3. PASSWORD VALIDATION
+    # --------------------------------------------------------
 
     password_valid = verify_password(
         user.password,
         db_user.hashed_password
     )
 
-    print("PASSWORD VALID:", password_valid)
+    print(
+        "PASSWORD VALID:",
+        password_valid
+    )
 
     if not password_valid:
+
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
-    # --------------------------------------
-    # Create JWT
-    # --------------------------------------
+    # --------------------------------------------------------
+    # 4. CREATE JWT
+    # --------------------------------------------------------
 
     token = create_access_token(
         {
@@ -170,9 +183,9 @@ def login(
 
     print("JWT CREATED")
 
-    # --------------------------------------
-    # Audit log
-    # --------------------------------------
+    # --------------------------------------------------------
+    # 5. AUDIT LOG
+    # --------------------------------------------------------
 
     crud.create_audit_log(
         db=db,
@@ -186,7 +199,11 @@ def login(
     )
 
     print("LOGIN SUCCESS")
-    print("================================\n")
+    print("======================================\n")
+
+    # --------------------------------------------------------
+    # 6. RESPONSE
+    # --------------------------------------------------------
 
     return {
         "access_token": token,
@@ -196,9 +213,10 @@ def login(
         "role": db_user.role
     }
 
-# ==========================================
-# LOGIN - SWAGGER / OAUTH2
-# ==========================================
+
+# ============================================================
+# SWAGGER / OAUTH2 LOGIN
+# ============================================================
 
 @router.post("/token")
 def get_token(
@@ -206,8 +224,9 @@ def get_token(
     db: Session = Depends(get_db)
 ):
 
-    # Swagger sends username field.
-    # In our application username is the user's email.
+    # Swagger uses username field.
+    # In our application username = email.
+
     db_user = crud.get_user_by_email(
         db,
         form_data.username
@@ -221,6 +240,7 @@ def get_token(
         )
 
     # Verify password
+
     password_valid = verify_password(
         form_data.password,
         db_user.hashed_password
@@ -233,7 +253,8 @@ def get_token(
             detail="Invalid email or password"
         )
 
-    # Create JWT token
+    # Create token
+
     token = create_access_token(
         {
             "sub": db_user.email
@@ -246,9 +267,9 @@ def get_token(
     }
 
 
-# ==========================================
+# ============================================================
 # CURRENT USER
-# ==========================================
+# ============================================================
 
 @router.get(
     "/me",
@@ -259,7 +280,6 @@ def get_current_user(
     db: Session = Depends(get_db)
 ):
 
-    # Decode JWT
     payload = decode_access_token(token)
 
     if not payload:
@@ -269,7 +289,6 @@ def get_current_user(
             detail="Invalid or expired token"
         )
 
-    # Get email from JWT
     email = payload.get("sub")
 
     if not email:
@@ -279,7 +298,6 @@ def get_current_user(
             detail="Invalid token"
         )
 
-    # Find user
     user = crud.get_user_by_email(
         db,
         email
@@ -295,9 +313,9 @@ def get_current_user(
     return user
 
 
-# ==========================================
+# ============================================================
 # UPDATE PROFILE
-# ==========================================
+# ============================================================
 
 @router.put(
     "/update-profile",
@@ -309,7 +327,6 @@ def update_profile(
     db: Session = Depends(get_db)
 ):
 
-    # Decode JWT
     payload = decode_access_token(token)
 
     if not payload:
@@ -319,7 +336,6 @@ def update_profile(
             detail="Invalid or expired token"
         )
 
-    # Get email from token
     email = payload.get("sub")
 
     if not email:
@@ -329,7 +345,6 @@ def update_profile(
             detail="Invalid token"
         )
 
-    # Find logged-in user
     db_user = crud.get_user_by_email(
         db,
         email
@@ -343,20 +358,24 @@ def update_profile(
         )
 
     # Update profile
-    # Update profile
+
     updated_profile = crud.update_user(
-    db,
-    db_user,
-    updated_user
+        db,
+        db_user,
+        updated_user
     )
 
-# Create audit log
+    # Audit log
+
     crud.create_audit_log(
-    db=db,
-    user_id=db_user.id,
-    action="PROFILE_UPDATED",
-    module="User Profile",
-    description=f"User {db_user.username} updated profile information"
+        db=db,
+        user_id=db_user.id,
+        action="PROFILE_UPDATED",
+        module="User Profile",
+        description=(
+            f"User {db_user.username} "
+            f"updated profile information"
+        )
     )
 
     return updated_profile

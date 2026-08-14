@@ -24,8 +24,8 @@ export function useLogin() {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
-      login(username, password),
+    mutationFn: ({ username, password, turnstile_token }: { username: string; password: string; turnstile_token: string }) =>
+      login(username, password, turnstile_token),
     onSuccess: async (data) => {
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("refresh_token", data.refresh_token);
@@ -62,7 +62,7 @@ export function useLogout() {
 
 export function useForgotPassword() {
   return useMutation({
-    mutationFn: (email: string) => forgotPassword(email),
+    mutationFn: ({ email, turnstile_token }: { email: string; turnstile_token: string }) => forgotPassword(email, turnstile_token),
     onSuccess: () => {
       toast.success("If an account exists, a reset link has been sent");
     },
@@ -128,6 +128,7 @@ export function useRegisterInstitution() {
       admin_email: string;
       admin_password: string;
       logo: File;
+      turnstile_token: string;
     }) => registerInstitution(data),
     onSuccess: () => {
       toast.success("Institution registered! Please check your email to verify.");

@@ -8,6 +8,7 @@ export async function registerInstitution(data: {
   admin_email: string;
   admin_password: string;
   logo: File;
+  turnstile_token: string;
 }): Promise<Institution> {
   const formData = new FormData();
   formData.append("name", data.name);
@@ -16,6 +17,7 @@ export async function registerInstitution(data: {
   formData.append("admin_email", data.admin_email);
   formData.append("admin_password", data.admin_password);
   formData.append("logo", data.logo);
+  formData.append("turnstile_token", data.turnstile_token);
 
   const response = await fetch(`${API_BASE_URL}/api/v1/institutions/register`, {
     method: "POST",

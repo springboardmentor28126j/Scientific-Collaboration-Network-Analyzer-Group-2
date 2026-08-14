@@ -10,10 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FlaskConical, ArrowLeft } from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function RegisterInstitution() {
   const registerMutation = useRegisterInstitution();
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<InstitutionRegisterFormData>({
@@ -33,9 +35,12 @@ export default function RegisterInstitution() {
       return;
     }
 
+    if (!turnstileToken) return;
+
     registerMutation.mutate({
       ...data,
       logo: logoFile,
+      turnstile_token: turnstileToken,
     });
   }
 
@@ -177,10 +182,19 @@ export default function RegisterInstitution() {
                   </div>
                 </div>
 
+                <div className="flex justify-center my-4">
+                  <Turnstile
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onError={() => setTurnstileToken(null)}
+                    onExpire={() => setTurnstileToken(null)}
+                  />
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  disabled={registerMutation.isPending}
+                  disabled={registerMutation.isPending || !turnstileToken}
                 >
                   {registerMutation.isPending ? "Registering..." : "Register Institution"}
                 </Button>

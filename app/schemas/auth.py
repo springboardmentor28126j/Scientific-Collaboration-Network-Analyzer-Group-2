@@ -15,6 +15,7 @@ class RefreshRequest(BaseModel):
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+    turnstile_token: str
 
 
 class ResetPasswordRequest(BaseModel):

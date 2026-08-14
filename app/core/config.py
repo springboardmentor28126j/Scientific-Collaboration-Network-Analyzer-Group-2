@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     EMAIL_TOKEN_EXPIRE_MINUTES: int = 60
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
+    TURNSTILE_SECRET_KEY: str
 
     # --- Database ---
     DATABASE_URL: str

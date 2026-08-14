@@ -27,15 +27,35 @@ from app.repositories.token_repository import TokenRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import TokenPair
 from app.services.email_service import EmailService
+from app.services.turnstile_service import TurnstileService
 
 
 class AuthService:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, turnstile: TurnstileService) -> None:
         self.session = session
         self.users = UserRepository(session)
         self.tokens = TokenRepository(session)
+        self.turnstile = turnstile
 
     # --- Login / refresh ---
+
+    async def login(
+        self,
+        username: str,
+        password: str,
+        turnstile_token: str,
+    ) -> TokenPair:
+
+        await self.turnstile.verify(
+            token=turnstile_token,
+        )
+
+        user = await self.authenticate(
+            username,
+            password,
+        )
+
+        return self.issue_token_pair(user)
 
     async def authenticate(self, email: str, password: str) -> User:
         user = await self.users.get_by_email(email)
@@ -135,7 +155,11 @@ class AuthService:
 
     # --- Forgot / reset password ---
 
-    async def request_password_reset(self, email: str) -> None:
+    async def request_password_reset(
+        self,
+        email: str,
+        turnstile_token: str,
+    ) -> None:
         """
         Always succeeds silently from the caller's point of view (no
         indication whether the email exists) to avoid user enumeration.
@@ -143,6 +167,9 @@ class AuthService:
         reviewer alike; unverified accounts have no password to reset yet,
         so they're naturally excluded by the is_verified check.
         """
+        await self.turnstile.verify(
+            token=turnstile_token,
+        )
         user = await self.users.get_by_email(email)
         if user is None or not user.is_verified:
             return

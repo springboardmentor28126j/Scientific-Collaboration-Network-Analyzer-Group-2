@@ -8,6 +8,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
+from app.services.turnstile_service import TurnstileService
 from app.services.auth_service import AuthService
 from app.services.institution_service import InstitutionService
 from app.services.notification_service import NotificationService
@@ -23,12 +24,26 @@ from app.services.publication_history_service import PublicationHistoryService
 from app.services.dashboard_service import DashboardService
 
 
-def get_auth_service(session: AsyncSession = Depends(get_session)) -> AuthService:
-    return AuthService(session)
+def get_turnstile_service() -> TurnstileService:
+    return TurnstileService()
 
 
-def get_institution_service(session: AsyncSession = Depends(get_session)) -> InstitutionService:
-    return InstitutionService(session)
+def get_auth_service(
+    session: AsyncSession = Depends(get_session),
+    turnstile: TurnstileService = Depends(get_turnstile_service),
+) -> AuthService:
+    return AuthService(
+        session,
+        turnstile,
+    )
+
+
+def get_institution_service(
+    session: AsyncSession = Depends(get_session),
+    auth_service: AuthService = Depends(get_auth_service),
+    turnstile: TurnstileService = Depends(get_turnstile_service),
+) -> InstitutionService:
+    return InstitutionService(session, auth_service, turnstile)
 
 
 def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:

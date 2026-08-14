@@ -29,6 +29,7 @@ async def register_institution(
     admin_full_name: str = Form(...),
     admin_email: str = Form(...),
     admin_password: str = Form(...),
+    turnstile_token: str = Form(...),
     logo: UploadFile = File(...),
     institution_service: InstitutionService = Depends(get_institution_service),
 ):
@@ -39,7 +40,7 @@ async def register_institution(
         admin_email=admin_email,
         admin_password=admin_password,
     )
-    institution, _admin = await institution_service.register(payload, logo)
+    institution, _admin = await institution_service.register(payload, logo, turnstile_token)
     return institution
 
 

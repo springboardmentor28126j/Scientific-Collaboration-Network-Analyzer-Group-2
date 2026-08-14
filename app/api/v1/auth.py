@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Form, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import get_auth_service
@@ -33,10 +33,15 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 )
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
+    turnstile_token: str = Form(...),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> TokenPair:
-    user = await auth_service.authenticate(form_data.username, form_data.password)
-    return auth_service.issue_token_pair(user)
+
+    return await auth_service.login(
+        username=form_data.username,
+        password=form_data.password,
+        turnstile_token=turnstile_token,
+    )
 
 
 @router.post(
@@ -98,7 +103,9 @@ async def forgot_password(
     payload: ForgotPasswordRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> Message:
-    await auth_service.request_password_reset(payload.email)
+    await auth_service.request_password_reset(
+        payload.email, turnstile_token=payload.turnstile_token
+    )
     return Message(
         detail="If an account with that email exists, a password reset link has been sent."
     )

@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FlaskConical, ArrowLeft, Mail } from "lucide-react";
 import { useState } from "react";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function ForgotPassword() {
   const forgotMutation = useForgotPassword();
   const [submitted, setSubmitted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -22,7 +24,9 @@ export default function ForgotPassword() {
   });
 
   function onSubmit(data: ForgotPasswordFormData) {
-    forgotMutation.mutate(data.email, {
+    if (!turnstileToken) return;
+    
+    forgotMutation.mutate({ email: data.email, turnstile_token: turnstileToken }, {
       onSuccess: () => {
         setSubmitted(true);
       },
@@ -85,10 +89,19 @@ export default function ForgotPassword() {
                       )}
                     />
 
+                    <div className="flex justify-center my-4">
+                      <Turnstile
+                        siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                        onSuccess={(token) => setTurnstileToken(token)}
+                        onError={() => setTurnstileToken(null)}
+                        onExpire={() => setTurnstileToken(null)}
+                      />
+                    </div>
+
                     <Button
                       type="submit"
                       className="w-full bg-emerald-600 hover:bg-emerald-700"
-                      disabled={forgotMutation.isPending}
+                      disabled={forgotMutation.isPending || !turnstileToken}
                     >
                       {forgotMutation.isPending ? "Sending..." : "Send Reset Link"}
                     </Button>

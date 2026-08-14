@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Link } from "react-router";
 import { loginSchema, type LoginFormData } from "@/lib/schemas";
 import { useLogin } from "@/hooks/useAuthQuery";
@@ -11,6 +13,7 @@ import { FlaskConical } from "lucide-react";
 
 export default function Login() {
   const loginMutation = useLogin();
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -21,7 +24,8 @@ export default function Login() {
   });
 
   function onSubmit(data: LoginFormData) {
-    loginMutation.mutate({ username: data.email, password: data.password });
+    if (!turnstileToken) return;
+    loginMutation.mutate({ username: data.email, password: data.password, turnstile_token: turnstileToken });
   }
 
   return (
@@ -78,10 +82,19 @@ export default function Login() {
                   )}
                 />
 
+                <div className="flex justify-center my-4">
+                  <Turnstile
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onError={() => setTurnstileToken(null)}
+                    onExpire={() => setTurnstileToken(null)}
+                  />
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  disabled={loginMutation.isPending}
+                  disabled={loginMutation.isPending || !turnstileToken}
                 >
                   {loginMutation.isPending ? "Signing in..." : "Sign In"}
                 </Button>

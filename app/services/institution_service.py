@@ -15,18 +15,31 @@ from app.schemas.institution import InstitutionRegister
 from app.services.auth_service import AuthService
 from app.services.cloudinary_service import CloudinaryService
 from app.services.email_service import EmailService
+from app.services.turnstile_service import TurnstileService
 
 
 class InstitutionService:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        auth_service: AuthService,
+        turnstile: TurnstileService,
+    ) -> None:
         self.session = session
         self.institutions = InstitutionRepository(session)
         self.users = UserRepository(session)
-        self.auth_service = AuthService(session)
+        self.auth_service = auth_service
+        self.turnstile = turnstile
 
     async def register(
-        self, payload: InstitutionRegister, logo_file: UploadFile
+        self,
+        payload: InstitutionRegister,
+        logo_file: UploadFile,
+        turnstile_token: str,
     ) -> tuple[Institution, User]:
+        await self.turnstile.verify(
+            token=turnstile_token,
+        )
         existing = await self.users.get_by_email(payload.admin_email)
         if existing is not None:
             raise ConflictError("An account with this email already exists")

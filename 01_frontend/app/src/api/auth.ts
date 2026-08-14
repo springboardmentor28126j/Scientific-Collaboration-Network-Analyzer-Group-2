@@ -1,11 +1,12 @@
 import { API_BASE_URL, getHeaders, handleResponse } from "./core";
 import type { TokenPair, UserMe, MessageResponse } from "@/types";
 
-export async function login(username: string, password: string): Promise<TokenPair> {
+export async function login(username: string, password: string, turnstile_token: string): Promise<TokenPair> {
   const formData = new URLSearchParams();
   formData.append("grant_type", "password");
   formData.append("username", username);
   formData.append("password", password);
+  formData.append("turnstile_token", turnstile_token);
 
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
     method: "POST",
@@ -51,11 +52,11 @@ export async function verifyInvite(token: string, password: string): Promise<Mes
   return handleResponse<MessageResponse>(response);
 }
 
-export async function forgotPassword(email: string): Promise<MessageResponse> {
+export async function forgotPassword(email: string, turnstile_token: string): Promise<MessageResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, turnstile_token }),
   });
   return handleResponse<MessageResponse>(response);
 }

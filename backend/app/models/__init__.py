@@ -14,6 +14,7 @@ from app.models.collaboration import (
     CollaborationPublication,
 )
 from app.models.project import Project, ProjectMember, ProjectStatus, ProjectRole, ProjectMemberStatus
+from app.models.institution_collaboration import InstitutionCollaboration, InstitutionCollaborationStatus
 from app.models.audit_log import AuditLog
 from app.models.notification import Notification
 from app.models.auth_token import AuthToken, AuthTokenType
@@ -38,6 +39,8 @@ __all__ = [
     "ProjectStatus",
     "ProjectRole",
     "ProjectMemberStatus",
+    "InstitutionCollaboration",
+    "InstitutionCollaborationStatus",
     "AuditLog",
     "Notification",
     "AuthToken",

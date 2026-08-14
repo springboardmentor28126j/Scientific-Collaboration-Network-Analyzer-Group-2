@@ -44,7 +44,9 @@ class UserCreate(UserBase):
 # Login Schema
 # ----------------------------
 class UserLogin(BaseModel):
-    email: EmailStr
+
+    email: str
+
     password: str
 
 

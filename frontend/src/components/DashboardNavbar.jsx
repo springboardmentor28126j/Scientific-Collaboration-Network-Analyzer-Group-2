@@ -43,6 +43,12 @@ function DashboardNavbar() {
 
                 </div>
                 <button
+    className="ai-nav-btn"
+    onClick={() => navigate("/ai-recommendations")}
+>
+    AI Recommendations
+</button>
+                <button
     className="audit-nav-btn"
     onClick={() => navigate("/audit-logs")}
 >

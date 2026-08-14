@@ -20,6 +20,10 @@ from app.core.auth import (
     decode_access_token,
     oauth2_scheme
 )
+from app.services.captcha import (
+    generate_captcha,
+    verify_captcha
+)
 
 
 router = APIRouter(
@@ -73,67 +77,116 @@ def register(
         db,
         user
     )
+# ==========================================
+# CAPTCHA
+# ==========================================
 
+@router.get("/captcha")
+def get_captcha():
+    """
+    Generate a new CAPTCHA challenge.
+    """
+
+    return generate_captcha()
 
 # ==========================================
-# LOGIN - FRONTEND
+# LOGIN - FRONTEND + CAPTCHA
 # ==========================================
+
 @router.post("/login")
 def login(
     user: UserLogin,
     db: Session = Depends(get_db)
 ):
 
+    print("\n========== LOGIN DEBUG ==========")
+    print("EMAIL:", user.email)
+    print("CAPTCHA ID:", user.captcha_id)
+    print("CAPTCHA ANSWER:", user.captcha_answer)
+
+    # --------------------------------------
+    # Verify CAPTCHA
+    # --------------------------------------
+
+    captcha_valid = verify_captcha(
+        user.captcha_id,
+        user.captcha_answer
+    )
+
+    print("CAPTCHA VALID:", captcha_valid)
+
+    if not captcha_valid:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired CAPTCHA"
+        )
+
+    # --------------------------------------
     # Find user
+    # --------------------------------------
+
     db_user = crud.get_user_by_email(
         db,
         user.email
     )
 
-    # User not found
+    print("USER FOUND:", db_user is not None)
+
     if not db_user:
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
+    print("USER ID:", db_user.id)
+    print("USERNAME:", db_user.username)
+
+    # --------------------------------------
     # Verify password
+    # --------------------------------------
+
     password_valid = verify_password(
         user.password,
         db_user.hashed_password
     )
 
-    # Wrong password
+    print("PASSWORD VALID:", password_valid)
+
     if not password_valid:
-
-        crud.create_audit_log(
-            db=db,
-            user_id=db_user.id,
-            action="LOGIN_FAILED",
-            module="Authentication",
-            description=f"Failed login attempt for user {db_user.username}"
-        )
-
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
-    # Create JWT token
+    # --------------------------------------
+    # Create JWT
+    # --------------------------------------
+
     token = create_access_token(
         {
             "sub": db_user.email
         }
     )
 
-    # Successful login audit
+    print("JWT CREATED")
+
+    # --------------------------------------
+    # Audit log
+    # --------------------------------------
+
     crud.create_audit_log(
         db=db,
         user_id=db_user.id,
         action="LOGIN",
         module="Authentication",
-        description=f"User {db_user.username} logged in successfully"
+        description=(
+            f"User {db_user.username} "
+            f"logged in successfully"
+        )
     )
+
+    print("LOGIN SUCCESS")
+    print("================================\n")
 
     return {
         "access_token": token,
@@ -142,7 +195,6 @@ def login(
         "full_name": db_user.full_name,
         "role": db_user.role
     }
-
 
 # ==========================================
 # LOGIN - SWAGGER / OAUTH2

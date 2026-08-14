@@ -35,6 +35,7 @@ import Reports from "./pages/Reports";
 import ResearchReport from "./pages/ResearchReport";
 import InstitutionReport from "./pages/InstitutionReport";
 import CollaborationReport from "./pages/CollaborationReport";
+import AIRecommendations from "./pages/AIRecommendations";
 function App() {
   return (
     <BrowserRouter>
@@ -160,6 +161,10 @@ function App() {
     element={<Reports />}
 />
 <Route path="/audit-logs" element={<AuditLogs />} />
+<Route
+    path="/ai-recommendations"
+    element={<AIRecommendations />}
+/>
 <Route
     path="/reports/research"
     element={<ResearchReport />}

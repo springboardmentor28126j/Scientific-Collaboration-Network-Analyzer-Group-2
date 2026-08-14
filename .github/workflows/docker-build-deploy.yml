@@ -88,13 +88,14 @@ jobs:
   deploy:
     needs: [build-backend, build-frontend]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Trigger Render deploy - backend
         run: |
           if [ -z "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" ]; then
             echo "RENDER_BACKEND_DEPLOY_HOOK secret is not set -- skipping backend deploy trigger."
           else
-            curl -fsS -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
+            curl -fsS --max-time 30 --retry 2 --retry-delay 5 -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
           fi
 
       - name: Trigger Render deploy - frontend
@@ -102,5 +103,5 @@ jobs:
           if [ -z "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}" ]; then
             echo "RENDER_FRONTEND_DEPLOY_HOOK secret is not set -- skipping frontend deploy trigger."
           else
-            curl -fsS -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
+            curl -fsS --max-time 30 --retry 2 --retry-delay 5 -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
           fi

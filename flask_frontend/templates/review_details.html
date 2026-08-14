@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/review_details.css') }}">
+{% endblock %}
+{% block content %}
+
+<div class="review-page">
+
+    <!-- Page Header -->
+    <div class="review-header">
+        <div>
+            <h2>Review Publication</h2>
+            <p>View publication details and review information</p>
+        </div>
+    </div>
+
+
+    <!-- Publication Card -->
+    <div class="review-card publication-card">
+
+        <div class="card-title">
+            <span class="title-icon">📄</span>
+            <div>
+                <h3>{{ publication.title }}</h3>
+                <span class="card-subtitle">Publication Details</span>
+            </div>
+        </div>
+
+
+        <div class="details-grid">
+
+            <div class="detail-item">
+                <span class="detail-label">Publication Type</span>
+                <span class="detail-value">
+                    {{ publication.publication_type }}
+                </span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Researcher</span>
+                <span class="detail-value">
+                    {{ researcher_name }}
+                </span>
+            </div>
+
+            <div class="detail-item">
+                <span class="detail-label">Publication Year</span>
+                <span class="detail-value">
+                    {{ publication.publication_year }}
+                </span>
+            </div>
+
+            {% if publication.journal_name %}
+            <div class="detail-item">
+                <span class="detail-label">Journal</span>
+                <span class="detail-value">
+                    {{ publication.journal_name }}
+                </span>
+            </div>
+            {% endif %}
+
+            {% if publication.conference_name %}
+            <div class="detail-item">
+                <span class="detail-label">Conference</span>
+                <span class="detail-value">
+                    {{ publication.conference_name }}
+                </span>
+            </div>
+            {% endif %}
+
+            {% if publication.doi %}
+            <div class="detail-item">
+                <span class="detail-label">DOI</span>
+                <span class="detail-value doi-value">
+                    {{ publication.doi }}
+                </span>
+            </div>
+            {% endif %}
+
+        </div>
+
+
+        <!-- PDF Section -->
+        <div class="pdf-section">
+
+            <div>
+                <span class="detail-label">Publication PDF</span>
+
+                {% if publication.publication_file %}
+                <p class="pdf-name">
+                    {{ publication.publication_file }}
+                </p>
+                {% else %}
+                <p class="no-pdf">
+                    No PDF uploaded.
+                </p>
+                {% endif %}
+            </div>
+
+            {% if publication.publication_file %}
+            <a
+                href="{{ API_URL }}/uploads/publications/{{ publication.publication_file }}"
+                target="_blank"
+                class="pdf-button"
+            >
+                View Publication PDF
+            </a>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- Review Section -->
+    <div class="review-card review-card-section">
+
+        {% if review.decision == "Pending" %}
+
+        <div class="card-title">
+            <span class="title-icon">📝</span>
+            <div>
+                <h3>Review Decision</h3>
+                <span class="card-subtitle">
+                    Submit your evaluation of this publication
+                </span>
+            </div>
+        </div>
+
+
+        <form method="POST" class="review-form">
+
+            <div class="form-group">
+
+                <label for="decision">
+                    Decision
+                </label>
+
+                <select
+                    id="decision"
+                    name="decision"
+                    required
+                >
+                    <option value="">
+                        Select Decision
+                    </option>
+
+                    <option value="Approved">
+                        Approved
+                    </option>
+
+                    <option value="Needs Revision">
+                        Needs Revision
+                    </option>
+
+                    <option value="Rejected">
+                        Rejected
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="comments">
+                    Comments
+                </label>
+
+                <textarea
+                    id="comments"
+                    name="comments"
+                    rows="6"
+                    placeholder="Enter your review comments..."
+                    required
+                ></textarea>
+
+            </div>
+
+
+            <button type="submit" class="submit-review-btn">
+                Submit Review
+            </button>
+
+        </form>
+
+
+        {% else %}
+
+        <!-- Completed Review -->
+
+        <div class="card-title">
+            <span class="title-icon">✓</span>
+            <div>
+                <h3>Review Result</h3>
+                <span class="card-subtitle">
+                    Review submitted successfully
+                </span>
+            </div>
+        </div>
+
+
+        <div class="review-result">
+
+            <div class="result-row">
+
+                <span class="result-label">
+                    Decision
+                </span>
+
+                <span
+                    class="decision-badge
+                    {% if review.decision == 'Approved' %}
+                        approved
+                    {% elif review.decision == 'Needs Revision' %}
+                        revision
+                    {% elif review.decision == 'Rejected' %}
+                        rejected
+                    {% endif %}"
+                >
+                    {{ review.decision }}
+                </span>
+
+            </div>
+
+
+            <div class="comments-section">
+
+                <span class="result-label">
+                    Comments
+                </span>
+
+                <div class="comments-box">
+                    {{ review.comments or "No comments provided." }}
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

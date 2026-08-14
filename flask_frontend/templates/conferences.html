@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 
@@ -6,650 +5,777 @@
 
 <!-- ================= MAIN ================= -->
 
-
 <div class="main" id="main">
 
+    <div class="top-section">
 
-<div class="top-section">
-
-
-<h1>
-Conferences
-</h1>
+        <h1>
+            Conferences
+        </h1>
 
 
+        {% if session["role"] == "researcher" %}
 
-{% if session["role"] == "researcher" %}
+        <a href="{{ url_for('my_conference_history') }}">
 
-<a href="{{ url_for('my_conference_history') }}">
+            <button class="save-btn">
+                My Conference History
+            </button>
 
-<button class="save-btn">
-My Conference History
-</button>
+        </a>
 
-</a>
-
-{% endif %}
-
+        {% endif %}
 
 
+        {% if session["role"] in ["institution_admin","system_admin"] %}
+
+        <button class="add-btn" onclick="openModal()">
+
+            + Add Conference
+
+        </button>
+
+        {% endif %}
+
+    </div>
 
 
-{% if session["role"] in ["institution_admin","system_admin"] %}
+
+    <!-- ================= CONTROLS ================= -->
+
+    <div class="conference-controls">
+       
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="conferenceSearch"
+            placeholder="Search by Conference Name or Location"
+            onkeyup="searchConference()"
+        >
+
+    </div>
+        <div class="control-group">
+
+            <label for="conference_sort_by">
+                Sort by:
+            </label>
+
+            <select
+                id="conference_sort_by"
+                onchange="applyConferenceSort()"
+            >
+
+                <option
+                    value="title"
+                    {% if conference_sort_by == "title" %}selected{% endif %}
+                >
+                    Conference Title
+                </option>
+
+                <option
+                    value="organizer"
+                    {% if conference_sort_by == "organizer" %}selected{% endif %}
+                >
+                    Organizer
+                </option>
+
+                <option
+                    value="conference_date"
+                    {% if conference_sort_by == "conference_date" %}selected{% endif %}
+                >
+                    Conference Date
+                </option>
+
+                <option
+                    value="location"
+                    {% if conference_sort_by == "location" %}selected{% endif %}
+                >
+                    Location
+                </option>
+
+            </select>
+
+        </div>
 
 
-<button class="add-btn" onclick="openModal()">
+        <div class="control-group">
 
-+ Add Conference
+            <label for="conference_order">
+                Order:
+            </label>
 
-</button>
+            <select
+                id="conference_order"
+                onchange="applyConferenceSort()"
+            >
+
+                <option
+                    value="desc"
+                    {% if conference_order == "desc" %}selected{% endif %}
+                >
+                    Descending
+                </option>
+
+                <option
+                    value="asc"
+                    {% if conference_order == "asc" %}selected{% endif %}
+                >
+                    Ascending
+                </option>
+
+            </select>
+
+        </div>
 
 
-{% endif %}
+        <div class="control-group">
+
+            <label for="conference_page_size">
+                Show:
+            </label>
+
+            <select
+                id="conference_page_size"
+                onchange="applyConferenceSort()"
+            >
+
+                <option
+                    value="5"
+                    {% if conference_page_size == 5 %}selected{% endif %}
+                >
+                    5
+                </option>
+
+                <option
+                    value="10"
+                    {% if conference_page_size == 10 %}selected{% endif %}
+                >
+                    10
+                </option>
+
+                <option
+                    value="20"
+                    {% if conference_page_size == 20 %}selected{% endif %}
+                >
+                    20
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= TABLE ================= -->
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    ID
+                </th>
+
+                <th>
+                    Conference Title
+                </th>
+
+                <th>
+                    Organizer
+                </th>
+
+                <th>
+                    Institution
+                </th>
+
+                <th>
+                    Event Type
+                </th>
+
+                <th>
+                    Location
+                </th>
+
+                <th>
+                    Conference Date
+                </th>
+
+                <th>
+                    Website
+                </th>
+
+                {% if session["role"] in ["institution_admin","system_admin","researcher"] %}
+
+                <th>
+                    Action
+                </th>
+
+                {% endif %}
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% if conferences %}
+
+            {% for conference in conferences %}
+
+            <tr>
+
+                <td>
+{{ conference_pagination.offset + loop.index }}
+</td>
+
+
+                <td>
+                    {{ conference.title }}
+                </td>
+
+
+                <td>
+                    {{ conference.organizer }}
+                </td>
+
+
+                <td>
+                    {{ conference.institution }}
+                </td>
+
+
+                <td>
+                    {{ conference.event_type }}
+                </td>
+
+
+                <td>
+                    {{ conference.location }}
+                </td>
+
+
+                <td>
+                    {{ conference.conference_date }}
+                </td>
+
+
+                <td>
+
+                    {% if conference.website %}
+
+                    <a
+                        href="{{ conference.website }}"
+                        target="_blank"
+                    >
+                        Visit
+                    </a>
+
+                    {% else %}
+
+                    -
+
+                    {% endif %}
+
+                </td>
+
+
+                {% if session["role"] in ["institution_admin","system_admin","researcher"] %}
+
+                <td>
+
+
+                    {% if session["role"] in ["institution_admin","system_admin"] %}
+
+                    <a href="{{ url_for('edit_conference', id=conference.id) }}">
+
+                        <button class="edit-btn">
+                            Edit
+                        </button>
+
+                    </a>
+
+                    {% endif %}
+
+
+                    {% if session["role"] == "system_admin" %}
+
+                    <a
+                        href="{{ url_for('delete_conference', id=conference.id) }}"
+                        onclick="return confirm('Are you sure you want to delete this conference?');"
+                    >
+
+                        <button class="delete-btn">
+                            Delete
+                        </button>
+
+                    </a>
+
+                    {% endif %}
+
+
+                    <!-- Participants -->
+
+                    {% if session["role"] in ["institution_admin","system_admin"] %}
+
+                    <a href="{{ url_for('conference_participants', id=conference.id) }}">
+
+                        <button class="view-btn">
+                            Participants
+                        </button>
+
+                    </a>
+
+                    {% endif %}
+
+
+                    <!-- Researcher Registration -->
+
+                    {% if session["role"] == "researcher" %}
+
+
+                        {% if conference.registered %}
+
+                        <button
+                            class="closed-btn"
+                            disabled
+                        >
+                            Already Registered
+                        </button>
+
+
+                        {% elif conference.conference_date_obj and conference.conference_date_obj.date() > today.date() %}
+
+                        <a href="{{ url_for('register_conference', id=conference.id) }}">
+
+                            <button class="save-btn">
+                                Register
+                            </button>
+
+                        </a>
+
+
+                        {% else %}
+
+                        <button
+                            class="closed-btn"
+                            disabled
+                        >
+                            Registration Closed
+                        </button>
+
+                        {% endif %}
+
+                    {% endif %}
+
+                </td>
+
+                {% endif %}
+
+            </tr>
+
+            {% endfor %}
+
+
+            {% else %}
+
+            <tr>
+
+                <td
+                    colspan="9"
+                    class="empty"
+                >
+                    No Conferences Found
+                </td>
+
+            </tr>
+
+            {% endif %}
+
+        </tbody>
+
+    </table>
+
+
+    <!-- ================= PAGINATION ================= -->
+
+    {% if conference_pagination and conference_pagination.total_records > 0 %}
+
+    <div class="table-footer">
+
+        <div class="pagination-info">
+
+            Showing
+
+            {{ conference_pagination.offset + 1 }}
+
+            -
+
+            {{
+                [
+                    conference_pagination.offset + conference_page_size,
+                    conference_pagination.total_records
+                ] | min
+            }}
+
+            of
+
+            {{ conference_pagination.total_records }}
+
+            conferences
+
+        </div>
+
+
+        <div class="pagination">
+
+
+            <!-- Previous -->
+
+            {% if conference_pagination.page > 1 %}
+
+            <a href="{{ url_for(
+                'conferences',
+                conference_page=conference_pagination.page - 1,
+                conference_page_size=conference_page_size,
+                conference_sort_by=conference_sort_by,
+                conference_order=conference_order
+            ) }}">
+
+                Previous
+
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                Previous
+            </span>
+
+            {% endif %}
+
+
+            <!-- Page Numbers -->
+
+            {% for p in range(1, conference_pagination.total_pages + 1) %}
+
+                {% if p == conference_pagination.page %}
+
+                <span class="active">
+                    {{ p }}
+                </span>
+
+                {% else %}
+
+                <a href="{{ url_for(
+                    'conferences',
+                    conference_page=p,
+                    conference_page_size=conference_page_size,
+                    conference_sort_by=conference_sort_by,
+                    conference_order=conference_order
+                ) }}">
+
+                    {{ p }}
+
+                </a>
+
+                {% endif %}
+
+            {% endfor %}
+
+
+            <!-- Next -->
+
+            {% if conference_pagination.page < conference_pagination.total_pages %}
+
+            <a href="{{ url_for(
+                'conferences',
+                conference_page=conference_pagination.page + 1,
+                conference_page_size=conference_page_size,
+                conference_sort_by=conference_sort_by,
+                conference_order=conference_order
+            ) }}">
+
+                Next
+
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                Next
+            </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% endif %}
 
 
 </div>
-
-
-
-
-
-
-
-<!-- ================= SEARCH ================= -->
-
-
-<div class="search-box">
-
-
-<input
-
-type="text"
-
-id="conferenceSearch"
-
-placeholder="Search by Conference Name or Location"
-
-onkeyup="searchConference()"
-
->
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- ================= TABLE ================= -->
-
-
-<table>
-
-
-<thead>
-
-
-<tr>
-
-
-<th>
-ID
-</th>
-
-
-<th>
-Conference Title
-</th>
-
-
-<th>
-Organizer
-</th>
-
-<th>
-Institution
-</th>
-
-<th>
-Event Type
-</th>
-
-<th>
-Location
-</th>
-
-
-<th>
-Conference Date
-</th>
-
-
-<th>
-Website
-</th>
-
-
-{% if session["role"] in ["institution_admin","system_admin","researcher"] %}
-
-<th>
-Action
-</th>
-
-{% endif %}
-
-</tr>
-
-
-</thead>
-
-
-
-
-
-<tbody>
-
-
-
-{% if conferences %}
-
-
-
-{% for conference in conferences %}
-
-
-
-<tr>
-
-
-
-<td>
-{{ loop.index }}
-</td>
-
-
-
-<td>
-{{ conference.title }}
-</td>
-
-
-
-<td>
-{{ conference.organizer }}
-</td>
-
-
-<td>
-{{ conference.institution }}
-</td>
-
-
-<td>
-{{ conference.event_type }}
-</td>
-
-
-<td>
-{{ conference.location }}
-</td>
-
-
-
-<td>
-{{ conference.conference_date }}
-</td>
-
-
-
-<td>
-
-{% if conference.website %}
-
-<a href="{{ conference.website }}" target="_blank">
-Visit
-</a>
-
-{% else %}
-
--
-
-{% endif %}
-
-</td>
-
-
-
-
-<td>
-
-
-{% if session["role"] in ["institution_admin","system_admin"] %}
-
-<a href="{{ url_for('edit_conference', id=conference.id) }}">
-<button class="edit-btn">
-Edit
-</button>
-</a>
-
-{% endif %}
-
-
-
-
-
-{% if session["role"] == "system_admin" %}
-
-<a href="{{ url_for('delete_conference', id=conference.id) }}"
-onclick="return confirm('Are you sure you want to delete this conference?');">
-
-<button class="delete-btn">
-Delete
-</button>
-
-</a>
-
-{% endif %}
-
-
-
-
-
-
-<!-- Participants -->
-
-{% if session["role"] in ["institution_admin","system_admin"] %}
-
-<a href="{{ url_for('conference_participants', id=conference.id) }}">
-
-<button class="view-btn">
-Participants
-</button>
-
-</a>
-
-{% endif %}
-
-
-
-
-
-
-
-
-<!-- Researcher Registration -->
-
-{% if session["role"] == "researcher" %}
-
-
-
-{% if conference.conference_date_obj and conference.conference_date_obj.date() > today.date() %}
-
-
-
-<a href="{{ url_for('register_conference', id=conference.id) }}">
-
-<button class="save-btn">
-Register
-</button>
-
-</a>
-
-
-
-{% else %}
-
-
-
-<button class="closed-btn" disabled>
-Registration Closed
-</button>
-
-
-
-{% endif %}
-
-
-
-{% endif %}
-
-
-
-
-
-</td>
-
-
-</tr>
-
-
-
-{% endfor %}
-
-
-
-{% else %}
-
-
-
-<tr>
-
-<td colspan="9" class="empty">
-
-No Conferences Found
-
-</td>
-
-</tr>
-
-
-
-{% endif %}
-
-
-
-</tbody>
-
-
-</table>
-
-
-
-
-
-</div>
-
-
-
-
-
-
-
 
 
 <!-- ================= ADD CONFERENCE MODAL ================= -->
 
-
 <div class="modal" id="conferenceModal">
 
+    <div class="modal-content">
 
-<div class="modal-content">
+        <h2>
+            Add Conference
+        </h2>
 
 
-<h2>
-Add Conference
-</h2>
+        <form
+            method="POST"
+            action="{{ url_for('add_conference') }}"
+        >
 
 
+            <label>
+                Conference Title
+            </label>
 
+            <input
+                type="text"
+                name="title"
+                required
+            >
 
-<form method="POST"
-action="{{ url_for('add_conference') }}">
 
+            <label>
+                Organizer
+            </label>
 
+            <input
+                type="text"
+                name="organizer"
+                required
+            >
 
 
+            <label>
+                Location
+            </label>
 
-<label>
-Conference Title
-</label>
+            <input
+                type="text"
+                name="location"
+                required
+            >
 
 
-<input
+            <label>
+                Institution
+            </label>
 
-type="text"
+            <select
+                name="institution"
+                required
+            >
 
-name="title"
+                {% for institution in institutions %}
 
-required
+                <option value="{{ institution.name }}">
+                    {{ institution.name }}
+                </option>
 
->
+                {% endfor %}
 
+            </select>
 
 
+            <label>
+                Event Type
+            </label>
 
+            <select
+                name="event_type"
+                required
+            >
 
-<label>
-Organizer
-</label>
+                <option value="Conference">
+                    Conference
+                </option>
 
+                <option value="Workshop">
+                    Workshop
+                </option>
 
-<input
+                <option value="Seminar">
+                    Seminar
+                </option>
 
-type="text"
+            </select>
 
-name="organizer"
 
-required
+            <label>
+                Conference Date
+            </label>
 
->
+            <input
+                type="date"
+                name="conference_date"
+                required
+            >
 
 
+            <label>
+                Website
+            </label>
 
+            <input
+                type="text"
+                name="website"
+            >
 
 
+            <div class="modal-buttons">
 
-<label>
-Location
-</label>
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Save
+                </button>
 
 
-<input
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    onclick="closeModal()"
+                >
+                    Cancel
+                </button>
 
-type="text"
+            </div>
 
-name="location"
 
-required
+        </form>
 
->
-
-<label>
-Institution
-</label>
-
-<select name="institution" required>
-
-{% for institution in institutions %}
-
-<option value="{{ institution.name }}">
-{{ institution.name }}
-</option>
-
-{% endfor %}
-
-</select>
-
-
-<label>
-Event Type
-</label>
-
-<select name="event_type" required>
-
-<option value="Conference">
-Conference
-</option>
-
-<option value="Workshop">
-Workshop
-</option>
-
-<option value="Seminar">
-Seminar
-</option>
-
-
-</select>
-
-
-
-
-<label>
-Conference Date
-</label>
-
-
-<input
-type="date"
-name="conference_date"
-required>
-
-
-
-<label>
-Website
-</label>
-
-
-<input
-
-type="text"
-
-name="website"
-
->
-
-
-
-
-
-
-<div class="modal-buttons">
-
-
-
-<button type="submit"
-class="save-btn">
-
-Save
-
-</button>
-
-
-
-
-<button type="button"
-
-class="cancel-btn"
-
-onclick="closeModal()">
-
-Cancel
-
-</button>
-
-
+    </div>
 
 </div>
-
-
-
-
-</form>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
 
 
 <!-- ================= SCRIPT ================= -->
-
 
 <script>
 
 
 function openModal(){
 
-document.getElementById("conferenceModal").style.display="flex";
+    document.getElementById("conferenceModal").style.display = "flex";
 
 }
-
-
-
 
 
 function closeModal(){
 
-document.getElementById("conferenceModal").style.display="none";
+    document.getElementById("conferenceModal").style.display = "none";
 
 }
-
-
-
 
 
 function searchConference(){
 
+    let input =
+        document.getElementById("conferenceSearch");
 
-let input=document.getElementById("conferenceSearch");
-
-let filter=input.value.toLowerCase();
-
-
-let rows=document.querySelector("table")
-.getElementsByTagName("tr");
+    let filter =
+        input.value.toLowerCase();
 
 
-
-for(let i=1;i<rows.length;i++){
-
-
-let title=rows[i]
-.getElementsByTagName("td")[1];
+    let rows =
+        document.querySelector("table")
+        .getElementsByTagName("tr");
 
 
-let location=rows[i]
-.getElementsByTagName("td")[5];
+    for(let i = 1; i < rows.length; i++){
+
+        let title =
+            rows[i]
+            .getElementsByTagName("td")[1];
+
+        let location =
+            rows[i]
+            .getElementsByTagName("td")[5];
 
 
+        if(title && location){
 
-if(title && location){
+            let titleText =
+                title.textContent.toLowerCase();
+
+            let locationText =
+                location.textContent.toLowerCase();
 
 
-let titleText=title.textContent.toLowerCase();
+            if(
+                titleText.includes(filter) ||
+                locationText.includes(filter)
+            ){
 
-let locationText=location.textContent.toLowerCase();
+                rows[i].style.display = "";
 
+            }
 
+            else{
 
-if(
-titleText.includes(filter) ||
-locationText.includes(filter)
-){
+                rows[i].style.display = "none";
 
-rows[i].style.display="";
+            }
+
+        }
+
+    }
 
 }
 
-else{
 
-rows[i].style.display="none";
+/* ================= CONFERENCE SORT ================= */
 
-}
+function applyConferenceSort(){
 
-
-}
-
-
-}
+    const sortBy =
+        document.getElementById(
+            "conference_sort_by"
+        ).value;
 
 
+    const order =
+        document.getElementById(
+            "conference_order"
+        ).value;
+
+
+    const pageSize =
+        document.getElementById(
+            "conference_page_size"
+        ).value;
+
+
+    window.location.href =
+        "{{ url_for('conferences') }}" +
+        "?conference_page=1" +
+        "&conference_page_size=" +
+        pageSize +
+        "&conference_sort_by=" +
+        sortBy +
+        "&conference_order=" +
+        order;
 
 }
 
 
 </script>
+
+
 {% endblock %}

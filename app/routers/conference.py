@@ -41,10 +41,11 @@ def create_conference(
             detail="Only Institution Admin and System Admin can create conferences"
         )
 
-
     return crud.create_conference(
         db,
-        conference
+        conference,
+        current_user.id,
+        current_user.role
     )
 
 
@@ -52,13 +53,28 @@ def create_conference(
 # ---------------- View Conferences ----------------
 # All roles can view
 
-@router.get("/", response_model=list[schemas.ConferenceResponse])
+@router.get("/")
 def get_all_conferences(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str = "date",
+    order: str = "asc",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
 
-    return crud.get_all_conferences(db)
+    conferences, pagination = crud.get_all_conferences(
+        db,
+        page,
+        page_size,
+        sort_by,
+        order
+    )
+
+    return {
+        "data": conferences,
+        "pagination": pagination
+    }
 
 
 @router.get("/my")

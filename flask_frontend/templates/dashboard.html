@@ -231,49 +231,52 @@ Research Collaborations
 
 {% elif session["role"] == "reviewer" %}
 
-
 <div class="cards">
 
-<div class="stat-card">
+    <!-- ================= PENDING REVIEWS ================= -->
 
-<div class="stat-icon">
-⏳
-</div>
+    <div class="stat-card">
 
-<div class="stat-content">
+        <div class="stat-icon">
+            ⏳
+        </div>
 
-<h3>Pending Reviews</h3>
+        <div class="stat-content">
 
-<h1>
-0
-</h1>
+            <h3>Pending Reviews</h3>
 
-<p>Awaiting Review</p>
+            <h1>
+                {{ pending_review_count|default(0) }}
+            </h1>
 
-</div>
+            <p>Awaiting Review</p>
 
-</div>
+        </div>
+
+    </div>
 
 
-<div class="stat-card">
+    <!-- ================= REVIEWED PAPERS ================= -->
 
-<div class="stat-icon">
-✅
-</div>
+    <div class="stat-card">
 
-<div class="stat-content">
+        <div class="stat-icon">
+            ✅
+        </div>
 
-<h3>Reviewed Papers</h3>
+        <div class="stat-content">
 
-<h1>
-0
-</h1>
+            <h3>Reviewed Papers</h3>
 
-<p>Completed Reviews</p>
+            <h1>
+                {{ reviewed_paper_count|default(0) }}
+            </h1>
 
-</div>
+            <p>Completed Reviews</p>
 
-</div>
+        </div>
+
+    </div>
 
 </div>
 
@@ -382,15 +385,18 @@ Research Collaborations
 
 
 <!-- =================== RECENT ACTIVITIES =================== -->
+<!-- =================== RECENT ACTIVITIES =================== -->
 
 <div class="activity">
 
-    <h2>
-        Recent Activities
-    </h2>
+    <div class="activity-header">
 
-    <hr>
+        <div>
+            <h2>Recent Activities</h2>
+            <p>Your latest account activity</p>
+        </div>
 
+    </div>
 
     {% if activities %}
 
@@ -400,60 +406,35 @@ Research Collaborations
 
         <div class="activity-item">
 
+            <div class="activity-content">
 
-            <div class="activity-icon">
+                <div class="activity-action">
+                    {{ activity.action }}
+                </div>
 
-                {% if "publication" in activity.description.lower() %}
-                    📄
-
-                {% elif "project" in activity.description.lower() %}
-                    📁
-
-                {% elif "conference" in activity.description.lower() %}
-                    🎤
-
-                {% elif "collaboration" in activity.description.lower() %}
-                    🤝
-
-                {% else %}
-                    🔔
-
-                {% endif %}
-
-            </div>
-
-
-
-            <div class="activity-details">
-
-                <p>
+                <div class="activity-description">
                     {{ activity.description }}
-                </p>
+                </div>
 
-                <small>
+                <div class="activity-time">
                     {{ activity.created_at }}
-                </small>
+                </div>
 
             </div>
-
 
         </div>
-
 
         {% endfor %}
 
     </div>
 
-
     {% else %}
 
-        <p class="no-activity">
-            No recent activities available
-        </p>
-
+    <div class="no-activity">
+        <p>No recent activities available.</p>
+    </div>
 
     {% endif %}
-
 
 </div>
 </div>

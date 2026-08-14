@@ -49,17 +49,93 @@ Researchers
 
 
 
-<!-- ================= SEARCH ================= -->
+<!-- ================= SEARCH & CONTROLS ================= -->
 
-<div class="search-box">
+<div class="researcher-controls">
 
+    <div class="search-box">
+        <input
+            type="text"
+            id="researcherSearch"
+            placeholder="Search by Name or Email"
+            onkeyup="searchResearcher()">
+    </div>
 
-<input 
-type="text"
-id="researcherSearch"
-placeholder="Search by Name or Email"
-onkeyup="searchResearcher()">
+    <div class="control-group">
 
+        <label for="sort_by">
+            Sort by:
+        </label>
+
+        <select id="sort_by" onchange="applyResearcherSort()">
+
+            <option value="full_name"
+                {% if sort_by == "full_name" %}selected{% endif %}>
+                Name
+            </option>
+
+            <option value="email"
+                {% if sort_by == "email" %}selected{% endif %}>
+                Email
+            </option>
+
+            <option value="department"
+                {% if sort_by == "department" %}selected{% endif %}>
+                Department
+            </option>
+
+        </select>
+
+    </div>
+
+    <div class="control-group">
+
+        <label for="order">
+            Order:
+        </label>
+
+        <select id="order" onchange="applyResearcherSort()">
+
+            <option value="desc"
+                {% if order == "desc" %}selected{% endif %}>
+                Descending
+            </option>
+
+            <option value="asc"
+                {% if order == "asc" %}selected{% endif %}>
+                Ascending
+            </option>
+
+        </select>
+
+    </div>
+
+    <div class="control-group">
+
+        <label for="page_size">
+            Show:
+        </label>
+
+        <select id="page_size" onchange="applyResearcherSort()">
+
+            <option value="5"
+                {% if page_size == 5 %}selected{% endif %}>
+                5
+            </option>
+
+            <option value="10"
+                {% if page_size == 10 %}selected{% endif %}>
+                10
+            </option>
+
+            <option value="20"
+                {% if page_size == 20 %}selected{% endif %}>
+                20
+            </option>
+
+        </select>
+
+    </div>
 
 </div>
 
@@ -233,6 +309,99 @@ No Researchers Found
 </table>
 
 
+{% if pagination and pagination.total_records > 0 %}
+
+<div class="table-footer">
+
+    <div class="pagination-info">
+
+        Showing
+        {{ pagination.offset + 1 }}
+        -
+        {{ [pagination.offset + page_size, pagination.total_records] | min }}
+        of
+        {{ pagination.total_records }}
+        researchers
+
+    </div>
+
+
+    <div class="pagination">
+
+        {% if pagination.page > 1 %}
+
+        <a href="{{ url_for(
+            'researchers',
+            page=pagination.page - 1,
+            page_size=page_size,
+            sort_by=sort_by,
+            order=order
+        ) }}">
+            Previous
+        </a>
+
+        {% else %}
+
+        <span class="disabled">
+            Previous
+        </span>
+
+        {% endif %}
+
+
+        {% for p in range(1, pagination.total_pages + 1) %}
+
+            {% if p == pagination.page %}
+
+            <span class="active">
+                {{ p }}
+            </span>
+
+            {% else %}
+
+            <a href="{{ url_for(
+                'researchers',
+                page=p,
+                page_size=page_size,
+                sort_by=sort_by,
+                order=order
+            ) }}">
+                {{ p }}
+            </a>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if pagination.page < pagination.total_pages %}
+
+        <a href="{{ url_for(
+            'researchers',
+            page=pagination.page + 1,
+            page_size=page_size,
+            sort_by=sort_by,
+            order=order
+        ) }}">
+            Next
+        </a>
+
+        {% else %}
+
+        <span class="disabled">
+            Next
+        </span>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+</div>
 
 </div>
 
@@ -470,7 +639,28 @@ function searchResearcher(){
 
 }
 
+
 </script>
+<script>
 
+function applyResearcherSort() {
 
+    const sortBy =
+        document.getElementById("sort_by").value;
+
+    const order =
+        document.getElementById("order").value;
+
+    const pageSize =
+        document.getElementById("page_size").value;
+
+    window.location.href =
+        "{{ url_for('researchers') }}" +
+        "?page=1" +
+        "&page_size=" + pageSize +
+        "&sort_by=" + sortBy +
+        "&order=" + order;
+}
+
+</script>
 {% endblock %}

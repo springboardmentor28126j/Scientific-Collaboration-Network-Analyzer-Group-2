@@ -425,3 +425,104 @@ body{
     color: #777;
 
 }
+.activity {
+    width:100%;
+    box-sizing:border-box;
+}
+.activity-list {
+    width:100%;
+}
+.main {
+    width:100%;
+    box-sizing:border-box;
+}
+/* ================= RECENT ACTIVITIES ================= */
+
+.activity {
+    margin-top: 30px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px 26px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.activity-header h2 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.activity-header p {
+    margin: 5px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+
+/* ================= ACTIVITY LIST ================= */
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ================= ACTIVITY ITEM ================= */
+
+.activity-item {
+    padding: 18px 4px;
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s ease;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background: #f8fafc;
+}
+
+
+/* ================= ACTIVITY CONTENT ================= */
+
+.activity-content {
+    padding-left: 4px;
+}
+
+.activity-action {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 6px;
+}
+
+.activity-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #374151;
+}
+
+.activity-time {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+
+/* ================= NO ACTIVITY ================= */
+
+.no-activity {
+    padding: 30px 10px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+}

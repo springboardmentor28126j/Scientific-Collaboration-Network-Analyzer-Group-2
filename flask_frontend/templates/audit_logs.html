@@ -1,0 +1,90 @@
+
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/audit_logs.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="main" id="main">
+
+    <div class="page-header">
+        <h2>Audit Logs</h2>
+        <p>System activity history</p>
+    </div>
+
+    {% if error %}
+
+        <div class="error-message">
+            {{ error }}
+        </div>
+
+    {% endif %}
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User ID</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% if logs %}
+
+                    {% for log in logs %}
+
+                    <tr>
+
+                     <td>{{ loop.index }}</td>
+
+                        <td>
+                            {{ log.user_id }}
+                        </td>
+
+                        <td>
+                            {{ log.action }}
+                        </td>
+
+                        <td>
+                            {{ log.description }}
+                        </td>
+
+                        <td>
+                           {{ log.created_at[:10] }} |
+{{ (log.created_at[11:13]|int % 12 or 12) }}:{{ log.created_at[14:16] }}
+{% if log.created_at[11:13]|int >= 12 %}PM{% else %}AM{% endif %}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="5" class="no-data">
+                            No audit logs available
+                        </td>
+                    </tr>
+
+                {% endif %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

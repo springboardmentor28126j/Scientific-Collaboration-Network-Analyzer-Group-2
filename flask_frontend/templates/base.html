@@ -12,7 +12,8 @@
 Scientific Collaboration Network Analyzer
 </title>
 
-
+<link rel="stylesheet" 
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/common.css') }}">
 
@@ -55,10 +56,85 @@ Scientific Collaboration Network Analyzer
 
 <div class="navbar-right">
 
-Welcome, {{ session["full_name"] }}
+
+    <!-- Notification -->
+
+<!-- Notification -->
+
+<div class="notification-bell">
+
+
+    <a href="#" id="notification-btn">
+
+
+        <i class="fa-solid fa-bell"></i>
+
+
+        <span id="notification-count" class="hidden">
+            0
+        </span>
+
+
+    </a>
+
+
+
+    <!-- Notification Dropdown -->
+
+
+    <div class="notification-dropdown" id="notification-dropdown">
+
+
+        <div class="notification-header">
+
+
+            <h3>
+                Notifications
+            </h3>
+
+
+            <a href="{{ url_for('notifications') }}">
+                View All
+            </a>
+
+
+        </div>
+
+
+
+        <div id="notification-list">
+
+
+            <p class="empty-notification">
+                No notifications
+            </p>
+
+
+        </div>
+
+
+
+    </div>
+
 
 </div>
 
+
+
+    <!-- User -->
+
+  <div class="user-profile">
+
+    <i class="fa-solid fa-circle-user"></i>
+
+    <span>
+        {{ session["full_name"] }}
+    </span>
+
+</div>
+
+
+</div>
 
 </div>
 
@@ -104,7 +180,7 @@ Researchers
 <!-- Publications -->
 
 
-{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
 
 
 <a href="{{ url_for('publications') }}">
@@ -204,7 +280,7 @@ Conferences
 
 <!-- Citation & Reference -->
 
-{% if session["role"] in ["researcher", "institution_admin", "system_admin", "reviewer"] %}
+{% if session["role"] in ["researcher", "institution_admin", "system_admin"] %}
 
 <a href="{{ url_for('citation_reference') }}">
 
@@ -263,8 +339,32 @@ Profile
 {% endif %}
 
 
+<!-- My Reviews -->
 
+{% if session["role"] == "reviewer" %}
 
+<a href="{{ url_for('reviewer') }}">
+    My Reviews
+</a>
+
+{% endif %}
+
+<!-- Review Management -->
+
+{% if session["role"] == "system_admin" %}
+
+<a href="{{ url_for('review_management') }}">
+    Review Management
+</a>
+
+{% endif %}
+{% if session["role"] == "system_admin" %}
+
+<a href="{{ url_for('audit_logs') }}">
+    Audit Logs
+</a>
+
+{% endif %}
 <a href="{{ url_for('logout') }}">
 
 Logout
@@ -315,7 +415,280 @@ document.getElementById("main").classList.toggle("shift");
 
 </script>
 
+<script>
 
+
+function loadNotificationCount(){
+
+
+fetch("/notification-count")
+
+
+.then(response=>response.json())
+
+
+.then(data=>{
+
+
+let badge = document.getElementById(
+"notification-count"
+);
+
+
+
+if(data.count > 0){
+
+
+    badge.innerHTML = data.count;
+
+    badge.classList.remove("hidden");
+
+
+}
+
+else{
+
+
+    badge.classList.add("hidden");
+
+
+}
+
+
+});
+
+
+}
+
+
+
+loadNotificationCount();
+
+
+
+setInterval(
+loadNotificationCount,
+10000
+);
+
+
+
+
+
+// Open notification dropdown
+
+document
+.getElementById("notification-btn")
+.addEventListener(
+"click",
+function(e){
+
+
+e.preventDefault();
+
+
+e.stopPropagation();
+
+
+
+let dropdown =
+document.getElementById(
+"notification-dropdown"
+);
+
+
+
+if(dropdown.style.display === "block"){
+
+
+    dropdown.style.display="none";
+
+
+}
+
+else{
+
+
+    dropdown.style.display="block";
+
+
+    loadNotifications();
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+
+function loadNotifications(){
+
+
+
+fetch("/notifications-data")
+
+
+
+.then(response=>response.json())
+
+
+
+.then(data=>{
+
+
+let list =
+document.getElementById(
+"notification-list"
+);
+
+
+
+list.innerHTML="";
+
+
+
+if(data.length === 0){
+
+
+list.innerHTML=
+`
+<p class="empty-notification">
+No notifications
+</p>
+`;
+
+
+return;
+
+
+}
+
+
+
+
+data.slice(0,5).forEach(n=>{
+
+
+list.innerHTML +=
+
+`
+
+<div class="notification-item">
+
+
+<h4>
+${n.title}
+</h4>
+
+
+<p>
+${n.message}
+</p>
+
+
+<small>
+${formatTime(n.created_at)}
+</small>
+
+
+</div>
+
+`;
+
+
+});
+
+
+});
+
+
+}
+
+
+
+
+
+
+// Close dropdown when clicking outside
+
+document.addEventListener(
+"click",
+function(e){
+
+
+let bell =
+document.querySelector(
+".notification-bell"
+);
+
+
+let dropdown =
+document.getElementById(
+"notification-dropdown"
+);
+
+
+
+if(!bell.contains(e.target)){
+
+
+dropdown.style.display="none";
+
+
+}
+
+
+});
+function formatTime(dateString){
+
+    const created = new Date(dateString);
+    const now = new Date();
+
+    const seconds = Math.floor((now - created) / 1000);
+
+    if(seconds < 60){
+        return "Just now";
+    }
+
+    const minutes = Math.floor(seconds / 60);
+
+    if(minutes < 60){
+        return minutes + (minutes == 1 ? " minute ago" : " minutes ago");
+    }
+
+    const hours = Math.floor(minutes / 60);
+
+    if(hours < 24){
+        return hours + (hours == 1 ? " hour ago" : " hours ago");
+    }
+
+    const days = Math.floor(hours / 24);
+
+    if(days == 1){
+        return "Yesterday";
+    }
+
+    if(days < 7){
+        return days + " days ago";
+    }
+
+    return created.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+}
+
+</script>
 
 
 

@@ -29,29 +29,59 @@ def create_project(
 # Get All Projects
 # ==========================
 
-@router.get("/", response_model=list[schemas.ProjectResponse])
+@router.get("/")
 def get_projects(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str = "name",
+    order: str = "asc",
     db: Session = Depends(get_db)
 ):
 
-    return crud.get_projects(db)
+    projects, pagination = crud.get_projects(
+        db,
+        page,
+        page_size,
+        sort_by,
+        order
+    )
+
+    return {
+        "data": projects,
+        "pagination": pagination
+    }
 
 # ==========================
 # Get Projects By Institution
 # ==========================
 
-@router.get("/institution/{institution_id}", response_model=list[schemas.ProjectResponse])
+# ==========================
+# Get Projects By Institution
+# ==========================
+
+@router.get("/institution/{institution_id}")
 def get_projects_by_institution(
     institution_id: int,
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str = "project_name",
+    order: str = "asc",
     db: Session = Depends(get_db)
 ):
 
-    projects = crud.get_projects_by_institution(
+    projects, pagination = crud.get_projects_by_institution(
         db,
-        institution_id
+        institution_id,
+        page,
+        page_size,
+        sort_by,
+        order
     )
 
-    return projects
+    return {
+        "data": projects,
+        "pagination": pagination
+    }
 
 # ==========================
 # Get Projects By Researcher

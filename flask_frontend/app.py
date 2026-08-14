@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session,flash
 import requests
 from datetime import datetime
 from flask import send_file
 from io import BytesIO
 from reportlab.pdfgen import canvas
 import openpyxl
+from flask import jsonify
 
 app = Flask(__name__)
 
@@ -277,17 +278,16 @@ def register():
     )
 
 # ---------------------- Dashboard ----------------------
+
 @app.route("/dashboard")
 def dashboard():
 
     if "token" not in session:
         return redirect(url_for("login"))
 
-
     headers = {
         "Authorization": f"Bearer {session['token']}"
     }
-
 
     user_count = 0
     researcher_count = 0
@@ -298,14 +298,19 @@ def dashboard():
     department_count = 0
     conference_count = 0
 
+    # Reviewer dashboard counts
+    pending_review_count = 0
+    reviewed_paper_count = 0
+
     activities = []
 
+    # =========================================
+    # COMMON DATA
+    # =========================================
 
-
-    # ================= COMMON DATA =================
-
-
+    # -----------------------------------------
     # Users
+    # -----------------------------------------
 
     response = requests.get(
         f"{API_URL}/users",
@@ -315,11 +320,13 @@ def dashboard():
     if response.status_code == 200:
 
         users = response.json()
-        user_count = len(users)
 
+        if isinstance(users, list):
+            user_count = len(users)
 
-
+    # -----------------------------------------
     # Institutions
+    # -----------------------------------------
 
     response = requests.get(
         f"{API_URL}/institutions/",
@@ -329,11 +336,13 @@ def dashboard():
     if response.status_code == 200:
 
         institutions = response.json()
-        institution_count = len(institutions)
 
+        if isinstance(institutions, list):
+            institution_count = len(institutions)
 
-
+    # -----------------------------------------
     # Projects
+    # -----------------------------------------
 
     response = requests.get(
         f"{API_URL}/projects/",
@@ -344,11 +353,25 @@ def dashboard():
 
     if response.status_code == 200:
 
-        projects = response.json()
+        response_data = response.json()
 
+        if isinstance(response_data, dict):
 
+            projects = response_data.get(
+                "data",
+                []
+            )
 
-    # Project Members  ✅ ADDED
+        else:
+
+            projects = response_data
+
+        if not isinstance(projects, list):
+            projects = []
+
+    # -----------------------------------------
+    # Project Members
+    # -----------------------------------------
 
     response = requests.get(
         f"{API_URL}/project-members/",
@@ -361,9 +384,12 @@ def dashboard():
 
         project_members = response.json()
 
+        if not isinstance(project_members, list):
+            project_members = []
 
-
+    # -----------------------------------------
     # Institution Collaborations
+    # -----------------------------------------
 
     response = requests.get(
         f"{API_URL}/institution-collaborations/",
@@ -376,405 +402,607 @@ def dashboard():
 
         collaborations = response.json()
 
-
+        if not isinstance(collaborations, list):
+            collaborations = []
 
     project_collaboration_ids = [
-
         c.get("project_id")
-
         for c in collaborations
-
+        if isinstance(c, dict)
     ]
 
+    # =========================================
+    # ROLE
+    # =========================================
 
+    role = session.get("role")
 
-    # Activities
+    # =========================================
+    # INSTITUTION ADMIN
+    # =========================================
+
+    if role == "institution_admin":
+
+        # -------------------------------------
+        # Researchers
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/researchers/",
+            headers=headers
+        )
+
+        researchers = []
+
+        if response.status_code == 200:
+
+            response_data = response.json()
+
+            if isinstance(response_data, dict):
+
+                researchers = response_data.get(
+                    "data",
+                    []
+                )
+
+            else:
+
+                researchers = response_data
+
+            if not isinstance(researchers, list):
+                researchers = []
+
+            researchers = [
+                r
+                for r in researchers
+                if (
+                    isinstance(r, dict)
+                    and r.get("institution")
+                    == session.get("institution")
+                )
+            ]
+
+            researcher_count = len(researchers)
+
+        # -------------------------------------
+        # Publications
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/publications/",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            response_data = response.json()
+
+            if isinstance(response_data, dict):
+
+                publications = response_data.get(
+                    "data",
+                    []
+                )
+
+            else:
+
+                publications = response_data
+
+            if not isinstance(publications, list):
+                publications = []
+
+            researcher_ids = [
+                r.get("id")
+                for r in researchers
+                if isinstance(r, dict)
+            ]
+
+            publications = [
+                p
+                for p in publications
+                if (
+                    isinstance(p, dict)
+                    and p.get("researcher_id")
+                    in researcher_ids
+                )
+            ]
+
+            publication_count = len(publications)
+
+        # -------------------------------------
+        # Departments
+        # -------------------------------------
+
+        departments = set()
+
+        for researcher in researchers:
+
+            if (
+                isinstance(researcher, dict)
+                and researcher.get("department")
+            ):
+
+                departments.add(
+                    researcher.get("department")
+                )
+
+        department_count = len(departments)
+
+        # -------------------------------------
+        # Conferences
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/conferences/",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            response_data = response.json()
+
+            if isinstance(response_data, dict):
+
+                conferences = response_data.get(
+                    "data",
+                    []
+                )
+
+            else:
+
+                conferences = response_data
+
+            if not isinstance(conferences, list):
+                conferences = []
+
+            conferences = [
+                c
+                for c in conferences
+                if (
+                    isinstance(c, dict)
+                    and c.get("institution")
+                    == session.get("institution")
+                )
+            ]
+
+            conference_count = len(conferences)
+
+        # -------------------------------------
+        # Institution Projects
+        # -------------------------------------
+
+        institution_projects = [
+            p
+            for p in projects
+            if (
+                isinstance(p, dict)
+                and p.get("institution_id")
+                == session.get("institution_id")
+            )
+        ]
+
+        project_count = len(institution_projects)
+
+        # -------------------------------------
+        # Collaborations
+        # -------------------------------------
+
+        collaborative_projects = []
+
+        for project in institution_projects:
+
+            if (
+                project.get("team_members_count", 0) > 0
+                or project.get("id")
+                in project_collaboration_ids
+            ):
+
+                collaborative_projects.append(
+                    project
+                )
+
+        collaboration_count = len(
+            collaborative_projects
+        )
+
+    # =========================================
+    # RESEARCHER
+    # =========================================
+
+    elif role == "researcher":
+
+        # -------------------------------------
+        # My Publications
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/publications/user/{session['user_id']}",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            publications = response.json()
+
+            if isinstance(publications, list):
+
+                publication_count = len(
+                    publications
+                )
+
+        # -------------------------------------
+        # My Conferences
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/conference-registration/my",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            researcher_conferences = response.json()
+
+            if isinstance(
+                researcher_conferences,
+                list
+            ):
+
+                conference_count = len(
+                    researcher_conferences
+                )
+
+        # -------------------------------------
+        # My Projects
+        # -------------------------------------
+
+        my_project_ids = [
+            pm.get("project_id")
+            for pm in project_members
+            if (
+                isinstance(pm, dict)
+                and pm.get("researcher_id")
+                == session.get("researcher_id")
+            )
+        ]
+
+        researcher_projects = [
+            p
+            for p in projects
+            if (
+                isinstance(p, dict)
+                and p.get("id")
+                in my_project_ids
+            )
+        ]
+
+        project_count = len(
+            researcher_projects
+        )
+
+        # -------------------------------------
+        # My Collaborations
+        # -------------------------------------
+
+        collaborative_projects = []
+
+        for project in researcher_projects:
+
+            project_id = project.get("id")
+
+            has_team_members = any(
+                pm.get("project_id") == project_id
+                for pm in project_members
+                if isinstance(pm, dict)
+            )
+
+            has_institution_collaboration = (
+                project_id
+                in project_collaboration_ids
+            )
+
+            if (
+                has_team_members
+                or has_institution_collaboration
+            ):
+
+                collaborative_projects.append(
+                    project
+                )
+
+        collaboration_count = len(
+            collaborative_projects
+        )
+
+    # =========================================
+    # REVIEWER
+    # =========================================
+
+    elif role == "reviewer":
+
+        response = requests.get(
+            f"{API_URL}/reviewer/my-reviews",
+            headers=headers
+        )
+
+        reviews = []
+
+        if response.status_code == 200:
+
+            reviews = response.json()
+
+            if not isinstance(reviews, list):
+                reviews = []
+
+        # -------------------------------------
+        # Pending Reviews
+        # -------------------------------------
+
+        pending_reviews = [
+            review
+            for review in reviews
+            if (
+                isinstance(review, dict)
+                and review.get("decision")
+                == "Pending"
+            )
+        ]
+
+        # -------------------------------------
+        # Completed Reviews
+        # -------------------------------------
+
+        reviewed_reviews = [
+            review
+            for review in reviews
+            if (
+                isinstance(review, dict)
+                and review.get("decision")
+                in [
+                    "Approved",
+                    "Rejected",
+                    "Needs Revision"
+                ]
+            )
+        ]
+
+        pending_review_count = len(
+            pending_reviews
+        )
+
+        reviewed_paper_count = len(
+            reviewed_reviews
+        )
+
+    # =========================================
+    # SYSTEM ADMIN
+    # =========================================
+
+    elif role == "system_admin":
+
+        # -------------------------------------
+        # Researchers
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/researchers/",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            response_data = response.json()
+
+            if isinstance(response_data, dict):
+
+                researchers = response_data.get(
+                    "data",
+                    []
+                )
+
+            else:
+
+                researchers = response_data
+
+            if isinstance(researchers, list):
+
+                researcher_count = len(
+                    researchers
+                )
+
+        # -------------------------------------
+        # Publications
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/publications/",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            response_data = response.json()
+
+            if isinstance(response_data, dict):
+
+                publications = response_data.get(
+                    "data",
+                    []
+                )
+
+            else:
+
+                publications = response_data
+
+            if isinstance(publications, list):
+
+                publication_count = len(
+                    publications
+                )
+
+        # -------------------------------------
+        # Conferences
+        # -------------------------------------
+
+        response = requests.get(
+            f"{API_URL}/conferences/",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            response_data = response.json()
+
+            if isinstance(response_data, dict):
+
+                conferences = response_data.get(
+                    "data",
+                    []
+                )
+
+            else:
+
+                conferences = response_data
+
+            if isinstance(conferences, list):
+
+                conference_count = len(
+                    conferences
+                )
+
+        # -------------------------------------
+        # Projects
+        # -------------------------------------
+
+        project_count = len(projects)
+
+        # -------------------------------------
+        # Collaborations
+        # -------------------------------------
+
+        collaborative_projects = []
+
+        for project in projects:
+
+            if (
+                project.get("team_members_count", 0) > 0
+                or project.get("id")
+                in project_collaboration_ids
+            ):
+
+                collaborative_projects.append(
+                    project
+                )
+
+        collaboration_count = len(
+            collaborative_projects
+        )
+
+    # =========================================
+    # RECENT ACTIVITIES
+    # =========================================
 
     response = requests.get(
         f"{API_URL}/activities/",
         headers=headers
     )
 
+    print(
+        "ACTIVITY API STATUS:",
+        response.status_code
+    )
+
+    print(
+        "ACTIVITY API RESPONSE:",
+        response.text
+    )
+
+    activities = []
+
     if response.status_code == 200:
 
-        activities = response.json()
+        try:
 
+            activities = response.json()
 
+        except ValueError:
 
-
-
-    # ================= INSTITUTION ADMIN =================
-
-
-    if session["role"] == "institution_admin":
-
-
-        response = requests.get(
-            f"{API_URL}/researchers/",
-            headers=headers
-        )
-
-
-        researchers = []
-
-
-        if response.status_code == 200:
-
-            researchers = response.json()
-
-
-            researchers = [
-
-                r for r in researchers
-
-                if r.get("institution")
-                == session.get("institution")
-
-            ]
-
-
-            researcher_count = len(researchers)
-
-
-
-        response = requests.get(
-            f"{API_URL}/publications/",
-            headers=headers
-        )
-
-
-        if response.status_code == 200:
-
-
-            publications = response.json()
-
-
-            researcher_ids = [
-
-                r["id"]
-
-                for r in researchers
-
-            ]
-
-
-            publications = [
-
-                p for p in publications
-
-                if p.get("researcher_id")
-                in researcher_ids
-
-            ]
-
-
-            publication_count = len(publications)
-
-
-
-        departments = set()
-
-
-        for r in researchers:
-
-            if r.get("department"):
-
-                departments.add(
-                    r.get("department")
-                )
-
-
-        department_count = len(departments)
-
-
-
-        response = requests.get(
-            f"{API_URL}/conferences/",
-            headers=headers
-        )
-
-
-        if response.status_code == 200:
-
-            conferences = response.json()
-
-
-            conferences = [
-
-                c for c in conferences
-
-                if c.get("institution")
-                == session.get("institution")
-
-            ]
-
-
-            conference_count = len(conferences)
-
-
-
-        institution_projects = [
-
-            p for p in projects
-
-            if p.get("institution_id")
-            == session.get("institution_id")
-
-        ]
-
-
-        project_count = len(institution_projects)
-
-
-
-        collaborative_projects = []
-
-
-        for project in institution_projects:
-
-
-            if (
-                project.get("team_members_count",0)>0
-                or
-                project.get("id") in project_collaboration_ids
-            ):
-
-                collaborative_projects.append(project)
-
-
-
-        collaboration_count = len(
-            collaborative_projects
-        )
-
-
-
-
-
-
-    # ================= RESEARCHER =================
-
-
-    elif session["role"] == "researcher":
-
-        print("SESSION DATA:", session)
-        print("PROJECT MEMBERS:", project_members)
-        response = requests.get(
-            f"{API_URL}/publications/user/{session['user_id']}",
-            headers=headers
-        )
-
-
-        if response.status_code == 200:
-
-            publications = response.json()
-            publication_count = len(publications)
-
-            # Researcher Conferences
-
-            response = requests.get(
-               f"{API_URL}/conference-registration/my",
-               headers=headers
+            print(
+                "ACTIVITY API returned invalid JSON"
             )
 
+            activities = []
 
-            if response.status_code == 200:
+        if not isinstance(activities, list):
 
-                researcher_conferences = response.json()
-
-                conference_count = len(
-                    researcher_conferences
-                )
-
-        # ✅ UPDATED PROJECT FILTERING
-
-
-        my_project_ids = [
-
-            pm.get("project_id")
-
-            for pm in project_members
-
-            if pm.get("researcher_id")
-            == session.get("researcher_id")
-
-        ]
-
-
-
-        researcher_projects = [
-
-            p for p in projects
-
-            if p.get("id")
-            in my_project_ids
-
-        ]
-
-
-
-        project_count = len(
-            researcher_projects
-        )
-
-
-
-
-
-        # ✅ UPDATED COLLABORATION CHECK
-
-
-        collaborative_projects = []
-
-
-        for project in researcher_projects:
-
-
-            project_id = project.get("id")
-
-
-            has_team_members = any(
-
-                pm.get("project_id")
-                == project_id
-
-                for pm in project_members
-
+            print(
+                "ACTIVITY API response is not a list"
             )
 
+            activities = []
 
-            has_institution_collaboration = (
+    else:
 
-                project_id
-                in project_collaboration_ids
-
-            )
-
-
-
-            if (
-                has_team_members
-                or
-                has_institution_collaboration
-            ):
-
-                collaborative_projects.append(project)
-
-
-
-        collaboration_count = len(
-            collaborative_projects
+        print(
+            "Activity API Error:",
+            response.status_code,
+            response.text
         )
 
+    # -----------------------------------------
+    # Latest activities first
+    # -----------------------------------------
 
+    activities = sorted(
+        activities,
+        key=lambda activity: (
+            activity.get("created_at", "")
+            if isinstance(activity, dict)
+            else ""
+        ),
+        reverse=True
+    )
 
+    # -----------------------------------------
+    # Dashboard displays latest 5
+    # -----------------------------------------
 
+    activities = activities[:5]
 
+    print(
+        "FINAL DASHBOARD ACTIVITIES:",
+        activities
+    )
 
-    # ================= SYSTEM ADMIN =================
-
-
-    elif session["role"] == "system_admin":
-
-
-        response = requests.get(
-            f"{API_URL}/researchers/",
-            headers=headers
-        )
-
-
-        if response.status_code == 200:
-
-            researchers = response.json()
-            researcher_count = len(researchers)
-
-
-
-
-        response = requests.get(
-            f"{API_URL}/publications/",
-            headers=headers
-        )
-
-
-        if response.status_code == 200:
-
-            publications = response.json()
-            publication_count = len(publications)
-
-
-
-
-        response = requests.get(
-            f"{API_URL}/conferences/",
-            headers=headers
-        )
-
-
-        if response.status_code == 200:
-
-            conferences = response.json()
-            conference_count = len(conferences)
-
-
-
-
-        project_count = len(projects)
-
-
-
-        collaborative_projects = []
-
-
-        for project in projects:
-
-
-            if (
-                project.get("team_members_count",0)>0
-                or
-                project.get("id") in project_collaboration_ids
-            ):
-
-                collaborative_projects.append(project)
-
-
-
-        collaboration_count = len(
-            collaborative_projects
-        )
-
-
-
-
+    # =========================================
+    # RETURN DASHBOARD
+    # =========================================
 
     return render_template(
-
         "dashboard.html",
 
-        role=session["role"],
-
+        role=role,
         name=session["full_name"],
 
         user_count=user_count,
-
         researcher_count=researcher_count,
-
         publication_count=publication_count,
-
         institution_count=institution_count,
-
         project_count=project_count,
-
         collaboration_count=collaboration_count,
-
         department_count=department_count,
-
         conference_count=conference_count,
 
-        activities=activities
+        pending_review_count=pending_review_count,
+        reviewed_paper_count=reviewed_paper_count,
 
+        activities=activities
     )
 # ---------------------- Researchers ----------------------
+
+# ==========================
+# Researchers
+# ==========================
 
 @app.route("/researchers")
 def researchers():
@@ -782,159 +1010,219 @@ def researchers():
     if "token" not in session:
         return redirect(url_for("login"))
 
-
     headers = {
         "Authorization": f"Bearer {session['token']}"
     }
 
+    role = session.get("role")
 
-    # Get all researchers from backend
+    page = request.args.get(
+        "page",
+        1,
+        type=int
+    )
+
+    page_size = request.args.get(
+        "page_size",
+        5,
+        type=int
+    )
+
+    sort_by = request.args.get(
+        "sort_by",
+        "full_name"
+    )
+
+    order = request.args.get(
+        "order",
+        "asc"
+    )
+
+    # Safety
+    if page < 1:
+        page = 1
+
+    if page_size < 1 or page_size > 100:
+        page_size = 5
+
+    if sort_by not in [
+        "full_name",
+        "email",
+        "institution"
+    ]:
+        sort_by = "full_name"
+
+    if order not in [
+        "asc",
+        "desc"
+    ]:
+        order = "asc"
+
+    # ==================================================
+    # GET RESEARCHERS
+    # ==================================================
 
     response = requests.get(
         f"{API_URL}/researchers/",
-        headers=headers
+        headers=headers,
+        params={
+            "page": page,
+            "page_size": page_size,
+            "sort_by": sort_by,
+            "order": order
+        }
     )
 
+    print(
+        "GET RESEARCHERS:",
+        response.status_code,
+        response.text
+    )
 
     researchers = []
-
+    pagination = {
+        "page": page,
+        "page_size": page_size,
+        "total_records": 0,
+        "total_pages": 1,
+        "offset": 0
+    }
 
     if response.status_code == 200:
 
-        researchers = response.json()
+        data = response.json()
 
+        researchers = data.get(
+            "data",
+            []
+        )
 
-        print("ALL RESEARCHERS:", researchers)
-        print("USER ROLE:", session.get("role"))
-        print("SESSION INSTITUTION:", session.get("institution"))
+        pagination = data.get(
+            "pagination",
+            pagination
+        )
 
+    else:
 
+        try:
+            error = response.json().get(
+                "detail",
+                "Failed to load researchers"
+            )
+        except Exception:
+            error = "Failed to load researchers"
 
-        # Institution Admin -> show only own institution researchers
-
-        if session.get("role") == "institution_admin":
-
-
-            institution_name = session.get("institution")
-
-
-            researchers = [
-
-                r for r in researchers
-
-                if r.get("institution") == institution_name
-
-            ]
-
-
-            print("FILTERED RESEARCHERS:", researchers)
-
-
+        return render_template(
+            "researchers.html",
+            researchers=[],
+            pagination=pagination,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            order=order,
+            error=error
+        )
 
     return render_template(
         "researchers.html",
-        researchers=researchers
+        researchers=researchers,
+        pagination=pagination,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        order=order
     )
 # ---------------------- Add Researcher ----------------------
 
 @app.route("/researchers/add", methods=["POST"])
 def add_researcher():
 
-
     if "token" not in session:
+        return redirect(url_for("login"))
 
+    role = session.get("role")
+
+    # Only these roles can add
+    if role not in [
+        "institution_admin",
+        "system_admin"
+    ]:
         return redirect(
-            url_for("login")
+            url_for("researchers")
         )
 
-
-
     data = {
-
-
         "full_name": request.form.get("full_name"),
-
         "email": request.form.get("email"),
-
         "department": request.form.get("department"),
-
         "institution": request.form.get("institution"),
-
         "designation": request.form.get("designation"),
-
-        "research_interests": request.form.get("research_interests"),
-
-        "skills": None,
-
-        "phone": None
-
+        "research_interests": request.form.get(
+            "research_interests"
+        ),
+        "skills": request.form.get("skills"),
+        "phone": request.form.get("phone")
     }
 
+    # Institution Admin must use their institution
+    if role == "institution_admin":
 
+        data["institution"] = session.get(
+            "institution"
+        )
 
     headers = {
-
-
-        "Authorization":
-        f"Bearer {session['token']}"
-
+        "Authorization": f"Bearer {session['token']}"
     }
 
-
-
-
     response = requests.post(
-
         f"{API_URL}/researchers/",
-
         json=data,
-
         headers=headers
-
     )
 
+    print(
+        "ADD RESEARCHER STATUS:",
+        response.status_code
+    )
 
-
-    print("ADD RESEARCHER STATUS:", response.status_code)
-
-    print("ADD RESEARCHER RESPONSE:", response.text)
-
-
+    print(
+        "ADD RESEARCHER RESPONSE:",
+        response.text
+    )
 
     if response.status_code == 200:
-
 
         return redirect(
             url_for("researchers")
         )
 
-
-
     try:
-
         error_message = response.json().get(
-
             "detail",
-
             "Failed to add researcher"
-
         )
-
 
     except ValueError:
 
         error_message = response.text
 
-
-
     return render_template(
-
         "researchers.html",
-
+        researchers=[],
+        pagination={
+            "page": 1,
+            "page_size": 5,
+            "total_records": 0,
+            "total_pages": 1,
+            "offset": 0
+        },
+        page=1,
+        page_size=5,
+        sort_by="full_name",
+        order="asc",
         error=error_message
-
     )
-
 # ---------------------- Delete Researcher ----------------------
 
 @app.route("/researchers/delete/<int:researcher_id>")
@@ -1274,152 +1562,458 @@ def institution_profile():
         institution=None
     )
 # ---------------------- Publications ----------------------
-
 @app.route("/publications")
 def publications():
 
+    # ==================================================
+    # LOGIN CHECK
+    # ==================================================
+
     if "token" not in session:
         return redirect(url_for("login"))
-
 
     headers = {
         "Authorization": f"Bearer {session['token']}"
     }
 
-
     publications = []
     researchers = []
 
+    # ==================================================
+    # PAGINATION + SORTING PARAMETERS
+    # ==================================================
 
-    # ================= GET RESEARCHERS =================
+    page = request.args.get(
+        "page",
+        1,
+        type=int
+    )
 
+    page_size = request.args.get(
+        "page_size",
+        10,
+        type=int
+    )
 
-    response = requests.get(
+    sort_by = request.args.get(
+        "sort_by",
+        "year"
+    )
+
+    order = request.args.get(
+        "order",
+        "desc"
+    )
+
+    # ==================================================
+    # SAFE VALUES
+    # ==================================================
+
+    if page < 1:
+        page = 1
+
+    if page_size < 1 or page_size > 100:
+        page_size = 10
+
+    if sort_by not in [
+        "year",
+        "title"
+    ]:
+        sort_by = "year"
+
+    if order not in [
+        "asc",
+        "desc"
+    ]:
+        order = "desc"
+
+    # ==================================================
+    # GET RESEARCHERS
+    # ==================================================
+
+    researcher_response = requests.get(
+
         f"{API_URL}/researchers/",
-        headers=headers
+
+        headers=headers,
+
+        params={
+
+            "page": 1,
+
+            "page_size": 1000,
+
+            "sort_by": "full_name",
+
+            "order": "asc"
+
+        }
+
     )
 
+    if researcher_response.status_code == 200:
 
-    if response.status_code == 200:
+        researcher_data = (
+            researcher_response.json()
+        )
 
-        all_researchers = response.json()
+        # FastAPI response:
+        #
+        # {
+        #     "data": [...],
+        #     "pagination": {...}
+        # }
 
+        if isinstance(
+            researcher_data,
+            dict
+        ):
 
+            all_researchers = (
+                researcher_data.get(
+                    "data",
+                    []
+                )
+            )
 
-        # Researcher -> only himself
+        else:
+
+            all_researchers = (
+                researcher_data
+            )
+
+        # Only dictionary records
+
+        all_researchers = [
+
+            r
+
+            for r in all_researchers
+
+            if isinstance(
+                r,
+                dict
+            )
+
+        ]
+
+        # ==================================================
+        # RESEARCHER ROLE
+        # ==================================================
 
         if session["role"] == "researcher":
 
             researchers = [
 
-                r for r in all_researchers
+                r
 
-                if r["user_id"] == session["user_id"]
+                for r in all_researchers
+
+                if r.get("user_id")
+                == session.get("user_id")
 
             ]
 
-
-
-        # Institution Admin -> only his institution researchers
+        # ==================================================
+        # INSTITUTION ADMIN
+        # ==================================================
 
         elif session["role"] == "institution_admin":
 
+            institution_name = (
+                session.get("institution")
+            )
 
             researchers = [
 
-                r for r in all_researchers
+                r
 
-                if r.get("institution") == session.get("institution")
+                for r in all_researchers
+
+                if r.get("institution")
+                == institution_name
 
             ]
 
-
-
-        # System Admin -> all researchers
+        # ==================================================
+        # SYSTEM ADMIN / OTHER
+        # ==================================================
 
         else:
 
-            researchers = all_researchers
+            researchers = (
+                all_researchers
+            )
 
+    # ==================================================
+    # GET ALL PUBLICATIONS
+    # ==================================================
 
+    publication_response = requests.get(
 
-
-    # ================= GET PUBLICATIONS =================
-
-
-    response = requests.get(
         f"{API_URL}/publications/",
-        headers=headers
+
+        headers=headers,
+
+        params={
+
+            # IMPORTANT:
+            # Ask FastAPI for all records.
+            # FastAPI now allows up to 1000.
+
+            "page": 1,
+
+            "page_size": 1000,
+
+            "sort_by": "year",
+
+            "order": "desc"
+
+        }
+
     )
 
+    # ==================================================
+    # PUBLICATION RESPONSE
+    # ==================================================
 
-    if response.status_code == 200:
+    if publication_response.status_code == 200:
 
+        publication_data = (
+            publication_response.json()
+        )
 
-        all_publications = response.json()
+        if isinstance(
+            publication_data,
+            dict
+        ):
 
-
-
-        # Researcher -> only own publications
-
-        if session["role"] == "researcher":
-
-
-            publications = [
-
-                p for p in all_publications
-
-                if p.get("researcher_id") in 
-                [r["id"] for r in researchers]
-
-            ]
-
-
-
-        # Institution Admin -> publications of institution researchers
-
-        elif session["role"] == "institution_admin":
-
-
-            institution_researcher_ids = [
-
-                r["id"]
-
-                for r in researchers
-
-            ]
-
-
-            publications = [
-
-                p for p in all_publications
-
-                if p.get("researcher_id") 
-                in institution_researcher_ids
-
-            ]
-
-
-
-        # System Admin -> all publications
+            all_publications = (
+                publication_data.get(
+                    "data",
+                    []
+                )
+            )
 
         else:
 
+            all_publications = (
+                publication_data
+            )
 
-            publications = all_publications
+        # Only dictionary records
 
+        all_publications = [
 
+            p
 
+            for p in all_publications
+
+            if isinstance(
+                p,
+                dict
+            )
+
+        ]
+
+        # ==================================================
+        # GET RESEARCHER IDS
+        # ==================================================
+
+        researcher_ids = [
+
+            r.get("id")
+
+            for r in researchers
+
+            if isinstance(
+                r,
+                dict
+            )
+
+            and r.get("id") is not None
+
+        ]
+
+        # ==================================================
+        # ROLE-BASED FILTERING
+        # ==================================================
+
+        if session["role"] in [
+
+            "researcher",
+
+            "institution_admin"
+
+        ]:
+
+            publications = [
+
+                p
+
+                for p in all_publications
+
+                if p.get("researcher_id")
+                in researcher_ids
+
+            ]
+
+        else:
+
+            publications = (
+                all_publications
+            )
+
+    else:
+
+        # ==================================================
+        # API ERROR
+        # ==================================================
+
+        print(
+            "PUBLICATION API ERROR:",
+            publication_response.status_code
+        )
+
+        print(
+            "PUBLICATION API RESPONSE:",
+            publication_response.text
+        )
+
+        publications = []
+
+    # ==================================================
+    # SORTING
+    # ==================================================
+
+    if sort_by == "title":
+
+        publications.sort(
+
+            key=lambda p: (
+                p.get("title") or ""
+            ).casefold(),
+
+            reverse=(
+                order == "desc"
+            )
+
+        )
+
+    else:
+
+        publications.sort(
+
+            key=lambda p: (
+                p.get(
+                    "publication_year",
+                    0
+                )
+                or 0
+            ),
+
+            reverse=(
+                order == "desc"
+            )
+
+        )
+
+    # ==================================================
+    # PAGINATION
+    # ==================================================
+
+    total_records = len(
+        publications
+    )
+
+    total_pages = (
+
+        (
+            total_records
+            + page_size
+            - 1
+        )
+        // page_size
+
+        if total_records > 0
+
+        else 1
+
+    )
+
+    # ==================================================
+    # PREVENT INVALID PAGE
+    # ==================================================
+
+    if page > total_pages:
+
+        page = total_pages
+
+    if page < 1:
+
+        page = 1
+
+    # ==================================================
+    # SLICE RECORDS
+    # ==================================================
+
+    start = (
+        (page - 1)
+        * page_size
+    )
+
+    end = (
+        start
+        + page_size
+    )
+
+    paginated_publications = (
+        publications[start:end]
+    )
+
+    # ==================================================
+    # PAGINATION INFORMATION
+    # ==================================================
+
+    pagination = {
+
+        "page": page,
+
+        "page_size": page_size,
+
+        "total_records":
+            total_records,
+
+        "total_pages":
+            total_pages,
+
+        "offset":
+            start
+
+    }
+
+    # ==================================================
+    # SEND TO TEMPLATE
+    # ==================================================
 
     return render_template(
 
         "publications.html",
 
-        publications=publications,
+        publications=paginated_publications,
 
-        researchers=researchers
+        researchers=researchers,
+
+        pagination=pagination,
+
+        sort_by=sort_by,
+
+        order=order,
+
+        page_size=page_size
 
     )
+
 @app.route("/publication/add", methods=["POST"])
 def add_publication():
 
@@ -1427,16 +2021,13 @@ def add_publication():
         return redirect(url_for("login"))
 
     print("FORM DATA:", request.form)
-    print("Researcher ID:", request.form.get("researcher_id"))
     print("Session:", session)
 
-    researcher_id = session.get("researcher_id")
-
-    print("SESSION RESEARCHER ID:", researcher_id)
+    # Researcher selected in the form
+    researcher_id = request.form.get("researcher_id")
 
     if not researcher_id:
-         return "Researcher ID is missing in session!", 400
-
+        return "Researcher ID is missing!", 400
 
     data = {
         "researcher_id": int(researcher_id),
@@ -1448,7 +2039,6 @@ def add_publication():
         "doi": request.form.get("doi"),
         "status": request.form.get("status")
     }
-
 
     files = None
 
@@ -1465,11 +2055,9 @@ def add_publication():
                 )
             }
 
-
     headers = {
         "Authorization": f"Bearer {session['token']}"
     }
-
 
     response = requests.post(
         f"{API_URL}/publications/",
@@ -1478,10 +2066,8 @@ def add_publication():
         headers=headers
     )
 
-
     print("ADD PUBLICATION:", response.status_code)
     print(response.text)
-
 
     return redirect(url_for("publications"))
 @app.route("/publication/delete/<int:id>")
@@ -1611,6 +2197,46 @@ def edit_publication(id):
         publication=publication
 
     )
+
+@app.route("/publication-recommend")
+def publication_recommend():
+
+    if "token" not in session:
+        return {"error": "Not authenticated"}, 401
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    query = request.args.get("query", "").strip()
+
+    if not query:
+        return {"error": "Query is required"}, 400
+
+    response = requests.get(
+        f"{API_URL}/publications/recommend",
+        params={
+            "q": query
+        },
+        headers=headers
+    )
+
+    print(
+        "RECOMMENDATION API:",
+        response.status_code,
+        response.text
+    )
+
+    if response.status_code != 200:
+        return {
+            "error": "Unable to get recommendations"
+        }, response.status_code
+
+    data = response.json()
+
+    return jsonify(
+        data.get("recommendations", [])
+    )
 # ---------------------- Conferences ----------------------
 
 @app.route("/conferences")
@@ -1619,87 +2245,316 @@ def conferences():
     if "token" not in session:
         return redirect(url_for("login"))
 
-
     headers = {
-        "Authorization": f"Bearer " + session["token"]
+        "Authorization": f"Bearer {session['token']}"
     }
 
+    # ==================================================
+    # PAGINATION / SORTING
+    # ==================================================
 
+    conference_page = request.args.get(
+        "conference_page",
+        1,
+        type=int
+    )
 
-    # -------- Get Conferences --------
+    conference_page_size = request.args.get(
+        "conference_page_size",
+        5,
+        type=int
+    )
 
-    if session["role"] in ["researcher", "institution_admin"]:
+    conference_sort_by = request.args.get(
+        "conference_sort_by",
+        "title"
+    )
+
+    conference_order = request.args.get(
+        "conference_order",
+        "desc"
+    )
+
+    # Keep values safe
+    if conference_page < 1:
+        conference_page = 1
+
+    if conference_page_size not in [5, 10, 20]:
+        conference_page_size = 5
+
+    if conference_sort_by not in [
+        "title",
+        "organizer",
+        "institution",
+        "event_type",
+        "location",
+        "conference_date"
+    ]:
+        conference_sort_by = "title"
+
+    if conference_order not in ["asc", "desc"]:
+        conference_order = "desc"
+
+    # ==================================================
+    # GET CONFERENCES
+    # ==================================================
+
+    if session["role"] in [
+        "researcher",
+        "institution_admin"
+    ]:
 
         response = requests.get(
             f"{API_URL}/conferences/my",
             headers=headers
         )
 
-
     else:
-
-        # System Admin sees all conferences
 
         response = requests.get(
             f"{API_URL}/conferences/",
             headers=headers
         )
 
-
-
     conferences = []
-
 
     if response.status_code == 200:
 
-        conferences = response.json()
+        conference_data = response.json()
 
+        if isinstance(conference_data, dict):
 
+            conferences = conference_data.get(
+                "data",
+                []
+            )
 
-    # -------- Convert Conference Date --------
+        elif isinstance(conference_data, list):
 
-    for conference in conferences:
+            conferences = conference_data
+
+    # ==================================================
+    # SORT CONFERENCES
+    # ==================================================
+
+    reverse_order = conference_order == "desc"
+
+    if conference_sort_by == "title":
+
+        conferences.sort(
+            key=lambda x: (
+                x.get("title") or ""
+            ).lower(),
+            reverse=reverse_order
+        )
+
+    elif conference_sort_by == "organizer":
+
+        conferences.sort(
+            key=lambda x: (
+                x.get("organizer") or ""
+            ).lower(),
+            reverse=reverse_order
+        )
+
+    elif conference_sort_by == "institution":
+
+        conferences.sort(
+            key=lambda x: (
+                x.get("institution") or ""
+            ).lower(),
+            reverse=reverse_order
+        )
+
+    elif conference_sort_by == "event_type":
+
+        conferences.sort(
+            key=lambda x: (
+                x.get("event_type") or ""
+            ).lower(),
+            reverse=reverse_order
+        )
+
+    elif conference_sort_by == "location":
+
+        conferences.sort(
+            key=lambda x: (
+                x.get("location") or ""
+            ).lower(),
+            reverse=reverse_order
+        )
+
+    elif conference_sort_by == "conference_date":
+
+        conferences.sort(
+            key=lambda x: (
+                x.get("conference_date") or ""
+            ),
+            reverse=reverse_order
+        )
+
+    # ==================================================
+    # TOTAL RECORDS
+    # ==================================================
+
+    total_records = len(conferences)
+
+    total_pages = (
+        (total_records + conference_page_size - 1)
+        // conference_page_size
+    )
+
+    # ==================================================
+    # MAKE SURE PAGE IS VALID
+    # ==================================================
+
+    if total_pages > 0 and conference_page > total_pages:
+
+        conference_page = total_pages
+
+    if conference_page < 1:
+
+        conference_page = 1
+
+    # ==================================================
+    # PAGINATION
+    # ==================================================
+
+    offset = (
+        (conference_page - 1)
+        * conference_page_size
+    )
+
+    paginated_conferences = conferences[
+        offset:
+        offset + conference_page_size
+    ]
+
+    # ==================================================
+    # CONVERT CONFERENCE DATE
+    # ==================================================
+
+    for conference in paginated_conferences:
 
         try:
 
-            conference["conference_date_obj"] = datetime.strptime(
-                conference["conference_date"],
-                "%Y-%m-%d"
+            conference["conference_date_obj"] = (
+                datetime.strptime(
+                    conference["conference_date"],
+                    "%Y-%m-%d"
+                )
             )
 
         except:
 
             conference["conference_date_obj"] = None
 
+    # ==================================================
+    # CHECK RESEARCHER REGISTERED CONFERENCES
+    # ==================================================
 
+    registered_conferences = []
 
+    if session["role"] == "researcher":
 
+        reg_response = requests.get(
+            f"{API_URL}/conference-registration/my",
+            headers=headers
+        )
 
-    # -------- Get Institutions for Dropdown --------
+        if reg_response.status_code == 200:
 
-    response = requests.get(
+            registrations = reg_response.json()
+
+            for reg in registrations:
+
+                registered_conferences.append(
+                    reg["conference_id"]
+                )
+
+    # ==================================================
+    # ADD REGISTERED FLAG
+    # ==================================================
+
+    for conference in paginated_conferences:
+
+        if conference["id"] in registered_conferences:
+
+            conference["registered"] = True
+
+        else:
+
+            conference["registered"] = False
+
+    # ==================================================
+    # GET INSTITUTIONS
+    # ==================================================
+
+    institution_response = requests.get(
         f"{API_URL}/institutions/",
         headers=headers
     )
 
-
     institutions = []
 
+    if institution_response.status_code == 200:
 
-    if response.status_code == 200:
+        institution_data = institution_response.json()
 
-        institutions = response.json()
+        if isinstance(institution_data, dict):
 
+            institutions = institution_data.get(
+                "data",
+                []
+            )
 
+        elif isinstance(institution_data, list):
 
+            institutions = institution_data
+
+    # ==================================================
+    # PAGINATION DATA
+    # ==================================================
+
+    pagination = {
+
+        "page": conference_page,
+
+        "page_size": conference_page_size,
+
+        "total_records": total_records,
+
+        "total_pages": total_pages,
+
+        "offset": offset
+
+    }
+
+    # ==================================================
+    # RENDER
+    # ==================================================
 
     return render_template(
-        "conferences.html",
-        conferences=conferences,
-        institutions=institutions,
-        today=datetime.today()
-    )
 
+        "conferences.html",
+
+        conferences=paginated_conferences,
+
+        institutions=institutions,
+
+        today=datetime.today(),
+
+        conference_pagination=pagination,
+
+        conference_page=conference_page,
+
+        conference_page_size=conference_page_size,
+
+        conference_sort_by=conference_sort_by,
+
+        conference_order=conference_order
+
+)
 # ---------------------- Add Conference ----------------------
 
 @app.route("/conference/add", methods=["POST"])
@@ -2013,7 +2868,10 @@ def my_conference_history():
         "my_conference_history.html",
         registrations=registrations
     )
-    
+# ==========================
+# Institutions
+# ==========================
+
 @app.route("/institutions")
 def institutions():
 
@@ -2024,27 +2882,64 @@ def institutions():
         "Authorization": f"Bearer {session['token']}"
     }
 
+    # ==========================
+    # Pagination / Sorting
+    # ==========================
+
+    page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("page_size", 5, type=int)
+    sort_by = request.args.get("sort_by", "name")
+    order = request.args.get("order", "asc")
+
+    params = {
+        "page": page,
+        "page_size": page_size,
+        "sort_by": sort_by,
+        "order": order
+    }
+
+    # ==========================
+    # Get Institutions
+    # ==========================
 
     response = requests.get(
         f"{API_URL}/institutions/",
-        headers=headers
+        headers=headers,
+        params=params
     )
-
 
     print("INSTITUTION STATUS:", response.status_code)
     print("INSTITUTION DATA:", response.text)
 
-
     institutions = []
-
+    pagination = {}
 
     if response.status_code == 200:
-        institutions = response.json()
 
+        institution_data = response.json()
+
+        if isinstance(institution_data, dict):
+
+            institutions = institution_data.get("data", [])
+
+            pagination = institution_data.get(
+                "pagination",
+                {}
+            )
+
+        else:
+
+            institutions = institution_data
+            pagination = {}
 
     return render_template(
         "institutions.html",
-        institutions=institutions
+        institutions=institutions,
+        pagination=pagination,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        order=order
     )
 # ---------------------- Add Institution ----------------------
 
@@ -2206,9 +3101,6 @@ def delete_institution(id):
 # Projects
 # ==========================
 
-# ==========================
-# Projects
-# ==========================
 
 @app.route("/projects")
 def projects():
@@ -2223,6 +3115,22 @@ def projects():
     role = session.get("role")
 
     # ==========================
+    # Pagination / Sorting
+    # ==========================
+
+    page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("page_size", 5, type=int)
+    sort_by = request.args.get("sort_by", "start_date")
+    order = request.args.get("order", "desc")
+
+    params = {
+        "page": page,
+        "page_size": page_size,
+        "sort_by": sort_by,
+        "order": order
+    }
+
+    # ==========================
     # System Admin
     # ==========================
 
@@ -2230,7 +3138,8 @@ def projects():
 
         project_response = requests.get(
             f"{API_URL}/projects/",
-            headers=headers
+            headers=headers,
+            params=params
         )
 
     # ==========================
@@ -2243,7 +3152,8 @@ def projects():
 
         project_response = requests.get(
             f"{API_URL}/projects/institution/{institution_id}",
-            headers=headers
+            headers=headers,
+            params=params
         )
 
     # ==========================
@@ -2255,14 +3165,29 @@ def projects():
         return render_template(
             "projects.html",
             projects=[],
-            institutions=[]
+            institutions=[],
+            pagination={}
         )
 
     else:
-
         return "Unauthorized"
 
-    projects = project_response.json()
+    # ==========================
+    # Projects Response
+    # ==========================
+
+    project_data = project_response.json()
+
+    if isinstance(project_data, dict):
+
+        projects = project_data.get("data", [])
+        pagination = project_data.get("pagination", {})
+
+    else:
+
+        projects = project_data
+        pagination = {}
+
     # ==========================
     # Get Institutions
     # ==========================
@@ -2272,12 +3197,22 @@ def projects():
         headers=headers
     )
 
-    institutions = institution_response.json()
+    institution_data = institution_response.json()
+
+    if isinstance(institution_data, dict):
+        institutions = institution_data.get("data", [])
+    else:
+        institutions = institution_data
 
     return render_template(
         "projects.html",
         projects=projects,
-        institutions=institutions
+        institutions=institutions,
+        pagination=pagination,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        order=order
     )
 # ==========================
 # Add Project
@@ -2414,7 +3349,6 @@ def delete_project(id):
 # ==========================
 # Collaboration
 # ==========================
-
 @app.route("/collaboration")
 def collaboration():
 
@@ -2427,18 +3361,46 @@ def collaboration():
 
     role = session.get("role")
 
+    # ==================================================
+    # PAGINATION / SORTING
+    # ==================================================
 
-    # ==========================
-    # Get Projects
-    # ==========================
+    page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("page_size", 5, type=int)
+    sort_by = request.args.get("sort_by", "project_name")
+    order = request.args.get("order", "asc")
+
+    # Keep values safe
+    if page < 1:
+        page = 1
+
+    if page_size not in [5, 10, 20]:
+        page_size = 5
+
+    if sort_by not in ["project_name", "status"]:
+        sort_by = "project_name"
+
+    if order not in ["asc", "desc"]:
+        order = "asc"
+
+    params = {
+        "page": page,
+        "page_size": page_size,
+        "sort_by": sort_by,
+        "order": order
+    }
+
+    # ==================================================
+    # GET PROJECTS
+    # ==================================================
 
     if role == "system_admin":
 
         response = requests.get(
             f"{API_URL}/projects/",
-            headers=headers
+            headers=headers,
+            params=params
         )
-
 
     elif role == "institution_admin":
 
@@ -2446,58 +3408,144 @@ def collaboration():
 
         response = requests.get(
             f"{API_URL}/projects/institution/{institution_id}",
-            headers=headers
+            headers=headers,
+            params=params
         )
-
 
     else:
 
         return "Unauthorized"
 
+    # ==================================================
+    # PROJECT RESPONSE
+    # ==================================================
 
+    projects = []
+    backend_pagination = {}
 
-    projects = response.json()
+    if response.status_code == 200:
 
+        project_data = response.json()
 
+        if isinstance(project_data, dict):
 
-    # ==========================
-    # Get All Collaborations
-    # ==========================
+            projects = project_data.get(
+                "data",
+                []
+            )
+
+            backend_pagination = project_data.get(
+                "pagination",
+                {}
+            )
+
+        elif isinstance(project_data, list):
+
+            projects = project_data
+
+    # ==================================================
+    # NORMALIZE PAGINATION
+    # ==================================================
+
+    total_records = backend_pagination.get(
+        "total_records",
+        len(projects)
+    )
+
+    total_pages = backend_pagination.get(
+        "total_pages",
+        1
+    )
+
+    backend_page = backend_pagination.get(
+        "page",
+        page
+    )
+
+    backend_page_size = backend_pagination.get(
+        "page_size",
+        page_size
+    )
+
+    # Calculate offset ourselves if backend doesn't provide it
+    offset = backend_pagination.get(
+        "offset",
+        (backend_page - 1) * backend_page_size
+    )
+
+    pagination = {
+
+        "page": backend_page,
+
+        "page_size": backend_page_size,
+
+        "total_records": total_records,
+
+        "total_pages": total_pages,
+
+        "offset": offset
+
+    }
+
+    # ==================================================
+    # GET ALL COLLABORATIONS
+    # ==================================================
 
     collab_response = requests.get(
         f"{API_URL}/institution-collaborations/",
         headers=headers
     )
 
+    all_collaborations = []
 
     if collab_response.status_code == 200:
 
-        all_collaborations = collab_response.json()
-        print("ALL COLLABORATIONS:", all_collaborations)
-    else:
+        collaboration_data = collab_response.json()
 
-        all_collaborations = []
+        if isinstance(collaboration_data, dict):
 
+            all_collaborations = collaboration_data.get(
+                "data",
+                []
+            )
 
+        elif isinstance(collaboration_data, list):
 
-    # ==========================
-    # Add Counts
-    # ==========================
+            all_collaborations = collaboration_data
+
+    # ==================================================
+    # ADD COUNTS
+    # ==================================================
 
     for project in projects:
 
-
-        # -------- Team Count --------
+        # ----------------------------------------------
+        # Team Count
+        # ----------------------------------------------
 
         member_response = requests.get(
             f"{API_URL}/project-members/project/{project['id']}",
             headers=headers
         )
 
-
         if member_response.status_code == 200:
 
-            members = member_response.json()
+            members_data = member_response.json()
+
+            if isinstance(members_data, dict):
+
+                members = members_data.get(
+                    "data",
+                    []
+                )
+
+            elif isinstance(members_data, list):
+
+                members = members_data
+
+            else:
+
+                members = []
 
             project["team_count"] = len(members)
 
@@ -2505,30 +3553,40 @@ def collaboration():
 
             project["team_count"] = 0
 
-
+        # ----------------------------------------------
+        # Collaboration Count
+        # ----------------------------------------------
 
         project["collaboration_count"] = len(
-          [
-             c for c in all_collaborations
-             if c.get("project_id") == project.get("id")
-          ]
+            [
+                c
+                for c in all_collaborations
+                if isinstance(c, dict)
+                and c.get("project_id")
+                == project.get("id")
+            ]
         )
 
-
-
-        print(
-            project["project_name"],
-            "TEAM:",
-            project["team_count"],
-            "COLLAB:",
-            project["collaboration_count"]
-        )
-
-
+    # ==================================================
+    # RENDER
+    # ==================================================
 
     return render_template(
+
         "collaboration.html",
-        projects=projects
+
+        projects=projects,
+
+        pagination=pagination,
+
+        page=page,
+
+        page_size=page_size,
+
+        sort_by=sort_by,
+
+        order=order
+
     )
 @app.route("/collaboration/project/<int:project_id>")
 def manage_team(project_id):
@@ -3058,42 +4116,51 @@ def citation_reference():
     if "token" not in session:
         return redirect(url_for("login"))
 
-
     headers = {
         "Authorization": f"Bearer {session['token']}"
     }
 
+    # =====================================================
+    # PAGINATION / SORTING
+    # =====================================================
 
-
-    # ================= GET CITATIONS =================
-
-    citation_response = requests.get(
-        f"{API_URL}/citations/",
-        headers=headers
+    citation_page = request.args.get(
+        "citation_page", 1, type=int
     )
 
-    citations = []
-
-    if citation_response.status_code == 200:
-        citations = citation_response.json()
-
-
-
-    # ================= GET REFERENCES =================
-
-    reference_response = requests.get(
-        f"{API_URL}/references/",
-        headers=headers
+    citation_page_size = request.args.get(
+        "citation_page_size", 5, type=int
     )
 
-    references = []
+    citation_sort_by = request.args.get(
+        "citation_sort_by", "publication_title"
+    )
 
-    if reference_response.status_code == 200:
-        references = reference_response.json()
+    citation_order = request.args.get(
+        "citation_order", "desc"
+    )
 
+    reference_page = request.args.get(
+        "reference_page", 1, type=int
+    )
 
+    reference_page_size = request.args.get(
+        "reference_page_size", 5, type=int
+    )
 
-    # ================= GET PUBLICATIONS =================
+    reference_sort_by = request.args.get(
+        "reference_sort_by", "publication_title"
+    )
+
+    reference_order = request.args.get(
+        "reference_order", "desc"
+    )
+
+    role = session.get("role")
+
+    # =====================================================
+    # GET PUBLICATIONS
+    # =====================================================
 
     publication_response = requests.get(
         f"{API_URL}/publications/",
@@ -3103,11 +4170,22 @@ def citation_reference():
     all_publications = []
 
     if publication_response.status_code == 200:
-        all_publications = publication_response.json()
 
+        publication_data = publication_response.json()
 
+        if isinstance(publication_data, dict):
 
-    # ================= GET RESEARCHERS =================
+            all_publications = publication_data.get(
+                "data", []
+            )
+
+        else:
+
+            all_publications = publication_data
+
+    # =====================================================
+    # GET RESEARCHERS
+    # =====================================================
 
     researcher_response = requests.get(
         f"{API_URL}/researchers/",
@@ -3117,21 +4195,24 @@ def citation_reference():
     researchers = []
 
     if researcher_response.status_code == 200:
-        researchers = researcher_response.json()
 
+        researcher_data = researcher_response.json()
 
+        if isinstance(researcher_data, dict):
 
-    role = session.get("role")
+            researchers = researcher_data.get(
+                "data", []
+            )
 
+        else:
 
+            researchers = researcher_data
 
     # =====================================================
     # ROLE BASED PUBLICATION ACCESS
     # =====================================================
 
-
     if role == "researcher":
-
 
         citing_publications = [
 
@@ -3142,13 +4223,9 @@ def citation_reference():
 
         ]
 
-
-
     elif role == "institution_admin":
 
-
         institution_name = session.get("institution")
-
 
         institution_researcher_ids = [
 
@@ -3161,7 +4238,6 @@ def citation_reference():
 
         ]
 
-
         citing_publications = [
 
             p for p in all_publications
@@ -3171,25 +4247,17 @@ def citation_reference():
 
         ]
 
-
-
     elif role == "system_admin":
 
-
         citing_publications = all_publications
-
-
 
     else:
 
         citing_publications = []
 
-
-
     # =====================================================
-    # FILTER CITATION & REFERENCE RECORDS
+    # ALLOWED PUBLICATION IDS
     # =====================================================
-
 
     allowed_publication_ids = [
 
@@ -3199,34 +4267,9 @@ def citation_reference():
 
     ]
 
-
-
-    citations = [
-
-        c for c in citations
-
-        if c.get("publication_id")
-        in allowed_publication_ids
-
-    ]
-
-
-
-    references = [
-
-        r for r in references
-
-        if r.get("publication_id")
-        in allowed_publication_ids
-
-    ]
-
-
-
     # =====================================================
-    # ADD PUBLICATION TITLES FOR TABLE DISPLAY
+    # PUBLICATION MAP
     # =====================================================
-
 
     publication_map = {
 
@@ -3236,22 +4279,274 @@ def citation_reference():
 
     }
 
+    # =====================================================
+    # GET ALL CITATIONS
+    # =====================================================
 
+    citation_params = {
+        "page": 1,
+        "page_size": 10000
+    }
 
-    # Citation table data
+    citation_response = requests.get(
+        f"{API_URL}/citations/",
+        headers=headers,
+        params=citation_params
+    )
+
+    all_citations = []
+
+    if citation_response.status_code == 200:
+
+        citation_data = citation_response.json()
+
+        if isinstance(citation_data, dict):
+
+            all_citations = citation_data.get(
+                "data", []
+            )
+
+        else:
+
+            all_citations = citation_data
+
+    # =====================================================
+    # FILTER CITATIONS BY ROLE
+    # =====================================================
+
+    all_citations = [
+
+        c for c in all_citations
+
+        if c.get("publication_id")
+        in allowed_publication_ids
+
+    ]
+
+    # =====================================================
+    # CITATION SORTING
+    # =====================================================
+
+    if citation_sort_by == "publication_title":
+
+        all_citations.sort(
+
+            key=lambda c:
+            publication_map.get(
+                c.get("publication_id"), {}
+            ).get("title", "").lower(),
+
+            reverse=(citation_order == "desc")
+
+        )
+
+    elif citation_sort_by == "cited_publication_title":
+
+        all_citations.sort(
+
+            key=lambda c:
+            publication_map.get(
+                c.get("cited_publication_id"), {}
+            ).get("title", "").lower(),
+
+            reverse=(citation_order == "desc")
+
+        )
+
+    # =====================================================
+    # CITATION PAGINATION
+    # =====================================================
+
+    citation_total_records = len(all_citations)
+
+    citation_total_pages = (
+
+        (
+            citation_total_records
+            + citation_page_size
+            - 1
+        )
+        // citation_page_size
+
+        if citation_total_records > 0
+
+        else 0
+
+    )
+
+    citation_offset = (
+
+        (citation_page - 1)
+        * citation_page_size
+
+    )
+
+    citations = all_citations[
+
+        citation_offset:
+        citation_offset + citation_page_size
+
+    ]
+
+    citation_pagination = {
+
+        "page": citation_page,
+
+        "page_size": citation_page_size,
+
+        "total_records": citation_total_records,
+
+        "total_pages": citation_total_pages,
+
+        "offset": citation_offset
+
+    }
+
+    # =====================================================
+    # GET ALL REFERENCES
+    # =====================================================
+
+    reference_params = {
+        "page": 1,
+        "page_size": 10000
+    }
+
+    reference_response = requests.get(
+        f"{API_URL}/references/",
+        headers=headers,
+        params=reference_params
+    )
+
+    all_references = []
+
+    if reference_response.status_code == 200:
+
+        reference_data = reference_response.json()
+
+        if isinstance(reference_data, dict):
+
+            all_references = reference_data.get(
+                "data", []
+            )
+
+        else:
+
+            all_references = reference_data
+
+    # =====================================================
+    # FILTER REFERENCES BY ROLE
+    # =====================================================
+
+    all_references = [
+
+        r for r in all_references
+
+        if r.get("publication_id")
+        in allowed_publication_ids
+
+    ]
+
+    # =====================================================
+    # REFERENCE SORTING
+    # =====================================================
+
+    if reference_sort_by == "publication_title":
+
+        all_references.sort(
+
+            key=lambda r:
+            publication_map.get(
+                r.get("publication_id"), {}
+            ).get("title", "").lower(),
+
+            reverse=(reference_order == "desc")
+
+        )
+
+    elif reference_sort_by == "reference_title":
+
+        all_references.sort(
+
+            key=lambda r:
+            r.get("reference_title", "").lower(),
+
+            reverse=(reference_order == "desc")
+
+        )
+
+    elif reference_sort_by == "publication_year":
+
+        all_references.sort(
+
+            key=lambda r:
+            r.get("publication_year") or 0,
+
+            reverse=(reference_order == "desc")
+
+        )
+
+    # =====================================================
+    # REFERENCE PAGINATION
+    # =====================================================
+
+    reference_total_records = len(all_references)
+
+    reference_total_pages = (
+
+        (
+            reference_total_records
+            + reference_page_size
+            - 1
+        )
+        // reference_page_size
+
+        if reference_total_records > 0
+
+        else 0
+
+    )
+
+    reference_offset = (
+
+        (reference_page - 1)
+        * reference_page_size
+
+    )
+
+    references = all_references[
+
+        reference_offset:
+        reference_offset + reference_page_size
+
+    ]
+
+    reference_pagination = {
+
+        "page": reference_page,
+
+        "page_size": reference_page_size,
+
+        "total_records": reference_total_records,
+
+        "total_pages": reference_total_pages,
+
+        "offset": reference_offset
+
+    }
+
+    # =====================================================
+    # CITATION TABLE DATA
+    # =====================================================
 
     for citation in citations:
-
 
         citing_pub = publication_map.get(
             citation.get("publication_id")
         )
 
-
         cited_pub = publication_map.get(
             citation.get("cited_publication_id")
         )
-
 
         citation["publication_title"] = (
 
@@ -3261,7 +4556,6 @@ def citation_reference():
 
         )
 
-
         citation["cited_publication_title"] = (
 
             cited_pub.get("title")
@@ -3270,17 +4564,15 @@ def citation_reference():
 
         )
 
-
-
-    # Reference table data
+    # =====================================================
+    # REFERENCE TABLE DATA
+    # =====================================================
 
     for reference in references:
-
 
         publication = publication_map.get(
             reference.get("publication_id")
         )
-
 
         reference["publication_title"] = (
 
@@ -3290,12 +4582,9 @@ def citation_reference():
 
         )
 
-
-
     # =====================================================
     # DROPDOWN DATA
     # =====================================================
-
 
     cited_publications = [
 
@@ -3305,24 +4594,18 @@ def citation_reference():
 
     ]
 
-
     reference_publications = citing_publications
-
-
 
     # =====================================================
     # SEND TO HTML
     # =====================================================
-
 
     return render_template(
 
         "citation_reference.html",
 
         citations=citations,
-
         references=references,
-
 
         publications=citing_publications,
 
@@ -3330,10 +4613,25 @@ def citation_reference():
 
         reference_publications=reference_publications,
 
+        # TOTAL COUNTS
+        citation_count=citation_total_records,
+        reference_count=reference_total_records,
 
-        citation_count=len(citations),
+        # PAGINATION
+        citation_pagination=citation_pagination,
+        reference_pagination=reference_pagination,
 
-        reference_count=len(references)
+        # CITATION CONTROLS
+        citation_page=citation_page,
+        citation_page_size=citation_page_size,
+        citation_sort_by=citation_sort_by,
+        citation_order=citation_order,
+
+        # REFERENCE CONTROLS
+        reference_page=reference_page,
+        reference_page_size=reference_page_size,
+        reference_sort_by=reference_sort_by,
+        reference_order=reference_order
 
     )
 @app.route("/add-citation", methods=["POST"])
@@ -3352,26 +4650,63 @@ def add_citation():
 
         "publication_id": int(request.form["publication_id"]),
 
-        "cited_publication_id": int(request.form["cited_publication_id"])
+        "cited_publication_id": int(
+            request.form["cited_publication_id"]
+        )
 
     }
 
 
     response = requests.post(
-        "http://127.0.0.1:8000/citations/",
+
+        f"{API_URL}/citations/",
+
         json=data,
+
         headers=headers
+
     )
 
 
-    if response.status_code in [200, 201]:
-        return redirect(url_for("citation_reference"))
+    if response.status_code in [200,201]:
+
+        flash(
+            "Citation added successfully",
+            "success"
+        )
+
+        return redirect(
+            url_for("citation_reference")
+        )
 
 
     else:
-        print("STATUS:", response.status_code)
-        print("ERROR:", response.text)
-        return redirect(url_for("citation_reference"))
+
+        try:
+
+            error_message = response.json().get(
+                "detail",
+                "Unable to add citation"
+            )
+
+        except:
+
+            error_message = "Unable to add citation"
+
+
+
+        print("CITATION ERROR:", error_message)
+
+
+        flash(
+            error_message,
+            "error"
+        )
+
+
+        return redirect(
+            url_for("citation_reference")
+        )
 @app.route("/delete-citation/<int:citation_id>")
 def delete_citation(citation_id):
 
@@ -3916,6 +5251,605 @@ def institution_report_excel():
 
 
     return "Excel Export Failed", 400
+
+@app.route("/notifications")
+def notifications():
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+
+    user_id = session.get("user_id")
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    response = requests.get(
+        f"http://127.0.0.1:8000/notifications/{user_id}",
+        headers=headers
+    )
+
+
+    if response.status_code == 200:
+        notifications = response.json()
+
+    else:
+        notifications = []
+
+
+    return render_template(
+        "notifications.html",
+        notifications=notifications
+    )
+@app.route("/notification-count")
+def notification_count():
+
+    if "token" not in session:
+        return {"count": 0}
+
+
+    user_id = session.get("user_id")
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    response = requests.get(
+        f"http://127.0.0.1:8000/notifications/unread-count/{user_id}",
+        headers=headers
+    )
+
+
+    if response.status_code == 200:
+        return response.json()
+
+
+    return {"count":0}
+@app.route("/notifications-data")
+def notifications_data():
+
+    if "token" not in session:
+        return []
+
+
+    user_id = session.get("user_id")
+
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+
+    response = requests.get(
+        f"{API_URL}/notifications/{user_id}",
+        headers=headers
+    )
+
+
+    if response.status_code == 200:
+        return response.json()
+
+
+    return []
+
+# ==========================
+# Reviewer - My Reviews
+# ==========================
+
+@app.route("/reviewer")
+def reviewer():
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") != "reviewer":
+        return redirect(url_for("dashboard"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    # =========================================
+    # Get My Reviews
+    # =========================================
+
+    response = requests.get(
+        f"{API_URL}/reviewer/my-reviews",
+        headers=headers
+    )
+
+    reviews = []
+
+    if response.status_code == 200:
+        reviews = response.json()
+
+    # =========================================
+    # Get Publications
+    # =========================================
+
+    response = requests.get(
+        f"{API_URL}/publications/",
+        headers=headers,
+        params={
+            "page": 1,
+            "page_size": 100
+        }
+    )
+
+    publications = []
+
+    if response.status_code == 200:
+
+        data = response.json()
+
+        if isinstance(data, dict):
+            publications = data.get("data", [])
+        else:
+            publications = data
+
+    # =========================================
+    # Create Publication ID -> Title Mapping
+    # =========================================
+
+    publication_map = {
+        publication.get("id"): publication.get("title", "Untitled Publication")
+        for publication in publications
+    }
+
+    # =========================================
+    # Add Publication Title to Each Review
+    # =========================================
+
+    for review in reviews:
+
+        publication_id = review.get("publication_id")
+
+        review["publication_title"] = publication_map.get(
+            publication_id,
+            f"Publication #{publication_id}"
+        )
+
+    # =========================================
+    # Render Reviewer Page
+    # =========================================
+
+    return render_template(
+        "reviews.html",
+        reviews=reviews
+    )
+@app.route("/review/<int:review_id>")
+def review_details(review_id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    # Allow Reviewer and System Admin
+    if session.get("role") not in ["reviewer", "system_admin"]:
+        return redirect(url_for("dashboard"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    # =========================================
+    # Get Reviews
+    # =========================================
+
+    if session.get("role") == "reviewer":
+
+        # Reviewer can see only their own assignments
+        response = requests.get(
+            f"{API_URL}/reviewer/my-reviews",
+            headers=headers
+        )
+
+        if response.status_code != 200:
+            return redirect(url_for("reviewer"))
+
+    else:
+
+        # System Admin can see all review assignments
+        response = requests.get(
+            f"{API_URL}/reviewer/all-reviews",
+            headers=headers
+        )
+
+        if response.status_code != 200:
+            return redirect(url_for("review_management"))
+
+    reviews = response.json()
+
+    # =========================================
+    # Find Requested Review
+    # =========================================
+
+    review = next(
+        (
+            r for r in reviews
+            if r.get("id") == review_id
+        ),
+        None
+    )
+
+    if not review:
+
+        if session.get("role") == "system_admin":
+            return redirect(url_for("review_management"))
+
+        return redirect(url_for("reviewer"))
+
+    # =========================================
+    # Get Publication Details
+    # =========================================
+
+    publication_id = review.get("publication_id")
+
+    response = requests.get(
+        f"{API_URL}/publications/{publication_id}",
+        headers=headers
+    )
+
+    if response.status_code != 200:
+
+        if session.get("role") == "system_admin":
+            return redirect(url_for("review_management"))
+
+        return redirect(url_for("reviewer"))
+
+    publication = response.json()
+
+    # =========================================
+    # Get Researcher Details
+    # =========================================
+
+    researcher_name = "Unknown Researcher"
+
+    researcher_id = publication.get("researcher_id")
+
+    if researcher_id:
+
+        response = requests.get(
+            f"{API_URL}/researchers/{researcher_id}",
+            headers=headers
+        )
+
+        if response.status_code == 200:
+
+            researcher = response.json()
+
+            researcher_name = (
+                researcher.get("full_name")
+                or researcher.get("name")
+                or "Unknown Researcher"
+            )
+
+    # =========================================
+    # Render Review Details
+    # =========================================
+
+    return render_template(
+        "review_details.html",
+        review=review,
+        publication=publication,
+        researcher_name=researcher_name,
+        API_URL=API_URL
+    )
+@app.route("/review/<int:review_id>", methods=["POST"])
+def submit_review(review_id):
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") != "reviewer":
+        return redirect(url_for("dashboard"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    decision = request.form.get("decision")
+    comments = request.form.get("comments")
+
+    data = {
+        "decision": decision,
+        "comments": comments
+    }
+
+    response = requests.put(
+        f"{API_URL}/reviewer/reviews/{review_id}",
+        headers=headers,
+        json=data
+    )
+
+    if response.status_code == 200:
+        return redirect(
+            url_for(
+                "review_details",
+                review_id=review_id
+            )
+        )
+
+    return f"Failed to submit review: {response.text}", response.status_code
+
+@app.route("/review-management")
+def review_management():
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") != "system_admin":
+        return redirect(url_for("dashboard"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    # =========================================
+    # 1. Get ALL Publications
+    # =========================================
+
+    response = requests.get(
+        f"{API_URL}/publications/",
+        headers=headers,
+        params={
+            "page": 1,
+            "page_size": 100
+        }
+    )
+
+    all_publications = []
+
+    if response.status_code == 200:
+
+        data = response.json()
+
+        if isinstance(data, dict):
+            all_publications = data.get("data", [])
+        elif isinstance(data, list):
+            all_publications = data
+
+    # =========================================
+    # 2. Get ALL Reviewers
+    # =========================================
+
+    response = requests.get(
+        f"{API_URL}/users",
+        headers=headers
+    )
+
+    reviewers = []
+
+    if response.status_code == 200:
+
+        users = response.json()
+
+        reviewers = [
+            user
+            for user in users
+            if user.get("role") == "reviewer"
+        ]
+
+    # =========================================
+    # 3. Get ALL Existing Reviews
+    # =========================================
+
+    response = requests.get(
+        f"{API_URL}/reviewer/all-reviews",
+        headers=headers
+    )
+
+    reviews = []
+
+    if response.status_code == 200:
+
+        data = response.json()
+
+        if isinstance(data, list):
+            reviews = data
+
+        elif isinstance(data, dict):
+            reviews = data.get("data", [])
+
+    # =========================================
+    # 4. Get Already Assigned Publication IDs
+    # =========================================
+
+    assigned_publication_ids = set()
+
+    for review in reviews:
+
+        publication_id = review.get("publication_id")
+
+        if publication_id is not None:
+            assigned_publication_ids.add(
+                int(publication_id)
+            )
+
+    # =========================================
+    # 5. ONLY Unassigned Submitted Publications
+    # =========================================
+
+    publications = []
+
+    for publication in all_publications:
+
+        publication_id = publication.get("id")
+
+        if publication_id is None:
+            continue
+
+        publication_id = int(publication_id)
+
+        # Must be Submitted
+        if publication.get("status") != "Submitted":
+            continue
+
+        # Must NOT already have a reviewer
+        if publication_id in assigned_publication_ids:
+            continue
+
+        publications.append(publication)
+
+    # =========================================
+    # 6. Publication Lookup
+    # =========================================
+
+    publication_map = {
+        int(publication.get("id")): publication
+        for publication in all_publications
+        if publication.get("id") is not None
+    }
+
+    # =========================================
+    # 7. Reviewer Lookup
+    # =========================================
+
+    reviewer_map = {
+        int(reviewer.get("id")): reviewer
+        for reviewer in reviewers
+        if reviewer.get("id") is not None
+    }
+
+    # =========================================
+    # 8. Prepare Review Assignment Display
+    # =========================================
+
+    formatted_reviews = []
+
+    for review in reviews:
+
+        publication_id = review.get("publication_id")
+        reviewer_id = review.get("reviewer_id")
+
+        publication = publication_map.get(
+            int(publication_id)
+        ) if publication_id is not None else None
+
+        reviewer = reviewer_map.get(
+            int(reviewer_id)
+        ) if reviewer_id is not None else None
+
+        formatted_reviews.append({
+
+            "id": review.get("id"),
+
+            "publication_id": publication_id,
+
+            "publication_title": (
+                publication.get("title")
+                if publication
+                else "Unknown Publication"
+            ),
+
+            "reviewer_id": reviewer_id,
+
+            "reviewer_name": (
+                reviewer.get("full_name")
+                if reviewer
+                else "Unknown Reviewer"
+            ),
+
+            "decision": review.get("decision"),
+
+            "comments": review.get("comments"),
+
+            "reviewed_at": review.get("reviewed_at")
+        })
+
+    # =========================================
+    # 9. Render Page
+    # =========================================
+
+    return render_template(
+        "review_management.html",
+        publications=publications,
+        reviewers=reviewers,
+        reviews=formatted_reviews
+    )
+
+@app.route("/assign-review", methods=["POST"])
+def assign_review():
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") != "system_admin":
+        return redirect(url_for("dashboard"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    publication_id = request.form.get("publication_id")
+    reviewer_id = request.form.get("reviewer_id")
+
+    data = {
+        "publication_id": int(publication_id),
+        "reviewer_id": int(reviewer_id)
+    }
+
+    response = requests.post(
+        f"{API_URL}/reviewer/assign",
+        headers=headers,
+        json=data
+    )
+
+    if response.status_code == 200:
+        return redirect(
+            url_for("review_management")
+        )
+
+    return (
+        f"Failed to assign reviewer: {response.text}",
+        response.status_code
+    )
+@app.route("/audit-logs")
+def audit_logs():
+
+    if "token" not in session:
+        return redirect(url_for("login"))
+
+    headers = {
+        "Authorization": f"Bearer {session['token']}"
+    }
+
+    response = requests.get(
+        f"{API_URL}/audit/logs",
+        headers=headers
+    )
+
+    print(
+        "GET AUDIT LOGS:",
+        response.status_code,
+        response.text
+    )
+
+    logs = []
+    error = None
+
+    if response.status_code == 200:
+
+        logs = response.json()
+
+    else:
+
+        try:
+            error = response.json().get(
+                "detail",
+                "Failed to load audit logs"
+            )
+        except Exception:
+            error = "Failed to load audit logs"
+
+    return render_template(
+        "audit_logs.html",
+        logs=logs,
+        error=error
+    )
 # ---------------------- Logout ----------------------
 
 @app.route("/logout")

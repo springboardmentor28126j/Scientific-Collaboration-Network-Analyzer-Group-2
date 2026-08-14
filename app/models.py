@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, date
 from .database import Base
@@ -507,3 +507,124 @@ class ActivityLog(Base):
     )
 
     user = relationship("User")
+
+class Notification(Base):
+
+    __tablename__ = "notifications"
+
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+
+    # User receiving notification
+    receiver_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+
+    # User who triggered the action
+    sender_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+
+    title = Column(
+        String(255),
+        nullable=False
+    )
+
+
+    message = Column(
+        Text,
+        nullable=False
+    )
+
+
+    notification_type = Column(
+        String(50),
+        nullable=False
+    )
+  
+    # Used for redirecting user when clicked
+    reference_id = Column(
+        Integer,
+        nullable=True
+    )
+
+
+    reference_type = Column(
+        String(50),
+        nullable=True
+    )
+    
+
+
+    is_read = Column(
+        Boolean,
+        default=False
+    )
+
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+
+    receiver = relationship(
+        "User",
+        foreign_keys=[receiver_id]
+    )
+
+
+    sender = relationship(
+        "User",
+        foreign_keys=[sender_id]
+    )
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    publication_id = Column(
+        Integer,
+        ForeignKey("publications.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    reviewer_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    decision = Column(
+        String(50),
+        nullable=False
+    )
+
+    comments = Column(
+        Text,
+        nullable=True
+    )
+
+    reviewed_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    publication = relationship("Publication")
+
+    reviewer = relationship(
+        "User",
+        foreign_keys=[reviewer_id]
+    )

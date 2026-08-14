@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
 from app.database import engine
 from app import models
+from app.routers import audit
 
 from app.routers import (
     researcher,
@@ -16,7 +16,9 @@ from app.routers import (
     activity_logs,
     citations,
     reference,
-    reports
+    reports,
+    notifications,
+    reviewer
 )
 
 from app.routers.auth import router as auth_router
@@ -61,7 +63,13 @@ app.include_router(
 app.include_router(
     publication.router
 )
+# ==========================
+# Reviewer Module
+# ==========================
 
+app.include_router(
+    reviewer.router
+)
 
 app.include_router(
     institution.router
@@ -119,8 +127,10 @@ app.include_router(
 app.include_router(
     reports.router
 )
-
-
+app.include_router(
+    notifications.router
+)
+app.include_router(audit.router)
 # ==========================
 # Root Endpoint
 # ==========================

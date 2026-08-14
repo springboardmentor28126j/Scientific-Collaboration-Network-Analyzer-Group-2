@@ -10,7 +10,6 @@
 
 <div class="main" id="main">
 
-
 <div class="top-section">
 
 
@@ -38,22 +37,98 @@ Projects
 
 
 
-<!-- ================= SEARCH ================= -->
+<!-- ================= SEARCH & CONTROLS ================= -->
+
+<div class="project-controls">
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="projectSearch"
+            placeholder="Search by Project Name or Status"
+            onkeyup="searchProject()">
+
+    </div>
 
 
-<div class="search-box">
+    <div class="control-group">
+
+        <label for="sort_by">
+            Sort by:
+        </label>
+
+        <select id="sort_by" onchange="applyProjectSort()">
+
+            <option value="start_date"
+                {% if sort_by == "start_date" %}selected{% endif %}>
+                Start Date
+            </option>
+
+            <option value="project_name"
+                {% if sort_by == "project_name" %}selected{% endif %}>
+                Project Name
+            </option>
+
+            <option value="status"
+                {% if sort_by == "status" %}selected{% endif %}>
+                Status
+            </option>
+
+        </select>
+
+    </div>
 
 
-<input
+    <div class="control-group">
 
-type="text"
+        <label for="order">
+            Order:
+        </label>
 
-id="projectSearch"
+        <select id="order" onchange="applyProjectSort()">
 
-placeholder="Search by Project Name or Status"
+            <option value="desc"
+                {% if order == "desc" %}selected{% endif %}>
+                Descending
+            </option>
 
-onkeyup="searchProject()">
+            <option value="asc"
+                {% if order == "asc" %}selected{% endif %}>
+                Ascending
+            </option>
 
+        </select>
+
+    </div>
+
+
+    <div class="control-group">
+
+        <label for="page_size">
+            Show:
+        </label>
+
+        <select id="page_size" onchange="applyProjectSort()">
+
+            <option value="5"
+                {% if page_size == 5 %}selected{% endif %}>
+                5
+            </option>
+
+            <option value="10"
+                {% if page_size == 10 %}selected{% endif %}>
+                10
+            </option>
+
+            <option value="20"
+                {% if page_size == 20 %}selected{% endif %}>
+                20
+            </option>
+
+        </select>
+
+    </div>
 
 </div>
 
@@ -222,7 +297,96 @@ No Projects Found
 
 </table>
 
+{% if pagination and pagination.total_records > 0 %}
 
+<div class="table-footer">
+
+    <div class="pagination-info">
+
+        Showing
+        {{ pagination.offset + 1 }}
+        -
+        {{ [pagination.offset + page_size, pagination.total_records] | min }}
+        of
+        {{ pagination.total_records }}
+        projects
+
+    </div>
+
+
+    <div class="pagination">
+
+        {% if pagination.page > 1 %}
+
+        <a href="{{ url_for(
+            'projects',
+            page=pagination.page - 1,
+            page_size=page_size,
+            sort_by=sort_by,
+            order=order
+        ) }}">
+            Previous
+        </a>
+
+        {% else %}
+
+        <span class="disabled">
+            Previous
+        </span>
+
+        {% endif %}
+
+
+        {% for p in range(1, pagination.total_pages + 1) %}
+
+            {% if p == pagination.page %}
+
+            <span class="active">
+                {{ p }}
+            </span>
+
+            {% else %}
+
+            <a href="{{ url_for(
+                'projects',
+                page=p,
+                page_size=page_size,
+                sort_by=sort_by,
+                order=order
+            ) }}">
+                {{ p }}
+            </a>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if pagination.page < pagination.total_pages %}
+
+        <a href="{{ url_for(
+            'projects',
+            page=pagination.page + 1,
+            page_size=page_size,
+            sort_by=sort_by,
+            order=order
+        ) }}">
+            Next
+        </a>
+
+        {% else %}
+
+        <span class="disabled">
+            Next
+        </span>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
 
 </div>
 
@@ -546,5 +710,26 @@ rows[i].style.display="none";
 
 
 </script>
+<script>
 
+function applyProjectSort() {
+
+    const sortBy =
+        document.getElementById("sort_by").value;
+
+    const order =
+        document.getElementById("order").value;
+
+    const pageSize =
+        document.getElementById("page_size").value;
+
+    window.location.href =
+        "{{ url_for('projects') }}" +
+        "?page=1" +
+        "&page_size=" + pageSize +
+        "&sort_by=" + sortBy +
+        "&order=" + order;
+}
+
+</script>
 {% endblock %}

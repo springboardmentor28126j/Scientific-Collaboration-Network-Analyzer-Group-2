@@ -1,0 +1,68 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-container">
+
+    <h2>My Reviews</h2>
+
+    {% if reviews %}
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Publication</th>
+                    <th>Review Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for review in reviews %}
+
+                <tr>
+
+                    <td>{{ review.publication_title }}</td>
+
+                    <td>
+                        {{ review.decision }}
+                    </td>
+
+                    <td>
+
+                        <a href="{{ url_for('review_details', review_id=review.id) }}">
+
+                            {% if review.decision == "Pending" %}
+                                Review
+                            {% else %}
+                                View
+                            {% endif %}
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <p>No publications have been assigned to you for review.</p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

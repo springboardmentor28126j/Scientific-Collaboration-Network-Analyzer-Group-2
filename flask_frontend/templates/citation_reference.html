@@ -1,615 +1,974 @@
 {% extends "base.html" %}
 
-
 {% block extra_css %}
-
 <link rel="stylesheet"
-href="{{ url_for('static', filename='css/citation_reference.css') }}">
-
+      href="{{ url_for('static', filename='css/citation_reference.css') }}">
 {% endblock %}
-
 
 
 {% block content %}
 
-
 <div class="main" id="main">
 
+    <!-- ================= TOP SECTION ================= -->
 
-<!-- ================= TOP SECTION ================= -->
+    <div class="top-section">
 
-<div class="top-section">
+        <div>
+            <h1>
+                Citation & Reference Management
+            </h1>
 
-    <div>
-        <h1>
-            Citation & Reference Management
-        </h1>
-
-        <p>
-            Manage publication citations and reference lists
-        </p>
-    </div>
-
-
-</div>
-
-
-
-<!-- ================= COUNT CARDS ================= -->
-
-
-<div class="stats-container">
-
-
-    <div class="stat-card">
-
-        <h3>
-            Total Citations
-        </h3>
-
-        <h2>
-            {{ citation_count }}
-        </h2>
+            <p>
+                Manage publication citations and reference lists
+            </p>
+        </div>
 
     </div>
 
 
+    <!-- ================= COUNT CARDS ================= -->
 
-    <div class="stat-card">
+    <div class="stats-container">
 
-        <h3>
-            Total References
-        </h3>
+        <div class="stat-card">
+            <h3>Total Citations</h3>
+            <h2>{{ citation_count }}</h2>
+        </div>
 
-        <h2>
-            {{ reference_count }}
-        </h2>
+        <div class="stat-card">
+            <h3>Total References</h3>
+            <h2>{{ reference_count }}</h2>
+        </div>
 
     </div>
 
 
-
-</div>
-
-
-
-
-
-<!-- ================= TABS ================= -->
-
-
+    <!-- ================= TABS ================= -->
 <div class="tab-container">
 
+    <button class="tab-btn"
+            onclick="showSection('citationSection')">
 
-<button class="tab-btn active"
-onclick="showSection('citationSection')">
+        Citation Records
 
-Citation Records
-
-</button>
-
-
-
-<button class="tab-btn"
-onclick="showSection('referenceSection')">
-
-Reference Lists
-
-</button>
-
-
-</div>
-
-
-
-
-
-<!-- ================= CITATION SECTION ================= -->
-
-
-<div id="citationSection"
-class="content-section">
-
-
-<div class="section-header">
-
-<h2>
-Citation Records
-</h2>
-
-<div class="header-actions">
-
-<input
-type="text"
-id="citationSearch"
-class="search-box"
-placeholder="Search citations..."
-onkeyup="searchCitation()">
-
-{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
-
-<button class="add-btn"
-onclick="openCitationModal()">
-
-+ Add Citation
-
-</button>
-
-{% endif %}
-
-</div>
-
-</div>
-
-
-
-
-
-<table>
-
-
-<thead>
-
-<tr>
-
-<th>
-Cited Publication
-</th>
-
-
-<th>
-Citing Publication
-</th>
-
-
-<th>
-Action
-</th>
-
-
-</tr>
-
-</thead>
-
-
-
-<tbody>
-
-
-{% for citation in citations %}
-
-
-<tr>
-
-
-<td>
-{{ citation.cited_publication_title }}
-</td>
-
-
-<td>
-{{ citation.publication_title }}
-</td>
-
-
-
-<td>
-
-
-{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
-
-<a href="{{ url_for('delete_citation', citation_id=citation.id) }}"
-   onclick="return confirm('Are you sure you want to delete this citation?')">
-
-    <button class="delete-btn" type="button">
-        Delete
     </button>
 
-</a>
+    <button class="tab-btn"
+            onclick="showSection('referenceSection')">
 
-{% endif %}
+        Reference Lists
 
-
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-{% if citations|length == 0 %}
-
-<tr>
-<td colspan="3" class="empty-message">
-No citation records found
-</td>
-</tr>
-
-{% endif %}
-
-</tbody>
-
-
-</table>
-
+    </button>
 
 </div>
 
 
+    <!-- ========================================================= -->
+    <!-- ================= CITATION SECTION ====================== -->
+    <!-- ========================================================= -->
+
+    <div id="citationSection"
+         class="content-section">
+
+        <div class="section-header">
+
+            <h2>
+                Citation Records
+            </h2>
+
+            <div class="header-actions">
+
+                <input
+                    type="text"
+                    id="citationSearch"
+                    class="search-box"
+                    placeholder="Search citations..."
+                    onkeyup="searchCitation()">
 
 
+                {% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+                <button class="add-btn"
+                        onclick="openCitationModal()">
+
+                    + Add Citation
+
+                </button>
+
+                {% endif %}
+
+            </div>
+
+        </div>
 
 
+        <!-- ================= CITATION CONTROLS ================= -->
 
-<!-- ================= REFERENCE SECTION ================= -->
+        <div class="citation-controls">
+
+            <div class="control-group">
+
+                <label for="citation_sort_by">
+                    Sort by:
+                </label>
+
+                <select id="citation_sort_by"
+                        onchange="applyCitationSort()">
+
+                    <option value="publication_title"
+                        {% if citation_sort_by == "publication_title" %}selected{% endif %}>
+
+                        Citing Publication
+
+                    </option>
+
+                    <option value="cited_publication_title"
+                        {% if citation_sort_by == "cited_publication_title" %}selected{% endif %}>
+
+                        Cited Publication
+
+                    </option>
+
+                </select>
+
+            </div>
 
 
-<div id="referenceSection"
-class="content-section"
-style="display:none;">
+            <div class="control-group">
 
-<div class="section-header">
+                <label for="citation_order">
+                    Order:
+                </label>
 
-    <h2>Reference Lists</h2>
+                <select id="citation_order"
+                        onchange="applyCitationSort()">
 
-    <div class="header-actions">
+                    <option value="desc"
+                        {% if citation_order == "desc" %}selected{% endif %}>
 
-        <input
-        type="text"
-        id="referenceSearch"
-        class="search-box"
-        placeholder="Search references..."
-        onkeyup="searchReference()">
+                        Descending
 
-        {% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+                    </option>
 
-        <button
-        class="add-btn"
-        onclick="openReferenceModal()">
+                    <option value="asc"
+                        {% if citation_order == "asc" %}selected{% endif %}>
 
-            + Add Reference
+                        Ascending
 
-        </button>
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="control-group">
+
+                <label for="citation_page_size">
+                    Show:
+                </label>
+
+                <select id="citation_page_size"
+                        onchange="applyCitationSort()">
+
+                    <option value="5"
+                        {% if citation_page_size == 5 %}selected{% endif %}>
+
+                        5
+
+                    </option>
+
+                    <option value="10"
+                        {% if citation_page_size == 10 %}selected{% endif %}>
+
+                        10
+
+                    </option>
+
+                    <option value="20"
+                        {% if citation_page_size == 20 %}selected{% endif %}>
+
+                        20
+
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= CITATION TABLE ================= -->
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Cited Publication
+                    </th>
+
+                    <th>
+                        Citing Publication
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for citation in citations %}
+
+                <tr>
+
+                    <td>
+                        {{ citation.cited_publication_title }}
+                    </td>
+
+                    <td>
+                        {{ citation.publication_title }}
+                    </td>
+
+                    <td>
+
+                        {% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+                        <a href="{{ url_for('delete_citation', citation_id=citation.id) }}"
+                           onclick="return confirm('Are you sure you want to delete this citation?')">
+
+                            <button class="delete-btn"
+                                    type="button">
+
+                                Delete
+
+                            </button>
+
+                        </a>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+
+                {% if citations|length == 0 %}
+
+                <tr>
+
+                    <td colspan="3"
+                        class="empty-message">
+
+                        No citation records found
+
+                    </td>
+
+                </tr>
+
+                {% endif %}
+
+            </tbody>
+
+        </table>
+
+
+        <!-- ================= CITATION PAGINATION ================= -->
+
+        {% if citation_pagination and citation_pagination.total_records > 0 %}
+
+        <div class="table-footer">
+
+            <div class="pagination-info">
+
+                Showing
+
+                {{ citation_pagination.offset + 1 }}
+
+                -
+
+                {{ [citation_pagination.offset + citation_page_size,
+                    citation_pagination.total_records] | min }}
+
+                of
+
+                {{ citation_pagination.total_records }}
+
+                citations
+
+            </div>
+
+
+            <div class="pagination">
+
+                {% if citation_pagination.page > 1 %}
+
+                <a href="{{ url_for(
+                    'citation_reference',
+                    tab='citation',
+                    citation_page=citation_pagination.page - 1,
+                    citation_page_size=citation_page_size,
+                    citation_sort_by=citation_sort_by,
+                    citation_order=citation_order,
+                    reference_page=reference_pagination.page,
+                    reference_page_size=reference_page_size,
+                    reference_sort_by=reference_sort_by,
+                    reference_order=reference_order
+                ) }}">
+
+                    Previous
+
+                </a>
+
+                {% else %}
+
+                <span class="disabled">
+                    Previous
+                </span>
+
+                {% endif %}
+
+
+                {% for p in range(1, citation_pagination.total_pages + 1) %}
+
+                    {% if p == citation_pagination.page %}
+
+                    <span class="active">
+                        {{ p }}
+                    </span>
+
+                    {% else %}
+
+                    <a href="{{ url_for(
+                        'citation_reference',
+                        tab='citation',
+                        citation_page=p,
+                        citation_page_size=citation_page_size,
+                        citation_sort_by=citation_sort_by,
+                        citation_order=citation_order,
+                        reference_page=reference_pagination.page,
+                        reference_page_size=reference_page_size,
+                        reference_sort_by=reference_sort_by,
+                        reference_order=reference_order
+                    ) }}">
+
+                        {{ p }}
+
+                    </a>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                {% if citation_pagination.page < citation_pagination.total_pages %}
+
+                <a href="{{ url_for(
+                    'citation_reference',
+                    tab='citation',
+                    citation_page=citation_pagination.page + 1,
+                    citation_page_size=citation_page_size,
+                    citation_sort_by=citation_sort_by,
+                    citation_order=citation_order,
+                    reference_page=reference_pagination.page,
+                    reference_page_size=reference_page_size,
+                    reference_sort_by=reference_sort_by,
+                    reference_order=reference_order
+                ) }}">
+
+                    Next
+
+                </a>
+
+                {% else %}
+
+                <span class="disabled">
+                    Next
+                </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
 
         {% endif %}
 
     </div>
 
+
+
+    <!-- ========================================================= -->
+    <!-- ================= REFERENCE SECTION ===================== -->
+    <!-- ========================================================= -->
+
+    <div id="referenceSection"
+         class="content-section"
+         style="display:none;">
+
+        <div class="section-header">
+
+            <h2>
+                Reference Lists
+            </h2>
+
+            <div class="header-actions">
+
+                <input
+                    type="text"
+                    id="referenceSearch"
+                    class="search-box"
+                    placeholder="Search references..."
+                    onkeyup="searchReference()">
+
+
+                {% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+                <button class="add-btn"
+                        onclick="openReferenceModal()">
+
+                    + Add Reference
+
+                </button>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= REFERENCE CONTROLS ================= -->
+
+        <div class="reference-controls">
+
+            <div class="control-group">
+
+                <label for="reference_sort_by">
+                    Sort by:
+                </label>
+
+                <select id="reference_sort_by"
+                        onchange="applyReferenceSort()">
+
+                    <option value="publication_title"
+                        {% if reference_sort_by == "publication_title" %}selected{% endif %}>
+
+                        Publication
+
+                    </option>
+
+                    <option value="reference_title"
+                        {% if reference_sort_by == "reference_title" %}selected{% endif %}>
+
+                        Reference Title
+
+                    </option>
+
+                    <option value="publication_year"
+                        {% if reference_sort_by == "publication_year" %}selected{% endif %}>
+
+                        Publication Year
+
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="control-group">
+
+                <label for="reference_order">
+                    Order:
+                </label>
+
+                <select id="reference_order"
+                        onchange="applyReferenceSort()">
+
+                    <option value="desc"
+                        {% if reference_order == "desc" %}selected{% endif %}>
+
+                        Descending
+
+                    </option>
+
+                    <option value="asc"
+                        {% if reference_order == "asc" %}selected{% endif %}>
+
+                        Ascending
+
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="control-group">
+
+                <label for="reference_page_size">
+                    Show:
+                </label>
+
+                <select id="reference_page_size"
+                        onchange="applyReferenceSort()">
+
+                    <option value="5"
+                        {% if reference_page_size == 5 %}selected{% endif %}>
+
+                        5
+
+                    </option>
+
+                    <option value="10"
+                        {% if reference_page_size == 10 %}selected{% endif %}>
+
+                        10
+
+                    </option>
+
+                    <option value="20"
+                        {% if reference_page_size == 20 %}selected{% endif %}>
+
+                        20
+
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= REFERENCE TABLE ================= -->
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Publication
+                    </th>
+
+                    <th>
+                        Referenced Paper
+                    </th>
+
+                    <th>
+                        Author(s)
+                    </th>
+
+                    <th>
+                        Year
+                    </th>
+
+                    <th>
+                        DOI
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for reference in references %}
+
+                <tr>
+
+                    <td>
+                        {{ reference.publication_title }}
+                    </td>
+
+                    <td>
+                        {{ reference.reference_title }}
+                    </td>
+
+                    <td>
+                        {{ reference.author }}
+                    </td>
+
+                    <td>
+                        {{ reference.publication_year }}
+                    </td>
+
+                    <td>
+
+                        <a href="https://doi.org/{{ reference.doi }}"
+                           target="_blank"
+                           class="doi-link">
+
+                            {{ reference.doi }}
+
+                        </a>
+
+                    </td>
+
+                    <td>
+
+                        {% if session["role"] in ["researcher","institution_admin","system_admin"] %}
+
+                        <a href="{{ url_for('delete_reference', reference_id=reference.id) }}"
+                           onclick="return confirm('Are you sure you want to delete this reference?')">
+
+                            <button class="delete-btn"
+                                    type="button">
+
+                                Delete
+
+                            </button>
+
+                        </a>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+
+                {% if references|length == 0 %}
+
+                <tr>
+
+                    <td colspan="6"
+                        class="empty-message">
+
+                        No reference records found
+
+                    </td>
+
+                </tr>
+
+                {% endif %}
+
+            </tbody>
+
+        </table>
+
+
+        <!-- ================= REFERENCE PAGINATION ================= -->
+
+        {% if reference_pagination and reference_pagination.total_records > 0 %}
+
+        <div class="table-footer">
+
+            <div class="pagination-info">
+
+                Showing
+
+                {{ reference_pagination.offset + 1 }}
+
+                -
+
+                {{ [reference_pagination.offset + reference_page_size,
+                    reference_pagination.total_records] | min }}
+
+                of
+
+                {{ reference_pagination.total_records }}
+
+                references
+
+            </div>
+
+
+            <div class="pagination">
+
+                {% if reference_pagination.page > 1 %}
+
+                <a href="{{ url_for(
+                    'citation_reference',
+                    tab='reference',
+                    citation_page=citation_pagination.page,
+                    citation_page_size=citation_page_size,
+                    citation_sort_by=citation_sort_by,
+                    citation_order=citation_order,
+                    reference_page=reference_pagination.page - 1,
+                    reference_page_size=reference_page_size,
+                    reference_sort_by=reference_sort_by,
+                    reference_order=reference_order
+                ) }}">
+
+                    Previous
+
+                </a>
+
+                {% else %}
+
+                <span class="disabled">
+                    Previous
+                </span>
+
+                {% endif %}
+
+
+                {% for p in range(1, reference_pagination.total_pages + 1) %}
+
+                    {% if p == reference_pagination.page %}
+
+                    <span class="active">
+                        {{ p }}
+                    </span>
+
+                    {% else %}
+
+                    <a href="{{ url_for(
+                        'citation_reference',
+                        tab='reference',
+                        citation_page=citation_pagination.page,
+                        citation_page_size=citation_page_size,
+                        citation_sort_by=citation_sort_by,
+                        citation_order=citation_order,
+                        reference_page=p,
+                        reference_page_size=reference_page_size,
+                        reference_sort_by=reference_sort_by,
+                        reference_order=reference_order
+                    ) }}">
+
+                        {{ p }}
+
+                    </a>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                {% if reference_pagination.page < reference_pagination.total_pages %}
+
+                <a href="{{ url_for(
+                    'citation_reference',
+                    tab='reference',
+                    citation_page=citation_pagination.page,
+                    citation_page_size=citation_page_size,
+                    citation_sort_by=citation_sort_by,
+                    citation_order=citation_order,
+                    reference_page=reference_pagination.page + 1,
+                    reference_page_size=reference_page_size,
+                    reference_sort_by=reference_sort_by,
+                    reference_order=reference_order
+                ) }}">
+
+                    Next
+
+                </a>
+
+                {% else %}
+
+                <span class="disabled">
+                    Next
+                </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
 </div>
 
-<table>
-<thead>
-
-
-<tr>
-
-<th>
-Publication
-</th>
-
-
-<th>
-Referenced Paper
-</th>
-
-<th>
-Author(s)
-</th>
-
-<th>
-Year
-</th>
-
-
-<th>
-DOI
-</th>
-
-
-<th>
-Action
-</th>
-
-
-</tr>
-
-
-</thead>
-
-
-
-<tbody>
-
-
-
-{% for reference in references %}
-
-
-<tr>
-
-
-<td>
-{{ reference.publication_title }}
-</td>
-
-
-<td>
-{{ reference.reference_title }}
-</td>
-
-<td>
-{{ reference.author }}
-</td>
-
-<td>
-{{ reference.publication_year }}
-</td>
-
-
-<td>
-<a href="https://doi.org/{{ reference.doi }}"
-   target="_blank"
-   class="doi-link">
-
-{{ reference.doi }}
-
-</a>
-</td>
-
-
-
-<td>
-
-
-{% if session["role"] in ["researcher","institution_admin","system_admin"] %}
-
-<a href="{{ url_for('delete_reference', reference_id=reference.id) }}"
-   onclick="return confirm('Are you sure you want to delete this reference?')">
-
-    <button class="delete-btn" type="button">
-        Delete
-    </button>
-
-</a>
-
-{% endif %}
-
-
-</td>
-
-
-
-</tr>
-
-
-{% endfor %}
-
-{% if references|length == 0 %}
-
-<tr>
-<td colspan="6" class="empty-message">
-No reference records found
-</td>
-</tr>
-
-{% endif %}
-
-</tbody>
-
-
-</table>
-
-</div>
-
-
-</div>
 
 <!-- ================= ADD CITATION MODAL ================= -->
 
 <div id="citationModal" class="modal">
 
+    <div class="modal-content">
 
-<div class="modal-content">
+        <span class="close"
+              onclick="closeCitationModal()">
+            ×
+        </span>
 
+        <h2>
+            Add Citation
+        </h2>
 
-<span class="close" onclick="closeCitationModal()">
-&times;
-</span>
+        <form action="{{ url_for('add_citation') }}"
+              method="POST">
 
+            <label>
+                Citing Publication
+            </label>
 
-<h2>
-Add Citation
-</h2>
+            <select name="publication_id"
+                    id="citingPublication"
+                    onchange="removeSelfCitation()"
+                    required>
 
+                <option value="">
+                    Select Publication
+                </option>
 
-<form action="{{ url_for('add_citation') }}" method="POST">
+                {% for publication in publications %}
 
+                <option value="{{ publication.id }}">
+                    {{ publication.title }}
+                </option>
 
-<label>
-Citing Publication
-</label>
+                {% endfor %}
 
-
-<select 
-    name="publication_id" 
-    id="citingPublication"
-    onchange="removeSelfCitation()"
-    required>
-
-<option value="">
-Select Publication
-</option>
-
-
-{% for publication in publications %}
-
-<option value="{{ publication.id }}">
-
-{{ publication.title }}
-
-</option>
-
-{% endfor %}
+            </select>
 
 
-</select>
+            <label>
+                Cited Publication
+            </label>
+
+            <select name="cited_publication_id"
+                    id="citedPublication"
+                    required>
+
+                <option value="">
+                    Select Publication
+                </option>
+
+                {% for publication in cited_publications %}
+
+                <option value="{{ publication.id }}">
+                    {{ publication.title }}
+                </option>
+
+                {% endfor %}
+
+            </select>
 
 
+            <button class="add-btn"
+                    type="submit">
 
-<label>
-Cited Publication
-</label>
+                Add Citation
 
+            </button>
 
-<select 
-    name="cited_publication_id"
-    id="citedPublication"
-    required>
+        </form>
 
-<option value="">
-Select Publication
-</option>
-
-
-{% for publication in cited_publications %}
-
-<option value="{{ publication.id }}">
-
-{{ publication.title }}
-
-</option>
-
-{% endfor %}
-
-
-</select>
-
-
-
-<button class="add-btn" type="submit">
-
-Add Citation
-
-</button>
-
-
-</form>
-
+    </div>
 
 </div>
-
-</div>
-
-
-
 
 
 <!-- ================= ADD REFERENCE MODAL ================= -->
 
-
 <div id="referenceModal" class="modal">
 
+    <div class="modal-content">
 
-<div class="modal-content">
+        <span class="close"
+              onclick="closeReferenceModal()">
+            ×
+        </span>
 
+        <h2>
+            Add Reference
+        </h2>
 
-<span class="close" onclick="closeReferenceModal()">
-&times;
-</span>
+        <form action="{{ url_for('add_reference') }}"
+              method="POST">
 
+            <label>
+                Publication
+            </label>
 
-<h2>
-Add Reference
-</h2>
+            <select name="publication_id"
+                    required>
 
+                <option value="">
+                    Select Publication
+                </option>
 
+                {% for publication in publications %}
 
-<form action="{{ url_for('add_reference') }}" method="POST">
+                <option value="{{ publication.id }}">
+                    {{ publication.title }}
+                </option>
 
+                {% endfor %}
 
-<label>
-Publication
-</label>
-
-
-<select name="publication_id" required>
-
-<option value="">
-Select Publication
-</option>
-
-
-{% for publication in publications %}
-
-<option value="{{ publication.id }}">
-
-{{ publication.title }}
-
-</option>
-
-{% endfor %}
+            </select>
 
 
-</select>
+            <label>
+                Reference Title
+            </label>
+
+            <input type="text"
+                   name="reference_title"
+                   required>
 
 
+            <label>
+                Author(s)
+            </label>
 
-<label>
-Reference Title
-</label>
-
-
-<input type="text" name="reference_title" required>
-
-
-
-<label>
-Author(s)
-</label>
+            <input type="text"
+                   name="author"
+                   placeholder="Example: John Smith, Alice Brown"
+                   required>
 
 
-<input
-type="text"
-name="author"
-placeholder="Example: John Smith, Alice Brown"
-required>
+            <label>
+                Publication Year
+            </label>
+
+            <input type="number"
+                   name="publication_year"
+                   required>
 
 
-<label>
-Publication Year
-</label>
+            <label>
+                DOI
+            </label>
+
+            <input type="text"
+                   name="doi"
+                   required>
 
 
-<input type="number" name="publication_year" required>
+            <button class="add-btn"
+                    type="submit">
 
+                Add Reference
 
+            </button>
 
-<label>
-DOI
-</label>
+        </form>
 
-
-<input type="text" name="doi" required>
-
-
-
-<button class="add-btn" type="submit">
-
-Add Reference
-
-</button>
-
-
-</form>
-
+    </div>
 
 </div>
 
-</div>
+
+<!-- ================= SCRIPT ================= -->
 
 <script>
-
 
 function showSection(section) {
 
@@ -622,44 +981,47 @@ function showSection(section) {
         btn.classList.remove("active");
     });
 
-    if(section === "citationSection"){
+    if (section === "citationSection") {
         document.querySelectorAll(".tab-btn")[0].classList.add("active");
     } else {
         document.querySelectorAll(".tab-btn")[1].classList.add("active");
     }
 }
+function setInitialSection() {
 
-function openCitationModal(){
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
 
-document.getElementById("citationModal").style.display="block";
+    if (tab === "reference") {
+        showSection("referenceSection");
+    } else {
+        showSection("citationSection");
+    }
+}
 
+document.addEventListener("DOMContentLoaded", setInitialSection);
+
+function openCitationModal() {
+    document.getElementById("citationModal").style.display = "block";
 }
 
 
-
-function closeCitationModal(){
-
-document.getElementById("citationModal").style.display="none";
-
+function closeCitationModal() {
+    document.getElementById("citationModal").style.display = "none";
 }
 
 
-
-function openReferenceModal(){
-
-document.getElementById("referenceModal").style.display="block";
-
+function openReferenceModal() {
+    document.getElementById("referenceModal").style.display = "block";
 }
 
 
-
-function closeReferenceModal(){
-
-document.getElementById("referenceModal").style.display="none";
-
+function closeReferenceModal() {
+    document.getElementById("referenceModal").style.display = "none";
 }
 
-function searchCitation(){
+
+function searchCitation() {
 
     let input = document.getElementById("citationSearch");
     let filter = input.value.toLowerCase();
@@ -667,25 +1029,22 @@ function searchCitation(){
     let table = document.querySelector("#citationSection table");
     let rows = table.getElementsByTagName("tr");
 
-
-    for(let i = 1; i < rows.length; i++){
+    for (let i = 1; i < rows.length; i++) {
 
         let text = rows[i].innerText.toLowerCase();
 
-        if(text.includes(filter)){
+        if (text.includes(filter)) {
             rows[i].style.display = "";
         }
-        else{
+        else {
             rows[i].style.display = "none";
         }
 
     }
-
 }
 
 
-
-function searchReference(){
+function searchReference() {
 
     let input = document.getElementById("referenceSearch");
     let filter = input.value.toLowerCase();
@@ -693,63 +1052,127 @@ function searchReference(){
     let table = document.querySelector("#referenceSection table");
     let rows = table.getElementsByTagName("tr");
 
-
-    for(let i = 1; i < rows.length; i++){
+    for (let i = 1; i < rows.length; i++) {
 
         let text = rows[i].innerText.toLowerCase();
 
-        if(text.includes(filter)){
+        if (text.includes(filter)) {
             rows[i].style.display = "";
         }
-        else{
+        else {
             rows[i].style.display = "none";
         }
 
     }
+}
+
+
+/* ================= CITATION SORT ================= */
+
+function applyCitationSort() {
+
+    const sortBy =
+        document.getElementById("citation_sort_by").value;
+
+    const order =
+        document.getElementById("citation_order").value;
+
+    const pageSize =
+        document.getElementById("citation_page_size").value;
+
+    window.location.href =
+        "{{ url_for('citation_reference') }}" +
+        "?tab=citation" +
+        "&citation_page=1" +
+        "&citation_page_size=" + pageSize +
+        "&citation_sort_by=" + sortBy +
+        "&citation_order=" + order +
+        "&reference_page={{ reference_pagination.page }}" +
+        "&reference_page_size={{ reference_page_size }}" +
+        "&reference_sort_by={{ reference_sort_by }}" +
+        "&reference_order={{ reference_order }}";
 
 }
-function removeSelfCitation(){
 
-    let citing = document.getElementById(
-        "citingPublication"
-    );
 
-    let cited = document.getElementById(
-        "citedPublication"
-    );
+/* ================= REFERENCE SORT ================= */
 
+function applyReferenceSort() {
+
+    const sortBy =
+        document.getElementById("reference_sort_by").value;
+
+    const order =
+        document.getElementById("reference_order").value;
+
+    const pageSize =
+        document.getElementById("reference_page_size").value;
+
+    window.location.href =
+        "{{ url_for('citation_reference') }}" +
+        "?tab=reference" +
+        "&citation_page={{ citation_pagination.page }}" +
+        "&citation_page_size={{ citation_page_size }}" +
+        "&citation_sort_by={{ citation_sort_by }}" +
+        "&citation_order={{ citation_order }}" +
+        "&reference_page=1" +
+        "&reference_page_size=" + pageSize +
+        "&reference_sort_by=" + sortBy +
+        "&reference_order=" + order;
+
+}
+
+
+/* ================= REMOVE SELF CITATION ================= */
+
+function removeSelfCitation() {
+
+    let citing =
+        document.getElementById("citingPublication");
+
+    let cited =
+        document.getElementById("citedPublication");
 
     let selectedValue = citing.value;
 
+    for (let option of cited.options) {
 
-    for(let i = 0; i < cited.options.length; i++){
+        option.disabled = false;
 
-        let option = cited.options[i];
+        if (option.value === selectedValue) {
 
+            option.disabled = true;
 
-        if(option.value === selectedValue){
-
-            option.style.display = "none";
-
-            if(cited.value === selectedValue){
-
+            if (cited.value === selectedValue) {
                 cited.value = "";
-
             }
-
-        }
-
-        else{
-
-            option.style.display = "block";
 
         }
 
     }
 
 }
+
 </script>
 
+
+<script>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+{% if messages %}
+
+{% for category, message in messages %}
+
+alert("{{ message }}");
+
+{% endfor %}
+
+{% endif %}
+
+{% endwith %}
+
+</script>
 
 
 {% endblock %}

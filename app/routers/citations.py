@@ -20,7 +20,6 @@ def create_citation(
     current_user: User = Depends(get_current_user)
 ):
 
-    # Get citing publication
     citing_publication = db.query(models.Publication).filter(
         models.Publication.id == citation.publication_id
     ).first()
@@ -36,8 +35,8 @@ def create_citation(
     # ================= ROLE PERMISSION =================
 
 
-    # Researcher permission
     if current_user.role == "researcher":
+
 
         researcher = db.query(models.Researcher).filter(
             models.Researcher.user_id == current_user.id
@@ -52,6 +51,7 @@ def create_citation(
 
 
         if citing_publication.researcher_id != researcher.id:
+
             raise HTTPException(
                 status_code=403,
                 detail="You can add citation only for your own publication"
@@ -59,7 +59,6 @@ def create_citation(
 
 
 
-    # Institution Admin permission
     elif current_user.role == "institution_admin":
 
 
@@ -69,6 +68,7 @@ def create_citation(
 
 
         if not institution_admin:
+
             raise HTTPException(
                 status_code=404,
                 detail="Institution profile not found"
@@ -80,12 +80,6 @@ def create_citation(
         ).first()
 
 
-        if not researcher:
-            raise HTTPException(
-                status_code=404,
-                detail="Researcher not found"
-            )
-
 
         if researcher.institution != institution_admin.name:
 
@@ -96,7 +90,6 @@ def create_citation(
 
 
 
-    # System Admin permission
     elif current_user.role == "system_admin":
 
         pass
@@ -112,10 +105,8 @@ def create_citation(
 
 
 
-    # ================= CITATION VALIDATIONS =================
+    # ================= VALIDATIONS =================
 
-
-    # Prevent self citation
 
     if citation.publication_id == citation.cited_publication_id:
 
@@ -126,11 +117,10 @@ def create_citation(
 
 
 
-    # Check cited publication
-
     cited_publication = db.query(models.Publication).filter(
         models.Publication.id == citation.cited_publication_id
     ).first()
+
 
 
     if not cited_publication:
@@ -142,8 +132,6 @@ def create_citation(
 
 
 
-    # Only Published papers can be cited
-
     if cited_publication.status != "Published":
 
         raise HTTPException(
@@ -152,8 +140,6 @@ def create_citation(
         )
 
 
-
-    # Duplicate check
 
     existing = db.query(models.Citation).filter(
         models.Citation.publication_id == citation.publication_id,
@@ -171,21 +157,33 @@ def create_citation(
 
 
 
+    # ================= CREATE + NOTIFICATION =================
+
+
     return crud.create_citation(
         db,
-        citation
+        citation,
+        current_user.id,
+        current_user.role
     )
-    
 @router.get("/")
 def get_all_citations(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str = "date",
+    order: str = "desc",
     db: Session = Depends(get_db)
 ):
 
-    citations = db.query(models.Citation).all()
-
+    citations, pagination = crud.get_all_citations(
+        db,
+        page,
+        page_size,
+        sort_by,
+        order
+    )
 
     result = []
-
 
     for citation in citations:
 
@@ -197,21 +195,23 @@ def get_all_citations(
 
             "cited_publication_id": citation.cited_publication_id,
 
+            "publication_title":
+                citation.publication.title
+                if citation.publication
+                else "Unknown",
 
-            "publication_title": citation.publication.title
-            if citation.publication else "Unknown",
-
-
-            "cited_publication_title": citation.cited_publication.title
-            if citation.cited_publication else "Unknown",
-
+            "cited_publication_title":
+                citation.cited_publication.title
+                if citation.cited_publication
+                else "Unknown",
 
             "created_at": citation.created_at
-
         })
 
-
-    return result
+    return {
+        "data": result,
+        "pagination": pagination
+    }
 
 # Get citations of a publication
 @router.get("/{publication_id}", response_model=list[schemas.CitationResponse])

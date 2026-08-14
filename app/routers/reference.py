@@ -21,15 +21,22 @@ router = APIRouter(
     response_model=schemas.ReferenceResponse
 )
 def create_reference(
+
     reference: schemas.ReferenceCreate,
-    db: Session = Depends(get_db)
+
+    db: Session = Depends(get_db),
+
+    current_user: User = Depends(get_current_user)
+
 ):
 
     try:
 
         return crud.create_reference(
             db,
-            reference
+            reference,
+            current_user.id,
+            current_user.role
         )
 
     except ValueError as e:
@@ -38,8 +45,6 @@ def create_reference(
             status_code=400,
             detail=str(e)
         )
-
-
 
 # ==========================
 # Get References by Publication
@@ -62,10 +67,20 @@ def get_references(
 
 @router.get("/")
 def get_all_references(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str = "year",
+    order: str = "desc",
     db: Session = Depends(get_db)
 ):
 
-    references = db.query(models.Reference).all()
+    references, pagination = crud.get_all_references(
+        db,
+        page,
+        page_size,
+        sort_by,
+        order
+    )
 
     result = []
 
@@ -81,7 +96,8 @@ def get_all_references(
 
             "publication_id": reference.publication_id,
 
-            "publication_title": publication.title if publication else "Unknown",
+            "publication_title":
+                publication.title if publication else "Unknown",
 
             "reference_title": reference.reference_title,
 
@@ -95,8 +111,10 @@ def get_all_references(
 
         })
 
-    return result
-    
+    return {
+        "data": result,
+        "pagination": pagination
+    }
 # ==========================
 # Get Single Reference
 # ==========================
@@ -132,12 +150,21 @@ def get_reference(
 # Delete Reference
 # ==========================
 
+# ==========================
+# Delete Reference
+# ==========================
+
 @router.delete("/{reference_id}")
 def delete_reference(
+
     reference_id: int,
+
     db: Session = Depends(get_db),
+
     current_user: User = Depends(get_current_user)
+
 ):
+
 
     reference = db.query(models.Reference).filter(
         models.Reference.id == reference_id
@@ -145,50 +172,105 @@ def delete_reference(
 
 
     if not reference:
+
         raise HTTPException(
             status_code=404,
             detail="Reference not found"
         )
 
 
-    # System Admin can delete any reference
+
+    # ==========================
+    # System Admin
+    # ==========================
+
     if current_user.role == "system_admin":
+
         pass
 
 
-    # Researcher can delete only their own publication references
+
+    # ==========================
+    # Researcher
+    # ==========================
+
     elif current_user.role == "researcher":
+
 
         publication = db.query(models.Publication).filter(
             models.Publication.id == reference.publication_id
         ).first()
 
 
+
         if not publication:
+
             raise HTTPException(
                 status_code=404,
                 detail="Publication not found"
             )
 
 
-        if publication.researcher_id != current_user.id:
+
+        # Get researcher profile using logged-in user
+
+        researcher = db.query(models.Researcher).filter(
+            models.Researcher.user_id == current_user.id
+        ).first()
+
+
+
+        if not researcher:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Researcher profile not found"
+            )
+
+
+
+        # Check ownership
+
+        if publication.researcher_id != researcher.id:
+
             raise HTTPException(
                 status_code=403,
                 detail="You can delete only references from your own publications"
             )
 
 
+
+    # ==========================
+    # Institution Admin
+    # ==========================
+
+    elif current_user.role == "institution_admin":
+
+
+        raise HTTPException(
+            status_code=403,
+            detail="Institution admin cannot delete references"
+        )
+
+
+
     else:
+
         raise HTTPException(
             status_code=403,
             detail="Permission denied"
         )
 
 
+
     db.delete(reference)
+
     db.commit()
 
 
+
     return {
+
         "message": "Reference deleted successfully"
+
     }

@@ -1,166 +1,378 @@
 {% extends "base.html" %}
 
-
 {% block content %}
 
 <!-- ================= MAIN ================= -->
 
 <div class="main" id="main">
 
+    <div class="top-section">
 
-<div class="top-section">
+        <h1>
+            Institutions
+        </h1>
 
-<h1>
-Institutions
-</h1>
+        {% if session["role"] == "system_admin" %}
 
+        <button class="add-btn" onclick="openModal()">
+            + Add Institution
+        </button>
 
-{% if session["role"] == "system_admin" %}
+        {% endif %}
 
-<button class="add-btn" onclick="openModal()">
+    </div>
 
-+ Add Institution
 
-</button>
+    <!-- ================= SEARCH & CONTROLS ================= -->
 
-{% endif %}
+    <div class="institution-controls">
 
+        <div class="search-box">
 
-</div>
+            <input
+                type="text"
+                id="institutionSearch"
+                placeholder="Search by Institution Name or Location"
+                onkeyup="searchInstitution()">
 
+        </div>
 
 
-<!-- ================= SEARCH ================= -->
+        <div class="control-group">
 
-<div class="search-box">
+            <label for="sort_by">
+                Sort by:
+            </label>
 
-<input
-type="text"
-id="institutionSearch"
-placeholder="Search by Institution Name or Location"
-onkeyup="searchInstitution()">
+            <select
+                id="sort_by"
+                onchange="applyInstitutionSort()">
 
-</div>
+                <option value="name"
+                    {% if sort_by == "name" %}selected{% endif %}>
+                    Name
+                </option>
 
+                <option value="institution_type"
+                    {% if sort_by == "institution_type" %}selected{% endif %}>
+                    Type
+                </option>
 
+                <option value="location"
+                    {% if sort_by == "location" %}selected{% endif %}>
+                    Location
+                </option>
 
+            </select>
 
-<!-- ================= TABLE ================= -->
+        </div>
 
-<table>
 
-<thead>
+        <div class="control-group">
 
-<tr>
+            <label for="order">
+                Order:
+            </label>
 
-<th>ID</th>
+            <select
+                id="order"
+                onchange="applyInstitutionSort()">
 
-<th>Institution Name</th>
+                <option value="asc"
+                    {% if order == "asc" %}selected{% endif %}>
+                    Ascending
+                </option>
 
-<th>Institution Type</th>
+                <option value="desc"
+                    {% if order == "desc" %}selected{% endif %}>
+                    Descending
+                </option>
 
-<th>Location</th>
+            </select>
 
-<th>Website</th>
+        </div>
 
-<th>Phone</th>
 
-<th>Action</th>
+        <div class="control-group">
 
-</tr>
+            <label for="page_size">
+                Show:
+            </label>
 
-</thead>
+            <select
+                id="page_size"
+                onchange="applyInstitutionSort()">
 
-<tbody>
+                <option value="5"
+                    {% if page_size == 5 %}selected{% endif %}>
+                    5
+                </option>
 
-{% if institutions %}
+                <option value="10"
+                    {% if page_size == 10 %}selected{% endif %}>
+                    10
+                </option>
 
-{% for institution in institutions %}
+                <option value="20"
+                    {% if page_size == 20 %}selected{% endif %}>
+                    20
+                </option>
 
-<tr>
+            </select>
 
-<td>
-{{ loop.index }}
-</td>
+        </div>
 
-<td>
-{{ institution.name }}
-</td>
+    </div>
 
-<td>
-{{ institution.institution_type }}
-</td>
 
-<td>
-{{ institution.location }}
-</td>
+    <!-- ================= TABLE ================= -->
 
-<td>
+    <table>
 
-{% if institution.website %}
+        <thead>
 
-<a href="{{ institution.website }}" target="_blank">
-Visit
-</a>
+            <tr>
 
-{% else %}
+                <th>ID</th>
 
--
+                <th>Institution Name</th>
 
-{% endif %}
+                <th>Institution Type</th>
 
-</td>
+                <th>Location</th>
 
-<td>
-{{ institution.phone }}
-</td>
+                <th>Website</th>
 
-<td>
+                <th>Phone</th>
 
-<a href="{{ url_for('edit_institution', id=institution.id) }}">
+                <th>Action</th>
 
-<button class="edit-btn">
+            </tr>
 
-Edit
+        </thead>
 
-</button>
 
-</a>
+        <tbody>
 
-<a href="{{ url_for('delete_institution', id=institution.id) }}"
-onclick="return confirm('Are you sure you want to delete this institution?');">
+            {% if institutions %}
 
-<button class="delete-btn">
+                {% for institution in institutions %}
 
-Delete
+                <tr>
 
-</button>
+                    <td>
+                        {{ pagination.offset + loop.index if pagination else loop.index }}
+                    </td>
 
-</a>
 
-</td>
+                    <td>
+                        {{ institution.name }}
+                    </td>
 
-</tr>
 
-{% endfor %}
+                    <td>
+                        {{ institution.institution_type }}
+                    </td>
 
-{% else %}
 
-<tr>
+                    <td>
+                        {{ institution.location }}
+                    </td>
 
-<td colspan="7" class="empty">
 
-No Institutions Found
+                    <td>
 
-</td>
+                        {% if institution.website %}
 
-</tr>
+                            <a
+                                href="{{ institution.website }}"
+                                target="_blank">
+                                Visit
+                            </a>
 
-{% endif %}
+                        {% else %}
 
-</tbody>
+                            -
 
-</table>
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        {{ institution.phone }}
+                    </td>
+
+
+                    <td>
+
+                        <a href="{{ url_for(
+                            'edit_institution',
+                            id=institution.id
+                        ) }}">
+
+                            <button class="edit-btn">
+                                Edit
+                            </button>
+
+                        </a>
+
+
+                        <a
+                            href="{{ url_for(
+                                'delete_institution',
+                                id=institution.id
+                            ) }}"
+                            onclick="return confirm(
+                                'Are you sure you want to delete this institution?'
+                            );">
+
+                            <button class="delete-btn">
+                                Delete
+                            </button>
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            {% else %}
+
+                <tr>
+
+                    <td colspan="7" class="empty">
+                        No Institutions Found
+                    </td>
+
+                </tr>
+
+            {% endif %}
+
+        </tbody>
+
+    </table>
+
+
+    <!-- ================= PAGINATION ================= -->
+
+    {% if pagination and pagination.total_records > 0 %}
+
+    <div class="table-footer">
+
+        <div class="pagination-info">
+
+            Showing
+
+            {{ pagination.offset + 1 }}
+
+            -
+
+            {{
+                [
+                    pagination.offset + page_size,
+                    pagination.total_records
+                ] | min
+            }}
+
+            of
+
+            {{ pagination.total_records }}
+
+            institutions
+
+        </div>
+
+
+        <div class="pagination">
+
+
+            {% if pagination.page > 1 %}
+
+            <a href="{{ url_for(
+                'institutions',
+                page=pagination.page - 1,
+                page_size=page_size,
+                sort_by=sort_by,
+                order=order
+            ) }}">
+
+                Previous
+
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                Previous
+            </span>
+
+            {% endif %}
+
+
+
+            {% for p in range(
+                1,
+                pagination.total_pages + 1
+            ) %}
+
+
+                {% if p == pagination.page %}
+
+                <span class="active">
+                    {{ p }}
+                </span>
+
+                {% else %}
+
+                <a href="{{ url_for(
+                    'institutions',
+                    page=p,
+                    page_size=page_size,
+                    sort_by=sort_by,
+                    order=order
+                ) }}">
+
+                    {{ p }}
+
+                </a>
+
+                {% endif %}
+
+
+            {% endfor %}
+
+
+
+            {% if pagination.page < pagination.total_pages %}
+
+            <a href="{{ url_for(
+                'institutions',
+                page=pagination.page + 1,
+                page_size=page_size,
+                sort_by=sort_by,
+                order=order
+            ) }}">
+
+                Next
+
+            </a>
+
+            {% else %}
+
+            <span class="disabled">
+                Next
+            </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% endif %}
 
 </div>
 
@@ -169,164 +381,202 @@ No Institutions Found
 
 <div class="modal" id="institutionModal">
 
+    <div class="modal-content">
 
-<div class="modal-content">
-
-
-<h2>
-Add Institution
-</h2>
+        <h2>
+            Add Institution
+        </h2>
 
 
-
-<form method="POST"
-action="{{ url_for('add_institution') }}">
-
-
-
-<label>
-Institution Name
-</label>
-
-<input
-type="text"
-name="name"
-required>
+        <form
+            method="POST"
+            action="{{ url_for('add_institution') }}">
 
 
+            <label>
+                Institution Name
+            </label>
 
-<label>
-Institution Type
-</label>
-
-<input
-type="text"
-name="institution_type"
-required>
-
+            <input
+                type="text"
+                name="name"
+                required>
 
 
-<label>
-Location
-</label>
+            <label>
+                Institution Type
+            </label>
 
-<input
-type="text"
-name="location"
-required>
-
-
-
-<label>
-Website
-</label>
-
-<input
-type="text"
-name="website">
+            <input
+                type="text"
+                name="institution_type"
+                required>
 
 
+            <label>
+                Location
+            </label>
 
-<label>
-Phone
-</label>
-
-<input
-type="text"
-name="phone">
-
-
-
-<div class="modal-buttons">
+            <input
+                type="text"
+                name="location"
+                required>
 
 
-<button type="submit"
-class="save-btn">
+            <label>
+                Website
+            </label>
 
-Save
+            <input
+                type="text"
+                name="website">
 
-</button>
+
+            <label>
+                Phone
+            </label>
+
+            <input
+                type="text"
+                name="phone">
 
 
+            <div class="modal-buttons">
 
-<button type="button"
-class="cancel-btn"
-onclick="closeModal()">
+                <button
+                    type="submit"
+                    class="save-btn">
 
-Cancel
+                    Save
 
-</button>
+                </button>
 
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    onclick="closeModal()">
+
+                    Cancel
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 
 
-
-</form>
-
-
-</div>
-
-
-</div>
-
-<!-- ================= SCRIPT ================= -->
+<!-- ================= JAVASCRIPT ================= -->
 
 <script>
 
-function openModal(){
+function openModal() {
 
-document.getElementById("institutionModal").style.display="flex";
-
-}
-
-
-
-function closeModal(){
-
-document.getElementById("institutionModal").style.display="none";
+    document.getElementById(
+        "institutionModal"
+    ).style.display = "flex";
 
 }
 
 
+function closeModal() {
 
-function searchInstitution(){
-
-let input=document.getElementById("institutionSearch");
-
-let filter=input.value.toLowerCase();
-
-let rows=document.querySelector("table").getElementsByTagName("tr");
-
-for(let i=1;i<rows.length;i++){
-
-let name=rows[i].getElementsByTagName("td")[1];
-
-let location=rows[i].getElementsByTagName("td")[3];
-
-if(name && location){
-
-let nameText=name.textContent.toLowerCase();
-
-let locationText=location.textContent.toLowerCase();
-
-if(nameText.includes(filter) || locationText.includes(filter)){
-
-rows[i].style.display="";
-
-}else{
-
-rows[i].style.display="none";
+    document.getElementById(
+        "institutionModal"
+    ).style.display = "none";
 
 }
 
-}
+
+function searchInstitution() {
+
+    let input =
+        document.getElementById(
+            "institutionSearch"
+        );
+
+    let filter =
+        input.value.toLowerCase();
+
+    let rows =
+        document
+        .querySelector("table")
+        .getElementsByTagName("tr");
+
+
+    for (let i = 1; i < rows.length; i++) {
+
+        let name =
+            rows[i]
+            .getElementsByTagName("td")[1];
+
+        let location =
+            rows[i]
+            .getElementsByTagName("td")[3];
+
+
+        if (name && location) {
+
+            let nameText =
+                name.textContent.toLowerCase();
+
+            let locationText =
+                location.textContent.toLowerCase();
+
+
+            if (
+                nameText.includes(filter) ||
+                locationText.includes(filter)
+            ) {
+
+                rows[i].style.display = "";
+
+            } else {
+
+                rows[i].style.display = "none";
+
+            }
+
+        }
+
+    }
 
 }
+
+
+function applyInstitutionSort() {
+
+    const sortBy =
+        document.getElementById(
+            "sort_by"
+        ).value;
+
+
+    const order =
+        document.getElementById(
+            "order"
+        ).value;
+
+
+    const pageSize =
+        document.getElementById(
+            "page_size"
+        ).value;
+
+
+    window.location.href =
+        "{{ url_for('institutions') }}" +
+        "?page=1" +
+        "&page_size=" + pageSize +
+        "&sort_by=" + sortBy +
+        "&order=" + order;
 
 }
 
 </script>
-
 
 {% endblock %}

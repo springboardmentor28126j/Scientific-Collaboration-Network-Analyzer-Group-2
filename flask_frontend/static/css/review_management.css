@@ -1,0 +1,88 @@
+/* ================= REVIEW MANAGEMENT ================= */
+
+.review-management-card{
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    margin-bottom:25px;
+}
+
+.review-management-card h3{
+    color:#1E3C72;
+    margin-top:0;
+    margin-bottom:20px;
+}
+
+.review-management-card table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.review-management-card thead{
+    background:#1E3C72;
+    color:white;
+}
+
+.review-management-card th{
+    padding:15px;
+    text-align:left;
+}
+
+.review-management-card td{
+    padding:14px 15px;
+    border-bottom:1px solid #eee;
+}
+
+.review-management-card tbody tr:hover{
+    background:#f9f9f9;
+}
+
+/* Reviewer selection */
+
+.review-management-card select{
+    padding:8px 12px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    font-size:14px;
+    background:white;
+}
+
+/* Assign button */
+
+.review-management-card button{
+    background:#2563EB;
+    color:white;
+    border:none;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+}
+
+.review-management-card button:hover{
+    background:#1D4ED8;
+}
+
+/* Not available */
+
+.review-management-card span{
+    color:#777;
+    font-size:13px;
+}
+
+/* View button */
+
+.review-management-card .view-btn{
+    background:#3498db;
+    color:white;
+    padding:7px 14px;
+    border-radius:6px;
+    text-decoration:none;
+    font-size:13px;
+}
+
+.review-management-card .view-btn:hover{
+    background:#2980b9;
+}

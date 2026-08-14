@@ -41,20 +41,134 @@ Publications
 
 
 </div>
+<!-- ================= AI RESEARCH PAPER RECOMMENDATION ================= -->
 
+<div class="ai-recommendation-section">
 
-<!-- SEARCH -->
+    <h2>
+        AI Research Paper Recommendation
+    </h2>
 
-<div class="search-box">
+    <p class="ai-description">
+        Enter your research requirement to find the most relevant publications.
+    </p>
 
-    <input 
-        type="text"
-        id="searchInput"
-        placeholder="Search by Researcher or Title"
-        onkeyup="searchPublication()">
+    <div class="ai-search-box">
+
+        <input
+            type="text"
+            id="recommendationQuery"
+            placeholder="Example: Machine learning for diabetes prediction"
+        >
+
+        <button
+            type="button"
+            class="ai-recommend-btn"
+            onclick="getRecommendations()">
+            Get Recommendations
+        </button>
+
+    </div>
+
+    <div id="recommendationLoading" class="recommendation-loading" style="display:none;">
+        Finding the best matches...
+    </div>
+
+    <div id="recommendationResults" class="recommendation-results">
+
+    </div>
 
 </div>
 
+<!-- ================= SEARCH & CONTROLS ================= -->
+
+<div class="publication-controls">
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by Researcher or Title"
+            onkeyup="searchPublication()">
+
+    </div>
+
+
+    <div class="control-group">
+
+        <label for="sort_by">
+            Sort by:
+        </label>
+
+        <select id="sort_by" onchange="applyPublicationSort()">
+
+            <option value="year"
+                {% if sort_by == "year" %}selected{% endif %}>
+                Publication Year
+            </option>
+
+            <option value="title"
+                {% if sort_by == "title" %}selected{% endif %}>
+                Title
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="control-group">
+
+        <label for="order">
+            Order:
+        </label>
+
+        <select id="order" onchange="applyPublicationSort()">
+
+            <option value="desc"
+                {% if order == "desc" %}selected{% endif %}>
+                Descending
+            </option>
+
+            <option value="asc"
+                {% if order == "asc" %}selected{% endif %}>
+                Ascending
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="control-group">
+
+        <label for="page_size">
+            Show:
+        </label>
+
+        <select id="page_size" onchange="applyPublicationSort()">
+
+            <option value="5"
+                {% if page_size == 5 %}selected{% endif %}>
+                5
+            </option>
+
+            <option value="10"
+                {% if page_size == 10 %}selected{% endif %}>
+                10
+            </option>
+
+            <option value="20"
+                {% if page_size == 20 %}selected{% endif %}>
+                20
+            </option>
+
+        </select>
+
+    </div>
+
+</div>
 
 <!-- TABLE -->
 
@@ -240,7 +354,96 @@ No Publications Found
 
 </table>
 
+{% if pagination and pagination.total_records > 0 %}
 
+<div class="table-footer">
+
+    <div class="pagination-info">
+
+        Showing
+        {{ pagination.offset + 1 }}
+        -
+        {{ [pagination.offset + page_size, pagination.total_records] | min }}
+        of
+        {{ pagination.total_records }}
+        publications
+
+    </div>
+
+
+    <div class="pagination">
+
+        {% if pagination.page > 1 %}
+
+        <a href="{{ url_for(
+            'publications',
+            page=pagination.page - 1,
+            page_size=page_size,
+            sort_by=sort_by,
+            order=order
+        ) }}">
+            Previous
+        </a>
+
+        {% else %}
+
+        <span class="disabled">
+            Previous
+        </span>
+
+        {% endif %}
+
+
+        {% for p in range(1, pagination.total_pages + 1) %}
+
+            {% if p == pagination.page %}
+
+            <span class="active">
+                {{ p }}
+            </span>
+
+            {% else %}
+
+            <a href="{{ url_for(
+                'publications',
+                page=p,
+                page_size=page_size,
+                sort_by=sort_by,
+                order=order
+            ) }}">
+                {{ p }}
+            </a>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% if pagination.page < pagination.total_pages %}
+
+        <a href="{{ url_for(
+            'publications',
+            page=pagination.page + 1,
+            page_size=page_size,
+            sort_by=sort_by,
+            order=order
+        ) }}">
+            Next
+        </a>
+
+        {% else %}
+
+        <span class="disabled">
+            Next
+        </span>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endif %}
 
 </div>
 
@@ -561,5 +764,150 @@ function checkDOI(){
 }
 
 </script>
+<script>
 
+function applyPublicationSort() {
+
+    const sortBy = document.getElementById("sort_by").value;
+    const order = document.getElementById("order").value;
+    const pageSize = document.getElementById("page_size").value;
+
+    window.location.href =
+        "{{ url_for('publications') }}" +
+        "?page=1" +
+        "&page_size=" + pageSize +
+        "&sort_by=" + sortBy +
+        "&order=" + order;
+}
+
+</script>
+<script>
+
+function getRecommendations() {
+
+    const query = document
+        .getElementById("recommendationQuery")
+        .value
+        .trim();
+
+    const results = document
+        .getElementById("recommendationResults");
+
+    const loading = document
+        .getElementById("recommendationLoading");
+
+
+    if (!query) {
+
+        results.innerHTML = `
+            <p class="recommendation-message">
+                Please enter what you are looking for.
+            </p>
+        `;
+
+        return;
+    }
+
+
+    loading.style.display = "block";
+
+    results.innerHTML = "";
+
+
+    fetch(
+    "{{ url_for('publication_recommend') }}" +
+    "?query=" +
+    encodeURIComponent(query)
+)
+
+    .then(response => {
+
+        if (!response.ok) {
+            throw new Error("Failed to get recommendations");
+        }
+
+        return response.json();
+
+    })
+
+    .then(data => {
+
+        loading.style.display = "none";
+
+
+        if (!data || data.length === 0) {
+
+            results.innerHTML = `
+                <p class="recommendation-message">
+                    No matching publications found.
+                </p>
+            `;
+
+            return;
+        }
+
+
+        data.forEach(pub => {
+
+            results.innerHTML += `
+
+                <div class="recommendation-card">
+
+                    <div class="recommendation-info">
+
+                        <h3>
+                            ${pub.title}
+                        </h3>
+
+                        <p>
+                            <strong>Researcher:</strong>
+                            ${pub.researcher_name || "Unknown"}
+                        </p>
+
+                        <p>
+                            <strong>Year:</strong>
+                            ${pub.publication_year || "N/A"}
+                        </p>
+
+                    </div>
+
+
+                    <div class="match-percentage">
+
+                        <span>
+                            ${pub.match_percentage}%
+                        </span>
+
+                        <small>
+                            Match
+                        </small>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        loading.style.display = "none";
+
+        results.innerHTML = `
+            <p class="recommendation-error">
+                Unable to get recommendations.
+                Please try again.
+            </p>
+        `;
+
+    });
+
+}
+
+</script>
 {% endblock %}

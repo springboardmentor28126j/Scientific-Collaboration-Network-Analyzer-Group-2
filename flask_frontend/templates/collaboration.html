@@ -1,304 +1,457 @@
 {% extends "base.html" %}
 
-
 {% block content %}
-
 
 <!-- ================= MAIN ================= -->
 
-
 <div class="main" id="main">
 
+    <div class="top-section">
+
+        <h1>
+            Collaboration Management
+        </h1>
+
+    </div>
 
 
-<div class="top-section">
+    <!-- ================= SEARCH & CONTROLS ================= -->
+
+    <div class="project-controls">
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="collaborationSearch"
+                placeholder="Search by Project Name or Status"
+                onkeyup="searchCollaboration()">
+
+        </div>
 
 
-<h1>
-Collaboration Management
-</h1>
+        <div class="control-group">
 
-<div class="search-box">
+            <label for="sort_by">
+                Sort by:
+            </label>
 
-<input
-type="text"
-id="collaborationSearch"
-placeholder="Search by Project Name or Status"
-onkeyup="searchCollaboration()">
+            <select
+                id="sort_by"
+                onchange="applyCollaborationSort()">
+
+                <option value="project_name"
+                    {% if sort_by == "project_name" %}selected{% endif %}>
+                    Project Name
+                </option>
+
+                <option value="status"
+                    {% if sort_by == "status" %}selected{% endif %}>
+                    Status
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="control-group">
+
+            <label for="order">
+                Order:
+            </label>
+
+            <select
+                id="order"
+                onchange="applyCollaborationSort()">
+
+                <option value="desc"
+                    {% if order == "desc" %}selected{% endif %}>
+                    Descending
+                </option>
+
+                <option value="asc"
+                    {% if order == "asc" %}selected{% endif %}>
+                    Ascending
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="control-group">
+
+            <label for="page_size">
+                Show:
+            </label>
+
+            <select
+                id="page_size"
+                onchange="applyCollaborationSort()">
+
+                <option value="5"
+                    {% if page_size == 5 %}selected{% endif %}>
+                    5
+                </option>
+
+                <option value="10"
+                    {% if page_size == 10 %}selected{% endif %}>
+                    10
+                </option>
+
+                <option value="20"
+                    {% if page_size == 20 %}selected{% endif %}>
+                    20
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= TABLE ================= -->
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    ID
+                </th>
+
+                <th>
+                    Project Name
+                </th>
+
+                <th>
+                    Institution
+                </th>
+
+                <th>
+                    Status
+                </th>
+
+                <th>
+                    Team Members
+                </th>
+
+                <th>
+                    Collaborations
+                </th>
+
+                <th>
+                    Action
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            {% if projects %}
+
+                {% for project in projects %}
+
+                    <tr>
+
+                        <!-- ID starts from 1 on every page -->
+
+                        <td>
+                            {{ loop.index }}
+                        </td>
+
+
+                        <td>
+                            {{ project.project_name }}
+                        </td>
+
+
+                        <td>
+                            {{ project.institution_name }}
+                        </td>
+
+
+                        <td>
+                            {{ project.status }}
+                        </td>
+
+
+                        <td>
+                            {{ project.team_count }}
+                        </td>
+
+
+                        <td>
+                            {{ project.collaboration_count }}
+                        </td>
+
+
+                        <td>
+
+                            <div class="action-buttons">
+
+                                {% if project.status == "Planned" %}
+
+                                    <a href="{{ url_for('manage_team', project_id=project.id) }}">
+                                        <button class="action-btn assign-btn">
+                                            Assign Team
+                                        </button>
+                                    </a>
+
+                                    <a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
+                                        <button class="action-btn collab-btn">
+                                            Add Collaboration
+                                        </button>
+                                    </a>
+
+
+                                {% elif project.status == "Ongoing" %}
+
+                                    <a href="{{ url_for('manage_team', project_id=project.id) }}">
+                                        <button class="action-btn assign-btn">
+                                            Manage Team
+                                        </button>
+                                    </a>
+
+                                    <a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
+                                        <button class="action-btn collab-btn">
+                                            Manage Collaboration
+                                        </button>
+                                    </a>
+
+
+                                {% elif project.status == "Completed" %}
+
+                                    <a href="{{ url_for('manage_team', project_id=project.id) }}">
+                                        <button class="action-btn assign-btn">
+                                            View Team
+                                        </button>
+                                    </a>
+
+                                    <a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
+                                        <button class="action-btn collab-btn">
+                                            View Collaboration
+                                        </button>
+                                    </a>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+
+            {% else %}
+
+                <tr>
+
+                    <td colspan="7" class="empty">
+                        No Projects Found
+                    </td>
+
+                </tr>
+
+            {% endif %}
+
+        </tbody>
+
+    </table>
+
+
+    <!-- ================= PAGINATION ================= -->
+
+    {% if pagination and pagination.total_records > 0 %}
+
+        <div class="table-footer">
+
+
+            <div class="pagination-info">
+
+                Showing
+
+                {{ pagination.offset + 1 }}
+
+                -
+
+                {{ [pagination.offset + page_size, pagination.total_records] | min }}
+
+                of
+
+                {{ pagination.total_records }}
+
+                projects
+
+            </div>
+
+
+            <div class="pagination">
+
+
+                <!-- Previous -->
+
+                {% if pagination.page > 1 %}
+
+                    <a href="{{ url_for(
+                        'collaboration',
+                        page=pagination.page - 1,
+                        page_size=page_size,
+                        sort_by=sort_by,
+                        order=order
+                    ) }}">
+                        Previous
+                    </a>
+
+                {% else %}
+
+                    <span class="disabled">
+                        Previous
+                    </span>
+
+                {% endif %}
+
+
+                <!-- Page Numbers -->
+
+                {% for p in range(1, pagination.total_pages + 1) %}
+
+                    {% if p == pagination.page %}
+
+                        <span class="active">
+                            {{ p }}
+                        </span>
+
+                    {% else %}
+
+                        <a href="{{ url_for(
+                            'collaboration',
+                            page=p,
+                            page_size=page_size,
+                            sort_by=sort_by,
+                            order=order
+                        ) }}">
+                            {{ p }}
+                        </a>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                <!-- Next -->
+
+                {% if pagination.page < pagination.total_pages %}
+
+                    <a href="{{ url_for(
+                        'collaboration',
+                        page=pagination.page + 1,
+                        page_size=page_size,
+                        sort_by=sort_by,
+                        order=order
+                    ) }}">
+                        Next
+                    </a>
+
+                {% else %}
+
+                    <span class="disabled">
+                        Next
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    {% endif %}
 
 </div>
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- ================= TABLE ================= -->
-
-
-
-<table>
-
-
-<thead>
-
-
-<tr>
-
-
-<th>
-ID
-</th>
-
-
-
-<th>
-Project Name
-</th>
-
-
-
-<th>
-Institution
-</th>
-
-
-
-<th>
-Status
-</th>
-<th>Team Members</th>
-<th>Collaborations</th>
-<th>Action</th>
-
-</tr>
-
-
-</thead>
-
-
-<tbody>
-
-
-
-{% if projects %}
-
-
-
-{% for project in projects %}
-
-
-
-<tr>
-
-
-
-<td>
-{{ loop.index }}
-</td>
-
-
-
-
-<td>
-{{ project.project_name }}
-</td>
-
-
-
-
-
-<td>
-{{ project.institution_name }}
-</td>
-
-
-
-
-
-<td>
-{{ project.status }}
-</td>
-
-
-
-
-
-<td>
-{{ project.team_count }}
-</td>
-
-<td>
-    {{ project.collaboration_count }}
-</td>
-
-
-
-<td>
-
-<div class="action-buttons">
-
-
-{% if project.status == "Planned" %}
-
-<a href="{{ url_for('manage_team', project_id=project.id) }}">
-<button class="action-btn assign-btn">
-Assign Team
-</button>
-</a>
-
-
-<a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
-<button class="action-btn collab-btn">
-Add Collaboration
-</button>
-</a>
-
-
-{% elif project.status == "Ongoing" %}
-
-<a href="{{ url_for('manage_team', project_id=project.id) }}">
-    <button class="action-btn assign-btn">
-        Manage Team
-    </button>
-</a>
-
-<a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
-    <button class="action-btn collab-btn">
-        Manage Collaboration
-    </button>
-</a>
-
-
-{% elif project.status == "Completed" %}
-
-
-<a href="{{ url_for('manage_team', project_id=project.id) }}">
-<button class="action-btn assign-btn">
-View Team
-</button>
-</a>
-
-
-<a href="{{ url_for('manage_collaboration', project_id=project.id) }}">
-<button class="action-btn collab-btn">
-View Collaboration
-</button>
-</a>
-
-
-{% endif %}
-
-
-</div>
-
-</td>
-
-
-
-</tr>
-
-
-
-
-{% endfor %}
-
-
-
-
-
-{% else %}
-
-
-
-
-<tr>
-
-
-<td colspan="6" class="empty">
-
-No Projects Found
-
-</td>
-
-
-</tr>
-
-
-
-
-
-{% endif %}
-
-
-
-
-
-</tbody>
-
-
-</table>
-
-
-
-
-
-
-
-
-
-</div>
-
-
-
-
-
-
-
 
 
 <!-- ================= SCRIPT ================= -->
 
-
 <script>
 
-function searchCollaboration(){
+function searchCollaboration() {
 
-let input = document.getElementById("collaborationSearch");
+    let input =
+        document.getElementById("collaborationSearch");
 
-let filter = input.value.toLowerCase();
+    let filter =
+        input.value.toLowerCase();
 
-let rows = document.querySelector("table").getElementsByTagName("tr");
+    let rows =
+        document.querySelector("table")
+        .getElementsByTagName("tr");
 
-for(let i = 1; i < rows.length; i++){
 
-    let cells = rows[i].getElementsByTagName("td");
+    for (let i = 1; i < rows.length; i++) {
 
-    if(cells.length > 0){
+        let cells =
+            rows[i].getElementsByTagName("td");
 
-        let project = cells[1].textContent.toLowerCase();
+        if (cells.length > 0) {
 
-        let status = cells[3].textContent.toLowerCase();
+            let project =
+                cells[1].textContent.toLowerCase();
 
-        if(project.includes(filter) || status.includes(filter)){
+            let status =
+                cells[3].textContent.toLowerCase();
 
-            rows[i].style.display = "";
 
-        }else{
+            if (
+                project.includes(filter) ||
+                status.includes(filter)
+            ) {
 
-            rows[i].style.display = "none";
+                rows[i].style.display = "";
+
+            } else {
+
+                rows[i].style.display = "none";
+
+            }
 
         }
+
     }
-}
+
 }
 
+
+function applyCollaborationSort() {
+
+    const sortBy =
+        document.getElementById("sort_by").value;
+
+    const order =
+        document.getElementById("order").value;
+
+    const pageSize =
+        document.getElementById("page_size").value;
+
+
+    window.location.href =
+        "{{ url_for('collaboration') }}" +
+        "?page=1" +
+        "&page_size=" + pageSize +
+        "&sort_by=" + sortBy +
+        "&order=" + order;
+
+}
 
 </script>
+
 
 {% endblock %}

@@ -30,6 +30,9 @@ def get_db():
 # ---------------- Register Conference ----------------
 
 
+# ---------------- Register Conference ----------------
+
+
 @router.post(
     "/",
     response_model=schemas.ConferenceRegistrationResponse
@@ -54,7 +57,6 @@ def register_conference(
     ).first()
 
 
-
     if not researcher:
 
         raise HTTPException(
@@ -65,7 +67,7 @@ def register_conference(
 
 
     # ==============================
-    # Conference Date Validation
+    # Get Conference
     # ==============================
 
     conference = db.query(
@@ -85,11 +87,14 @@ def register_conference(
 
 
 
+    # ==============================
+    # Conference Date Validation
+    # ==============================
+
     conference_date = datetime.strptime(
         conference.conference_date,
         "%Y-%m-%d"
     )
-
 
 
     if datetime.now().date() >= conference_date.date():
@@ -97,6 +102,28 @@ def register_conference(
         raise HTTPException(
             status_code=400,
             detail="Registration closed. Conference date has passed."
+        )
+
+
+
+    # ==============================
+    # Duplicate Registration Check
+    # ==============================
+
+    existing_registration = db.query(
+        models.ConferenceRegistration
+    ).filter(
+        models.ConferenceRegistration.researcher_id == researcher.id,
+        models.ConferenceRegistration.conference_id == registration.conference_id
+    ).first()
+
+
+
+    if existing_registration:
+
+        raise HTTPException(
+            status_code=400,
+            detail="You have already registered for this conference"
         )
 
 
@@ -140,12 +167,14 @@ def register_conference(
     if registration.participation_type == "Attendee":
 
         registration.publication_id = None
-
         registration.presentation_title = None
-
         registration.presentation_mode = None
 
 
+
+    # ==============================
+    # Save Registration
+    # ==============================
 
     return crud.create_conference_registration(
 

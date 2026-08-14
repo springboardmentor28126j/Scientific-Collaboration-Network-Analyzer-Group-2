@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/notifications.css') }}">
+
+{% endblock %}
+{% block content %}
+
+<div class="main" id="main">
+
+
+<div class="top-section">
+
+<h1>
+Notifications
+</h1>
+
+<p>
+View all your notifications
+</p>
+
+</div>
+
+
+
+<div class="notification-page">
+
+
+{% if notifications %}
+
+
+{% for notification in notifications %}
+
+
+<div class="notification-card">
+
+
+<h3>
+{{ notification.title }}
+</h3>
+
+
+<p>
+{{ notification.message }}
+</p>
+
+
+<small class="notification-time">
+    {{ notification.created_at }}
+</small>
+
+
+</div>
+
+
+{% endfor %}
+
+
+{% else %}
+
+
+<div class="empty-notification">
+
+No notifications available
+
+</div>
+
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}
+{% block extra_js %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    document.querySelectorAll(".notification-time").forEach(function(item){
+
+        item.innerText = formatTime(item.innerText);
+
+    });
+
+});
+
+</script>
+
+{% endblock %}

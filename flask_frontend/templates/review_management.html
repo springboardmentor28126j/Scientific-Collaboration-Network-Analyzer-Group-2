@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block extra_css %}
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/review_management.css') }}">
+
+{% endblock %}
+{% block content %}
+
+<div class="page-container">
+
+    <h2>Review Management</h2>
+
+    <p>
+        Assign submitted publications to reviewers.
+    </p>
+
+
+    <!-- ================= PUBLICATIONS ================= -->
+
+    <div class="review-management-card">
+
+       <h3>Publications Pending Review</h3>
+
+        {% if publications %}
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Publication</th>
+                    <th>Type</th>
+                    <th>Year</th>
+                    <th>Status</th>
+                    <th>Assign Reviewer</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            {% for publication in publications %}
+
+                <tr>
+
+                    <td>
+                        {{ publication.title }}
+                    </td>
+
+                    <td>
+                        {{ publication.publication_type }}
+                    </td>
+
+                    <td>
+                        {{ publication.publication_year }}
+                    </td>
+
+                    <td>
+                        {{ publication.status }}
+                    </td>
+
+                    <td>
+
+                        {% if publication.status == "Submitted" %}
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('assign_review') }}"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="publication_id"
+                                value="{{ publication.id }}"
+                            >
+
+                            <select
+                                name="reviewer_id"
+                                required
+                            >
+
+                                <option value="">
+                                    Select Reviewer
+                                </option>
+
+                                {% for reviewer in reviewers %}
+
+                                <option value="{{ reviewer.id }}">
+                                    {{ reviewer.full_name }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                            <button type="submit">
+                                Assign
+                            </button>
+
+                        </form>
+
+                        {% else %}
+
+                        <span>
+                            Not available
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        {% else %}
+
+        <p>
+            No publications found.
+        </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ================= EXISTING REVIEWS ================= -->
+
+    <div class="review-management-card">
+
+        <h3>Review Assignments</h3>
+
+        {% if reviews %}
+
+        <table>
+
+          <thead>
+    <tr>
+        <th>Publication</th>
+        <th>Reviewer</th>
+        <th>Decision</th>
+        <th>Action</th>
+    </tr>
+</thead>
+
+            <tbody>
+
+            {% for review in reviews %}
+
+                <tr>
+
+                    <td>
+    {{ review.publication_title }}
+</td>
+
+<td>
+    {{ review.reviewer_name }}
+</td>
+
+<td>
+    {{ review.decision }}
+</td>
+
+<td>
+    <a href="{{ url_for('review_details', review_id=review.id) }}">
+        View
+    </a>
+</td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        {% else %}
+
+        <p>
+            No review assignments yet.
+        </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

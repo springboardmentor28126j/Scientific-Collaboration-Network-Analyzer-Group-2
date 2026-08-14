@@ -117,7 +117,34 @@ class PublicationResponse(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
+    # ==========================
+# Review Schemas
+# ==========================
+
+class ReviewCreate(BaseModel):
+
+    publication_id: int
+    reviewer_id: int
+
+
+class ReviewUpdate(BaseModel):
+
+    decision: str
+    comments: str | None = None
+
+
+class ReviewResponse(BaseModel):
+
+    id: int
+    publication_id: int
+    reviewer_id: int
+    decision: str
+    comments: str | None = None
+    reviewed_at: datetime
+
+    class Config:
+        from_attributes = True
 class InstitutionCreate(BaseModel):
     name: str
     institution_type: str | None = None
@@ -474,6 +501,49 @@ class ActivityLogResponse(ActivityLogBase):
     user_id: int
 
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+class NotificationCreate(BaseModel):
+
+    receiver_id: int
+
+    sender_id: int | None = None
+
+    title: str
+
+    message: str
+
+    notification_type: str
+
+    reference_id: int | None = None
+
+    reference_type: str | None = None
+
+
+
+class NotificationResponse(BaseModel):
+
+    id: int
+
+    receiver_id: int
+
+    sender_id: int | None
+
+    title: str
+
+    message: str
+
+    notification_type: str
+
+    reference_id: int | None
+
+    reference_type: str | None
+
+    is_read: bool
+
+    created_at: datetime
+
 
     class Config:
         from_attributes = True

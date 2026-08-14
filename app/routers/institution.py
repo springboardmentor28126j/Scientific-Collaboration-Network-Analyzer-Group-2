@@ -40,8 +40,12 @@ def create_institution(
 
 # ---------------- View All Institutions ----------------
 
-@router.get("/", response_model=list[schemas.InstitutionResponse])
+@router.get("/")
 def get_all_institutions(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: str = "name",
+    order: str = "asc",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -55,7 +59,18 @@ def get_all_institutions(
             detail="Access denied."
         )
 
-    return crud.get_all_institutions(db)
+    institutions, pagination = crud.get_all_institutions(
+        db,
+        page,
+        page_size,
+        sort_by,
+        order
+    )
+
+    return {
+        "data": institutions,
+        "pagination": pagination
+    }
 
 # ---------------- Public Institutions (Registration Dropdown) ----------------
 

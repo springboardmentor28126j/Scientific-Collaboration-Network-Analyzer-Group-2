@@ -16,10 +16,13 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     return pwd_context.verify(plain_password, password_hash)
 
 
-def create_access_token(subject: str) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+def create_access_token(subject: str, expires_minutes: int | None = None) -> str:
+    """expires_minutes overrides the normal session lifetime -- used for
+    the short-lived pre_auth_token issued mid-login while a user still
+    has to complete their MFA step (see /auth/mfa/verify-login), which
+    must NOT be usable as a full 24h access token."""
+    minutes = expires_minutes if expires_minutes is not None else settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
     to_encode = {"sub": subject, "exp": expire}
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Security — SCNA{% endblock %}
+{% block content %}
+<div class="container">
+  <h1>Security</h1>
+
+  <div class="profile-field">
+    <div>
+      <div class="v" style="font-weight:700;">
+        <span class="status-dot {{ 'on' if mfa_enabled else 'off' }}"></span>
+        Two-factor authentication (email code)
+      </div>
+      <div class="k" style="margin-top:4px;">
+        {% if mfa_enabled %}
+        On. We'll email you a 6-digit code each time you log in.
+        {% else %}
+        Off. Turn this on to require a one-time email code at login, in addition to your password.
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <form method="POST">
+    <input type="hidden" name="action" value="{{ 'disable' if mfa_enabled else 'enable' }}">
+    <button type="submit" class="btn-inline {{ '' if mfa_enabled else 'btn-purple' }}" style="margin-top:20px; width:100%; text-align:center; {{ 'background:var(--danger);' if mfa_enabled }}">
+      {{ 'Turn off two-factor authentication' if mfa_enabled else 'Turn on two-factor authentication' }}
+    </button>
+  </form>
+
+  <span class="muted-link"><a href="{{ url_for('profile') }}">Back to profile</a></span>
+</div>
+{% endblock %}

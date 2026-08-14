@@ -33,6 +33,16 @@ def _get_current_researcher(db: Session, current_user: User) -> Researcher:
     return researcher
 
 
+def _institution_id_for_admin(db: Session, current_user: User) -> int | None:
+    """The single institution an Institution Admin manages, or None if
+    they don't manage one yet. Duplicated locally per this codebase's
+    existing convention rather than cross-importing between route files."""
+    institution = (
+        db.query(Institution).filter(Institution.admin_user_id == current_user.id).first()
+    )
+    return institution.id if institution else None
+
+
 def _get_researcher_or_none(db: Session, current_user: User) -> Researcher | None:
     """Like _get_current_researcher but returns None instead of raising --
     used by the read-only stats/network endpoints below, which every
@@ -76,10 +86,10 @@ def create_citation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Citation:
-    if current_user.role in (UserRole.SYSTEM_ADMIN, UserRole.REVIEWER):
+    if current_user.role in (UserRole.SYSTEM_ADMIN, UserRole.REVIEWER, UserRole.INSTITUTION_ADMIN):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="System Admin and Reviewer accounts cannot add citations -- only a publication's authors can",
+            detail="System Admin, Reviewer, and Institution Admin accounts cannot add citations -- only a publication's authors can",
         )
     researcher = _get_current_researcher(db, current_user)
     citing_publication = _get_publication_or_404(db, payload.citing_publication_id)
@@ -179,7 +189,16 @@ def top_cited_papers(
         func.count(Citation.id).label("citation_count"),
     ).join(Citation, Citation.cited_publication_id == Publication.id)
 
-    if current_user.role != UserRole.SYSTEM_ADMIN:
+    if current_user.role == UserRole.INSTITUTION_ADMIN:
+        institution_id = _institution_id_for_admin(db, current_user)
+        if institution_id is None:
+            return []
+        query = query.join(
+            PublicationAuthor, PublicationAuthor.publication_id == Publication.id
+        ).join(Researcher, Researcher.id == PublicationAuthor.researcher_id).filter(
+            Researcher.institution_id == institution_id
+        )
+    elif current_user.role != UserRole.SYSTEM_ADMIN:
         researcher = _get_researcher_or_none(db, current_user)
         if researcher is None:
             return []

@@ -8,15 +8,36 @@ from app.core.audit import log_audit
 from app.core.captcha import verify_recaptcha
 from app.core.config import settings
 from app.core.email import send_email
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models.auth_token import AuthToken, AuthTokenType
 from app.models.researcher import Researcher
 from app.models.user import User, UserRole
-from app.schemas.auth import ForgotPasswordRequest, ResetPasswordRequest
+from app.schemas.auth import ForgotPasswordRequest, MfaResendRequest, MfaVerifyRequest, ResetPasswordRequest
+from app.api.deps import get_current_user
 from app.schemas.user import Token, UserCreate, UserOut
 
 router = APIRouter()
+
+
+def _send_mfa_otp_email(db: Session, user: User) -> AuthToken:
+    """Generates + persists a 6-digit OTP for user and emails it. Callers
+    are responsible for committing (this only adds+commits the token row
+    itself, matching the pattern already used by forgot_password() below
+    for password-reset tokens)."""
+    otp = AuthToken.generate_otp(user.id)
+    db.add(otp)
+    db.commit()
+    send_email(
+        to_email=user.email,
+        subject="Your SCNA login code",
+        body=(
+            f"Your one-time login code is: {otp.token}\n\n"
+            "This code expires in 10 minutes. If you didn't try to log in, "
+            "you can ignore this email."
+        ),
+    )
+    return otp
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -84,11 +105,76 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if user.mfa_enabled:
+        _send_mfa_otp_email(db, user)
+        pre_auth_token = create_access_token(subject=user.email, expires_minutes=10)
+        return {"access_token": "", "token_type": "bearer", "mfa_required": True, "pre_auth_token": pre_auth_token}
+
     access_token = create_access_token(subject=user.email)
     log_audit(
         db, user_id=user.id, action="login", entity_type="user", entity_id=user.id
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/mfa/verify-login", response_model=Token)
+def verify_mfa_login(payload: MfaVerifyRequest, db: Session = Depends(get_db)) -> dict:
+    email = decode_access_token(payload.pre_auth_token)
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, please log in again")
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not user.mfa_enabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled for this account")
+
+    otp_record = (
+        db.query(AuthToken)
+        .filter(AuthToken.user_id == user.id, AuthToken.token_type == AuthTokenType.MFA_OTP, AuthToken.token == payload.code)
+        .order_by(AuthToken.created_at.desc())
+        .first()
+    )
+    if not otp_record or not otp_record.is_valid:
+        log_audit(db, user_id=user.id, action="mfa_failed", entity_type="user", entity_id=user.id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired code")
+
+    otp_record.used_at = datetime.utcnow()
+    access_token = create_access_token(subject=user.email)
+    log_audit(db, user_id=user.id, action="login", entity_type="user", entity_id=user.id, details="mfa")
+    db.commit()
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/mfa/resend-otp")
+def resend_mfa_otp(payload: MfaResendRequest, db: Session = Depends(get_db)) -> dict:
+    email = decode_access_token(payload.pre_auth_token)
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, please log in again")
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not user.mfa_enabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled for this account")
+
+    _send_mfa_otp_email(db, user)
+    return {"sent": True}
+
+
+@router.post("/mfa/enable")
+def enable_mfa(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+    current_user.mfa_enabled = True
+    db.commit()
+    log_audit(db, user_id=current_user.id, action="mfa_enabled", entity_type="user", entity_id=current_user.id)
+    return {"mfa_enabled": True}
+
+
+@router.post("/mfa/disable")
+def disable_mfa(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+    current_user.mfa_enabled = False
+    db.commit()
+    log_audit(db, user_id=current_user.id, action="mfa_disabled", entity_type="user", entity_id=current_user.id)
+    return {"mfa_enabled": False}
+
+
+@router.get("/me", response_model=UserOut)
+def read_current_user(current_user: User = Depends(get_current_user)) -> User:
+    return current_user
 
 
 @router.post("/forgot-password")

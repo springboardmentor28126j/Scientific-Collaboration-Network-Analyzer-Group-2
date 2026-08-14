@@ -23,6 +23,8 @@
         {% endif %}
         {% if current_role not in ['reviewer', 'system_admin'] %}
         <a href="{{ url_for('collaborations') }}">Collaborations</a>
+        {% endif %}
+        {% if current_role != 'reviewer' %}
         <a href="{{ url_for('projects') }}">Projects</a>
         {% endif %}
         <a href="{{ url_for('conferences') }}">Conferences</a>
@@ -49,6 +51,7 @@
         <a href="{{ url_for('notifications') }}" class="nav-bell" title="Notifications">
           🔔{% if unread_notification_count %}<span class="nav-badge">{{ unread_notification_count if unread_notification_count < 100 else '99+' }}</span>{% endif %}
         </a>
+        <a href="{{ url_for('security_settings') }}">Security</a>
         <a href="{{ url_for('logout') }}" class="nav-logout">Logout</a>
       {% else %}
         <a href="{{ url_for('login') }}">Login</a>

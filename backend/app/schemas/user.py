@@ -16,11 +16,14 @@ class UserOut(BaseModel):
     email: EmailStr
     role: UserRole
     is_active: bool
+    mfa_enabled: bool
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    mfa_required: bool = False
+    pre_auth_token: str | None = None
 
 
 class TokenPayload(BaseModel):

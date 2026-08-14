@@ -11,6 +11,7 @@ from app.core.email import send_email
 from app.core.notifications import create_notification
 from app.db.base_class import utcnow
 from app.db.session import get_db
+from app.models.institution import Institution
 from app.models.publication import Publication, PublicationAuthor, PublicationStatus
 from app.models.researcher import Researcher
 from app.models.reviewer_assignment import ReviewerAssignment
@@ -28,6 +29,17 @@ UPLOAD_DIR = Path("uploads/publication_files")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def _institution_id_for_admin(db: Session, current_user: User) -> int | None:
+    """The single institution an Institution Admin manages, or None if
+    they don't manage one yet. Same lookup as reports.py's helper of the
+    same purpose -- duplicated locally per this codebase's existing
+    convention rather than cross-importing between route modules."""
+    institution = (
+        db.query(Institution).filter(Institution.admin_user_id == current_user.id).first()
+    )
+    return institution.id if institution else None
 
 
 def _get_current_researcher(db: Session, current_user: User) -> Researcher:
@@ -123,6 +135,11 @@ def create_publication(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Publication:
+    if current_user.role == UserRole.INSTITUTION_ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institution Admins cannot publish their own publications",
+        )
     researcher = _get_current_researcher(db, current_user)
     _validate_coauthor_ids(db, payload.coauthor_ids)
 
@@ -154,18 +171,31 @@ def list_publications(
     q: str | None = None,
     year: int | None = None,
     author_id: int | None = None,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[Publication]:
     query = db.query(Publication).options(selectinload(Publication.authors))
+
+    if current_user.role == UserRole.INSTITUTION_ADMIN:
+        # Institution Admin only ever sees their own institution's
+        # publications -- any author_id they pass is ignored so they
+        # can't browse other institutions' authors' work by id.
+        institution_id = _institution_id_for_admin(db, current_user)
+        if institution_id is None:
+            return []
+        query = query.join(PublicationAuthor).join(
+            Researcher, Researcher.id == PublicationAuthor.researcher_id
+        ).filter(Researcher.institution_id == institution_id)
+    elif author_id is not None:
+        query = query.join(PublicationAuthor).filter(
+            PublicationAuthor.researcher_id == author_id
+        )
+
     if q:
         like = f"%{q}%"
         query = query.filter(or_(Publication.title.ilike(like), Publication.venue.ilike(like)))
     if year is not None:
         query = query.filter(Publication.year == year)
-    if author_id is not None:
-        query = query.join(PublicationAuthor).filter(
-            PublicationAuthor.researcher_id == author_id
-        )
     return query.order_by(Publication.year.desc().nullslast(), Publication.id.desc()).all()
 
 @router.get("/pending-review", response_model=list[PublicationOut])
@@ -181,7 +211,15 @@ def list_pending_review(
     an institution this reviewer is assigned to. System Admin is
     deliberately excluded from this queue; reviewing is a role-specific
     responsibility, not a blanket admin override (admins can still see
-    everything via GET /publications or the Reports module)."""
+    everything via GET /publications or the Reports module).
+
+    Deliberately avoids calling _is_eligible_reviewer() per publication
+    (an N+1 pattern -- up to 3 DB round-trips per submitted publication)
+    which was timing out this endpoint against the real remote DB once
+    there were enough submitted publications. Instead this batch-loads
+    the reviewer's assignments and every candidate publication's authors'
+    institution_ids in a small, fixed number of queries, then filters
+    in-memory."""
     if current_user.role != UserRole.REVIEWER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -195,7 +233,50 @@ def list_pending_review(
         .order_by(Publication.id.desc())
         .all()
     )
-    return [p for p in submitted if _is_eligible_reviewer(db, current_user, p)]
+    if not submitted:
+        return []
+
+    # This reviewer's assignments, loaded ONCE instead of per-publication.
+    assignments = (
+        db.query(ReviewerAssignment)
+        .filter(ReviewerAssignment.reviewer_user_id == current_user.id)
+        .all()
+    )
+    assigned_publication_ids = {
+        a.publication_id for a in assignments if a.publication_id is not None
+    }
+    assigned_institution_ids = {
+        a.institution_id for a in assignments if a.institution_id is not None
+    }
+    if not assigned_publication_ids and not assigned_institution_ids:
+        return []
+
+    # Every submitted publication's authors' institution_ids, batched
+    # into ONE query instead of one query per publication.
+    all_researcher_ids = {
+        author.researcher_id for pub in submitted for author in pub.authors
+    }
+    researcher_institution: dict[int, int | None] = {}
+    if all_researcher_ids:
+        researcher_institution = dict(
+            db.query(Researcher.id, Researcher.institution_id)
+            .filter(Researcher.id.in_(all_researcher_ids))
+            .all()
+        )
+
+    eligible = []
+    for pub in submitted:
+        if pub.id in assigned_publication_ids:
+            eligible.append(pub)
+            continue
+        author_institution_ids = {
+            researcher_institution.get(author.researcher_id) for author in pub.authors
+        }
+        author_institution_ids.discard(None)
+        if author_institution_ids & assigned_institution_ids:
+            eligible.append(pub)
+
+    return eligible
 
 
 @router.get("/reviewed-by-me", response_model=list[PublicationOut])
@@ -227,8 +308,29 @@ def list_reviewed_by_me(
 
 
 @router.get("/{publication_id}", response_model=PublicationOut)
-def get_publication(publication_id: int, db: Session = Depends(get_db)) -> Publication:
-    return _get_publication_or_404(db, publication_id)
+def get_publication(
+    publication_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Publication:
+    publication = _get_publication_or_404(db, publication_id)
+    if current_user.role == UserRole.INSTITUTION_ADMIN:
+        institution_id = _institution_id_for_admin(db, current_user)
+        author_institution_ids = {
+            researcher.institution_id
+            for researcher in (
+                db.query(Researcher)
+                .join(PublicationAuthor, PublicationAuthor.researcher_id == Researcher.id)
+                .filter(PublicationAuthor.publication_id == publication_id)
+                .all()
+            )
+        }
+        if institution_id is None or institution_id not in author_institution_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This publication doesn't belong to your institution",
+            )
+    return publication
 
 
 @router.put("/{publication_id}", response_model=PublicationOut)

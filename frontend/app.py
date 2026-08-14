@@ -241,12 +241,70 @@ def login():
             return redirect(url_for("login"))
 
         data = resp.json()
+        if data.get("mfa_required"):
+            session["pre_auth_token"] = data["pre_auth_token"]
+            session["pre_auth_email"] = email
+            return redirect(url_for("mfa_verify"))
         session["token"] = data["access_token"]
         session["email"] = email
         flash("Logged in successfully.", "success")
         return redirect(url_for("dashboard"))
 
     return render_template("login.html", recaptcha_site_key=RECAPTCHA_SITE_KEY)
+
+
+@app.route("/mfa/verify", methods=["GET", "POST"])
+def mfa_verify():
+    pre_auth_token = session.get("pre_auth_token")
+    if not pre_auth_token:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        code = request.form.get("code", "")
+        resp = requests.post(
+            f"{BACKEND_URL}/auth/mfa/verify-login",
+            json={"pre_auth_token": pre_auth_token, "code": code},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            flash("Invalid or expired code. Please try again.", "error")
+            return redirect(url_for("mfa_verify"))
+
+        data = resp.json()
+        session["token"] = data["access_token"]
+        session["email"] = session.pop("pre_auth_email", "")
+        session.pop("pre_auth_token", None)
+        flash("Logged in successfully.", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("mfa_verify.html")
+
+
+@app.route("/mfa/resend", methods=["POST"])
+def mfa_resend():
+    pre_auth_token = session.get("pre_auth_token")
+    if not pre_auth_token:
+        return redirect(url_for("login"))
+    requests.post(f"{BACKEND_URL}/auth/mfa/resend-otp", json={"pre_auth_token": pre_auth_token}, timeout=10)
+    flash("A new code has been sent to your email.", "success")
+    return redirect(url_for("mfa_verify"))
+
+
+@app.route("/security", methods=["GET", "POST"])
+def security_settings():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        endpoint = "enable" if action == "enable" else "disable"
+        requests.post(f"{BACKEND_URL}/auth/mfa/{endpoint}", headers=_auth_headers(), timeout=10)
+        flash(f"Two-factor authentication {'enabled' if endpoint == 'enable' else 'disabled'}.", "success")
+        return redirect(url_for("security_settings"))
+
+    me_resp = requests.get(f"{BACKEND_URL}/auth/me", headers=_auth_headers(), timeout=10)
+    mfa_enabled = me_resp.json().get("mfa_enabled", False) if me_resp.status_code == 200 else False
+    return render_template("security_settings.html", mfa_enabled=mfa_enabled)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -691,6 +749,7 @@ def publications():
 
     researcher = _current_researcher()
     researcher_id = researcher.get("id") if researcher else None
+    role = _current_role()
 
     params = {}
     if researcher_id:
@@ -701,8 +760,12 @@ def publications():
         params["year"] = request.args["year"]
 
     pubs = []
-    if researcher_id:
-        resp = requests.get(f"{BACKEND_URL}/publications", params=params, timeout=10)
+    if researcher_id or role == "institution_admin":
+        # Institution Admin has no researcher profile (so researcher_id
+        # is always None for them) but the backend still scopes the
+        # list to their institution on its own -- don't gate the call
+        # behind researcher_id or their view would just be empty.
+        resp = requests.get(f"{BACKEND_URL}/publications", params=params, headers=_auth_headers(), timeout=10)
         if resp.status_code == 200:
             pubs = resp.json()
     else:
@@ -820,7 +883,7 @@ def edit_publication(publication_id):
         flash("Publication updated.", "success")
         return redirect(url_for("publications"))
 
-    resp = requests.get(f"{BACKEND_URL}/publications/{publication_id}", timeout=10)
+    resp = requests.get(f"{BACKEND_URL}/publications/{publication_id}", headers=_auth_headers(), timeout=10)
     if resp.status_code != 200:
         flash("Publication not found.", "error")
         return redirect(url_for("publications"))
@@ -1015,11 +1078,11 @@ def citations():
     my_citations = []
     if researcher_id:
         my_pubs_resp = requests.get(
-            f"{BACKEND_URL}/publications", params={"author_id": researcher_id}, timeout=10
+            f"{BACKEND_URL}/publications", params={"author_id": researcher_id}, headers=_auth_headers(), timeout=10
         )
         my_publications = my_pubs_resp.json() if my_pubs_resp.status_code == 200 else []
 
-        all_pubs_resp = requests.get(f"{BACKEND_URL}/publications", timeout=10)
+        all_pubs_resp = requests.get(f"{BACKEND_URL}/publications", headers=_auth_headers(), timeout=10)
         all_publications = all_pubs_resp.json() if all_pubs_resp.status_code == 200 else []
 
         for pub in my_publications:
@@ -1657,10 +1720,6 @@ def projects():
         params["q"] = request.args["q"]
     if request.args.get("status_filter"):
         params["status_filter"] = request.args["status_filter"]
-    if request.args.get("mine") == "1":
-        researcher = _current_researcher()
-        if researcher:
-            params["researcher_id"] = researcher.get("id")
 
     resp = requests.get(f"{BACKEND_URL}/projects", params=params, headers=_auth_headers(), timeout=10)
     if resp.status_code == 401:

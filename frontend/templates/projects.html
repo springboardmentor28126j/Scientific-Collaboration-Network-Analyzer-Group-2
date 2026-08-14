@@ -17,10 +17,6 @@
           <option value="completed" {% if request.args.get('status_filter') == 'completed' %}selected{% endif %}>Completed</option>
           <option value="cancelled" {% if request.args.get('status_filter') == 'cancelled' %}selected{% endif %}>Cancelled</option>
         </select>
-        <select name="mine">
-          <option value="" {% if not request.args.get('mine') %}selected{% endif %}>All projects</option>
-          <option value="1" {% if request.args.get('mine') == '1' %}selected{% endif %}>My projects</option>
-        </select>
         <select name="sort_by">
           <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Sort: Newest</option>
           <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort: Title</option>

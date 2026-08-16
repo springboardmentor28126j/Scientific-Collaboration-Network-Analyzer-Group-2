@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Manage Users{% endblock %}
+{% block content %}
+<p class="eyebrow">System Admin</p>
+<h1>Users</h1>
+
+<form method="get" class="filter-bar">
+    <select name="role" onchange="this.form.submit()">
+        <option value="" {% if not role_filter %}selected{% endif %}>All roles</option>
+        <option value="researcher" {% if role_filter == "researcher" %}selected{% endif %}>Researcher</option>
+        <option value="institution_admin" {% if role_filter == "institution_admin" %}selected{% endif %}>Institution Admin</option>
+        <option value="reviewer" {% if role_filter == "reviewer" %}selected{% endif %}>Reviewer</option>
+        <option value="system_admin" {% if role_filter == "system_admin" %}selected{% endif %}>System Admin</option>
+    </select>
+    <select name="affiliation_status" onchange="this.form.submit()">
+        <option value="" {% if not affiliation_filter %}selected{% endif %}>Any affiliation status</option>
+        <option value="pending" {% if affiliation_filter == "pending" %}selected{% endif %}>Pending approval</option>
+        <option value="approved" {% if affiliation_filter == "approved" %}selected{% endif %}>Approved</option>
+        <option value="rejected" {% if affiliation_filter == "rejected" %}selected{% endif %}>Rejected</option>
+        <option value="not_applicable" {% if affiliation_filter == "not_applicable" %}selected{% endif %}>Not applicable</option>
+    </select>
+</form>
+
+{% if users %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Affiliation</th>
+            <th>Institution ID</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.email }}</td>
+            <td><span class="role-pill">{{ u.role | replace('_', ' ') }}</span></td>
+            <td>{% if u.is_active %}<span class="badge badge-completed">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</td>
+            <td>
+                {% if u.affiliation_status == "pending" %}<span class="badge badge-registration_open">Pending</span>
+                {% elif u.affiliation_status == "approved" %}<span class="badge badge-completed">Approved</span>
+                {% elif u.affiliation_status == "rejected" %}<span class="badge badge-cancelled">Rejected</span>
+                {% else %}<span class="badge badge-planned">—</span>{% endif %}
+            </td>
+            <td>{{ u.institution_id or "—" }}</td>
+            <td>
+                {% if u.affiliation_status == "pending" %}
+    {% if u.role == "institution_admin" and not u.institution_id %}
+        <a href="{{ url_for('admin_institution_requests') }}" class="btn btn-warning" title="This is a new-institution application -- it must be approved from the Institution Requests page, not here, or the institution row will never be created.">
+            Approve from Institution Requests →
+        </a>
+    {% else %}
+        <form method="post" action="{{ url_for('admin_approve_affiliation', user_id=u.user_id) }}" class="inline-form">
+            <button type="submit" class="btn">Approve{% if u.role == "institution_admin" %} &amp; Activate{% endif %}</button>
+        </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('admin_reject_affiliation', user_id=u.user_id) }}" class="inline-form"
+          onsubmit="return confirm('Reject this affiliation request?');">
+        <button type="submit" class="btn">Reject</button>
+    </form>
+{% endif %}
+                <form method="post" action="{{ url_for('admin_update_user', user_id=u.user_id) }}" class="inline-form">
+                    <select name="role" {% if u.role == "system_admin" %}disabled title="System Admin accounts can't be changed through the app"{% endif %}>
+                        {% for r in ["researcher", "institution_admin", "reviewer"] %}
+                        <option value="{{ r }}" {% if u.role == r %}selected{% endif %}>{{ r | replace('_', ' ') }}</option>
+                        {% endfor %}
+                        {% if u.role == "system_admin" %}
+                        <option value="system_admin" selected>system admin</option>
+                        {% endif %}
+                    </select>
+                    <button type="submit" class="btn">Save</button>
+                </form>
+                {% if u.is_active %}
+                <form method="post" action="{{ url_for('admin_deactivate_user', user_id=u.user_id) }}" style="display:inline;"
+                      onsubmit="return confirm('Deactivate this user?');">
+                    <button type="submit" class="btn">Deactivate</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No users found.</p>
+{% endif %}
+{% endblock %}

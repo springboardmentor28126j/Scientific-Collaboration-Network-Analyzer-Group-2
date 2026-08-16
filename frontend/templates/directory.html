@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Researcher Directory{% endblock %}
+{% block content %}
+<h1>Researcher Directory</h1>
+<p class="card-meta" style="margin-bottom:1rem;">Browse researchers and reviewers across the network. Connect with anyone to start building your collaboration network.</p>
+
+<form method="get" class="filter-bar">
+    <input type="text" name="skill" placeholder="Filter by skill" value="{{ skill }}">
+    <input type="text" name="interest" placeholder="Filter by interest" value="{{ interest }}">
+    <button type="submit">Search</button>
+</form>
+
+{% if results %}
+<div class="connection-list">
+    {% for r in results %}
+    <div class="connection-row">
+        <div class="connection-avatar">{{ (r.first_name[0] ~ r.last_name[0]) | upper if r.first_name and r.last_name else "?" }}</div>
+        <div class="connection-info">
+            <p class="connection-name">{{ r.first_name }} {{ r.last_name }}</p>
+            <p class="connection-title">{{ r.academic_title or "Researcher" }}</p>
+            <p class="connection-meta">
+                Skills: {{ r.skills | map(attribute='name') | join(', ') if r.skills else "None listed" }}
+            </p>
+        </div>
+        <div class="connection-actions">
+            {% if my_researcher_id and r.researcher_id == my_researcher_id %}
+            <span class="btn-pill neutral">This is you</span>
+            {% elif r.researcher_id in collaborator_ids %}
+            <span class="btn-pill neutral">&#10003; Collaborator</span>
+            {% elif r.researcher_id in outgoing_pending_ids %}
+            <span class="btn-pill neutral">Request pending</span>
+            {% elif r.researcher_id in incoming_pending_ids %}
+            <form method="post" action="{{ url_for('respond_collaboration_request_route', collaboration_request_id=incoming_pending_ids[r.researcher_id]) }}">
+                <input type="hidden" name="status" value="accepted">
+                <button type="submit" class="btn-pill solid">Accept request</button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('send_collaboration_request_route', researcher_id=r.researcher_id) }}">
+                <button type="submit" class="btn-pill solid">Connect</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No researchers found matching your search.</p>
+{% endif %}
+{% endblock %}

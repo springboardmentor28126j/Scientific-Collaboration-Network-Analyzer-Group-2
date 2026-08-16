@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Collaboration Requests{% endblock %}
+{% block content %}
+<h1>Connection Requests</h1>
+
+<p class="filter-bar">
+    <a href="{{ url_for('collaboration_requests', box='incoming') }}"{% if box == 'incoming' %} class="active"{% endif %}>Incoming</a>
+    &nbsp;&middot;&nbsp;
+    <a href="{{ url_for('collaboration_requests', box='outgoing') }}"{% if box == 'outgoing' %} class="active"{% endif %}>Sent by you</a>
+</p>
+
+{% if result['items'] %}
+<div class="connection-list">
+    {% for r in result['items'] %}
+    {% set other = r.requester if box == 'incoming' else r.addressee %}
+    <div class="connection-row">
+        <div class="connection-avatar">{{ (other.first_name[0] ~ other.last_name[0]) | upper }}</div>
+        <div class="connection-info">
+            <p class="connection-name">{{ other.first_name }} {{ other.last_name }}</p>
+            <p class="connection-title">{{ other.academic_title or "Researcher" }}{% if other.institution_name %} at {{ other.institution_name }}{% endif %}</p>
+            {% if r.message %}<p class="connection-meta">&ldquo;{{ r.message }}&rdquo;</p>{% endif %}
+            <p class="connection-meta">
+                <span class="badge badge-{{ r.status }}">{{ r.status | capitalize }}</span>
+                &nbsp;{{ r.created_at[:10] }}
+            </p>
+        </div>
+        <div class="connection-actions">
+            {% if box == 'incoming' and r.status == 'pending' %}
+            <form method="post" action="{{ url_for('respond_collaboration_request_route', collaboration_request_id=r.collaboration_request_id) }}">
+                <input type="hidden" name="status" value="accepted">
+                <button type="submit" class="btn-pill solid">Accept</button>
+            </form>
+            <form method="post" action="{{ url_for('respond_collaboration_request_route', collaboration_request_id=r.collaboration_request_id) }}">
+                <input type="hidden" name="status" value="rejected">
+                <button type="submit" class="btn-pill danger">Decline</button>
+            </form>
+            {% elif box == 'outgoing' and r.status == 'pending' %}
+            <form method="post" action="{{ url_for('respond_collaboration_request_route', collaboration_request_id=r.collaboration_request_id) }}">
+                <input type="hidden" name="status" value="cancelled">
+                <button type="submit" class="btn-pill">Cancel</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>{{ "No incoming requests." if box == 'incoming' else "You haven't sent any connection requests." }}</p>
+{% endif %}
+{% endblock %}

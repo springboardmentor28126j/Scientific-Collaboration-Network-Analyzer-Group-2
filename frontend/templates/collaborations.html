@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}My Collaborators{% endblock %}
+{% block content %}
+<h1>My Collaborators</h1>
+<p class="card-meta" style="margin-bottom:1rem;">Researchers you're connected with, ranked by most recent shared publication.</p>
+
+{% if result['items'] %}
+<div class="connection-list">
+    {% for c in result['items'] %}
+    <div class="connection-row">
+        <div class="connection-avatar">{{ (c.partner.first_name[0] ~ c.partner.last_name[0]) | upper }}</div>
+        <div class="connection-info">
+            <p class="connection-name">
+                <a href="{{ url_for('collaboration_detail', collaboration_id=c.collaboration_id) }}">{{ c.partner.first_name }} {{ c.partner.last_name }}</a>
+            </p>
+            <p class="connection-title">{{ c.partner.academic_title or "Researcher" }}{% if c.partner.institution_name %} at {{ c.partner.institution_name }}{% endif %}</p>
+            <p class="connection-meta">
+                {{ c.strength }} shared publication{{ 's' if c.strength != 1 else '' }}
+                {% if c.last_collaboration %} &middot; last collaborated {{ c.last_collaboration }}{% endif %}
+            </p>
+        </div>
+        <div class="connection-actions">
+            <a class="btn-pill" href="{{ url_for('collaboration_detail', collaboration_id=c.collaboration_id) }}">View</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('my_collaborations', page=page-1, page_size=page_size) }}">&laquo; Previous</a>
+    {% endif %}
+    <span>Page {{ page }} ({{ result.total }} total)</span>
+    {% if page * page_size < result.total %}
+    <a href="{{ url_for('my_collaborations', page=page+1, page_size=page_size) }}">Next &raquo;</a>
+    {% endif %}
+</div>
+
+<form method="get" style="margin-top:1rem;">
+    <label for="page_size">Per page:</label>
+    <select id="page_size" name="page_size" onchange="this.form.submit()">
+        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+        <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+    </select>
+</form>
+{% else %}
+<p>You don't have any collaborators yet. Visit the <a href="{{ url_for('researcher_directory') }}">researcher directory</a> or check your <a href="{{ url_for('suggested_collaborators') }}">suggested collaborators</a> to send your first connection request.</p>
+{% endif %}
+{% endblock %}

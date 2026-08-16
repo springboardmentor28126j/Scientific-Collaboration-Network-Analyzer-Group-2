@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% import "_recaptcha.html" as recaptcha_macros %}
+{% block title %}Researcher Login{% endblock %}
+{% block auth_content %}
+<a class="login-back-link" href="{{ url_for('login') }}">&larr; Change user type</a>
+<div class="login-role-icon">{{ icons.icon_researcher() }}</div>
+<h1>Researcher Login</h1>
+<form method="post" class="card-form">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+
+    {{ recaptcha_macros.recaptcha_fields(captcha_required, recaptcha_site_key) }}
+
+    <button type="submit" class="primary">Log in</button>
+</form>
+<p><a href="{{ url_for('forgot_password') }}">Forgot your password?</a></p>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<div id="g_id_onload"
+     data-client_id="244237880139-es9h95bv5q4a3hacssvp4c2h6ccc47lo.apps.googleusercontent.com"
+     data-callback="handleGoogleSignIn">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<!-- Shown only if Google tells us this is a brand-new account that still needs to finish sign-up. -->
+<div id="google-role-picker" style="display:none; margin-top:1rem;">
+    <p>One more step — finish creating your Researcher account.</p>
+    <button type="button" onclick="submitGoogleRole()">Finish sign-up</button>
+</div>
+
+<script>
+const EXPECTED_ROLE = "researcher";
+let pendingGoogleIdToken = null;
+
+async function finishGoogleLogin(data) {
+    const res = await fetch("/auth/google-session", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+            expected_role: EXPECTED_ROLE,
+        }),
+    });
+    if (res.ok) {
+        window.location.href = "/dashboard";
+    } else if (res.status === 403) {
+        const body = await res.json();
+        alert("This account is registered as " + (body.actual_role || "a different user type") + ". Please use that portal's login page instead.");
+        window.location.href = "/login";
+    } else {
+        alert("Google sign-in succeeded but the session could not be created. Please try again.");
+    }
+}
+
+async function handleGoogleSignIn(response) {
+    pendingGoogleIdToken = response.credential;
+
+    const res = await fetch("http://localhost:8000/api/v1/auth/google", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id_token: pendingGoogleIdToken }),
+    });
+    const data = await res.json();
+
+    if (data.needs_role_selection) {
+        document.getElementById("google-role-picker").style.display = "block";
+    } else if (data.access_token) {
+        await finishGoogleLogin(data);
+    } else {
+        alert("Google sign-in failed. Please try again.");
+    }
+}
+
+async function submitGoogleRole() {
+    const res = await fetch("http://localhost:8000/api/v1/auth/google", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id_token: pendingGoogleIdToken, role: EXPECTED_ROLE, institution_id: null }),
+    });
+    const data = await res.json();
+
+    if (data.access_token) {
+        await finishGoogleLogin(data);
+    } else {
+        alert("Could not complete sign-up. Please try again.");
+    }
+}
+</script>
+
+<p>Don't have an account? <a href="{{ url_for('register', role='researcher') }}">Register here</a>.</p>
+
+<details style="margin-top:1rem;">
+    <summary>Didn't get a verification email?</summary>
+    <form method="post" action="{{ url_for('resend_verification') }}" class="card-form" style="margin-top:0.5rem;">
+        <label for="resend-email">Email</label>
+        <input type="email" id="resend-email" name="email" required>
+        <button type="submit">Resend verification email</button>
+    </form>
+</details>
+{% endblock %}

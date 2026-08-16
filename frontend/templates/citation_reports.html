@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Citation Impact{% endblock %}
+{% block content %}
+<p class="eyebrow">Reports</p>
+<h1>Citation impact</h1>
+<p style="color: var(--scna-text-secondary); max-width: 640px;">
+    Four views into the citation graph: which papers get referenced most often, which are cited by
+    other well-cited work (not just cited a lot), which researchers have the most reach, and which
+    institutions are producing the highest-impact research.
+</p>
+
+<div style="display:flex; gap:8px; margin: 12px 0 24px;">
+    {% for n in [10, 25, 50] %}
+    <a href="{{ url_for('citation_reports', limit=n) }}"
+       class="nav-link" style="display:inline-block; padding:6px 14px; border:1px solid var(--scna-border); border-radius:999px;{% if limit == n %} background:var(--scna-accent-soft); color:var(--scna-accent); font-weight:600;{% endif %}">
+        Top {{ n }}
+    </a>
+    {% endfor %}
+</div>
+
+<p class="section-label">Frequently referenced papers</p>
+<p style="font-size:13px; color: var(--scna-text-secondary); margin-top:-8px;">Ranked by raw incoming citation count.</p>
+<div class="card">
+    {% if data.top_papers %}
+    <ol class="participant-list">
+        {% for p in data.top_papers %}
+        <li>
+            <a href="{{ url_for('publication_detail', publication_id=p.publication_id) }}">{{ p.title }}</a>
+            — <span class="badge badge-completed">{{ p.citation_count }} citation{{ '' if p.citation_count == 1 else 's' }}</span>
+        </li>
+        {% endfor %}
+    </ol>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">No citation data yet.</p>
+    {% endif %}
+</div>
+
+<p class="section-label">Most influential papers</p>
+<p style="font-size:13px; color: var(--scna-text-secondary); margin-top:-8px;">
+    Weighted score — a citation from a paper that is itself highly cited counts more than one from an uncited paper.
+</p>
+<div class="card">
+    {% if data.influential_papers %}
+    <ol class="participant-list">
+        {% for p in data.influential_papers %}
+        <li>
+            <a href="{{ url_for('publication_detail', publication_id=p.publication_id) }}">{{ p.title }}</a>
+            — <span class="badge badge-registration_open">influence score {{ p.influence_score }}</span>
+        </li>
+        {% endfor %}
+    </ol>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">No citation data yet.</p>
+    {% endif %}
+</div>
+
+<p class="section-label">Most cited researchers</p>
+<p style="font-size:13px; color: var(--scna-text-secondary); margin-top:-8px;">Citations summed across every publication they authored or co-authored.</p>
+<div class="card">
+    {% if data.top_researchers %}
+    <ol class="participant-list">
+        {% for r in data.top_researchers %}
+        <li>
+            {{ r.name }}
+            — <span class="badge badge-completed">{{ r.total_citations }} citation{{ '' if r.total_citations == 1 else 's' }}</span>
+            <span style="font-size:12px; color: var(--scna-text-secondary);">across {{ r.publication_count }} publication{{ '' if r.publication_count == 1 else 's' }}</span>
+        </li>
+        {% endfor %}
+    </ol>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">No citation data yet.</p>
+    {% endif %}
+</div>
+
+<p class="section-label">Institutions with the highest research impact</p>
+<p style="font-size:13px; color: var(--scna-text-secondary); margin-top:-8px;">
+    Total citations and citations-per-publication side by side, so high volume alone doesn't win.
+</p>
+<div class="card">
+    {% if data.top_institutions %}
+    <ol class="participant-list">
+        {% for i in data.top_institutions %}
+        <li>
+            {{ i.name }}
+            — <span class="badge badge-completed">{{ i.total_citations }} total citation{{ '' if i.total_citations == 1 else 's' }}</span>
+            <span class="badge badge-registration_open">{{ i.avg_citations_per_publication }} avg / publication</span>
+            <span style="font-size:12px; color: var(--scna-text-secondary);">({{ i.publication_count }} publications)</span>
+        </li>
+        {% endfor %}
+    </ol>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">No citation data yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

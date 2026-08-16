@@ -1,0 +1,72 @@
+from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, ConfigDict
+
+from app.models.user import UserRole
+
+class GoogleSignInRequest(BaseModel):
+    id_token: str
+    role: UserRole | None = None          # only needed the first time (new account)
+    institution_id: int | None = None      # only needed for institution_admin/reviewer on first sign-in
+
+
+class GoogleSignInResult(BaseModel):
+    """
+    Either a normal token pair (existing/linked account), or a signal that
+    the frontend needs to collect a role before the account can be created.
+    """
+    needs_role_selection: bool = False
+    email: EmailStr | None = None
+    access_token: str | None = None
+    refresh_token: str | None = None
+    token_type: str = "bearer"
+
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    role: UserRole
+    institution_id: int | None = None
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: int
+    email: EmailStr
+    role: UserRole
+    institution_id: int | None
+    is_active: bool
+    created_at: datetime
+
+
+class UserUpdate(BaseModel):
+    email: EmailStr | None = None
+    password: str | None = None
+
+
+class UserAdminUpdate(BaseModel):
+    role: UserRole | None = None
+    is_active: bool | None = None
+
+
+class TokenPair(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
+class MessageResponse(BaseModel):
+    message: str

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: scientific-collab-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: bash ./scripts/backend-build.sh
+    startCommand: bash ./scripts/backend-start.sh
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.12"
+
+  - type: web
+    name: scientific-collab-frontend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: bash ./scripts/frontend-build.sh
+    startCommand: bash ./scripts/frontend-start.sh
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "true"
+    depends_on:
+      - scientific-collab-backend

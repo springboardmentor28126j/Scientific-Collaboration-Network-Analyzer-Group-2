@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Institutions{% endblock %}
+{% block content %}
+<h1>Institutions</h1>
+{% if session.get('user_role') == 'system_admin' %}
+<p><a href="{{ url_for('new_institution') }}">+ New Institution</a></p>
+{% endif %}
+
+{% if institutions %}
+<div class="card-list">
+    {% for inst in institutions %}
+    <div class="card">
+        <h3><a href="{{ url_for('institution_detail', institution_id=inst.institution_id) }}">{{ inst.name }}</a></h3>
+        <p>{{ inst.type or "" }} {{ inst.country or "" }}</p>
+        {% if inst.email_domain %}<p>Email domain: @{{ inst.email_domain }}</p>{% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No institutions yet.</p>
+{% endif %}
+{% endblock %}

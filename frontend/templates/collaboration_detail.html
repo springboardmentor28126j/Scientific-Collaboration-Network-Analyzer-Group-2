@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Collaboration Detail{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('my_collaborations') }}">&laquo; My Collaborators</a></p>
+
+<h1>{{ collaboration.researcher1.first_name }} {{ collaboration.researcher1.last_name }} &amp; {{ collaboration.researcher2.first_name }} {{ collaboration.researcher2.last_name }}</h1>
+
+<div class="metrics-grid">
+    <div class="metric-card">
+        <p class="metric-label">Shared publications</p>
+        <p class="metric-value">{{ collaboration.strength }}</p>
+    </div>
+    <div class="metric-card">
+        <p class="metric-label">First collaborated</p>
+        <p class="metric-value" style="font-size:17px;">{{ collaboration.first_collaboration or "—" }}</p>
+    </div>
+    <div class="metric-card">
+        <p class="metric-label">Last collaborated</p>
+        <p class="metric-value" style="font-size:17px;">{{ collaboration.last_collaboration or "—" }}</p>
+    </div>
+</div>
+
+<h2 class="section-label">Researchers</h2>
+<div class="card">
+    <div class="card-row">
+        <div>
+            <p class="card-title">{{ collaboration.researcher1.first_name }} {{ collaboration.researcher1.last_name }}</p>
+            <p class="card-meta">{{ collaboration.researcher1.academic_title or "Researcher" }}{% if collaboration.researcher1.institution_name %} &middot; {{ collaboration.researcher1.institution_name }}{% endif %}</p>
+        </div>
+        <div>
+            <p class="card-title">{{ collaboration.researcher2.first_name }} {{ collaboration.researcher2.last_name }}</p>
+            <p class="card-meta">{{ collaboration.researcher2.academic_title or "Researcher" }}{% if collaboration.researcher2.institution_name %} &middot; {{ collaboration.researcher2.institution_name }}{% endif %}</p>
+        </div>
+    </div>
+</div>
+
+<h2 class="section-label">Shared publications</h2>
+{% if collaboration.shared_publications %}
+<div class="card-list">
+    {% for pub in collaboration.shared_publications %}
+    <div class="pub-card">
+        <p class="card-title"><a href="{{ url_for('publication_detail', publication_id=pub.publication_id) }}">{{ pub.title }}</a></p>
+        <p class="card-meta">{{ pub.publication_date or "" }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No shared publications recorded for this collaboration yet.</p>
+{% endif %}
+
+<h2 class="section-label">Messages</h2>
+<div class="card" style="max-width:640px;">
+    <div style="max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding-bottom:4px;">
+        {% if messages %}
+        {% for m in messages %}
+        <div style="display:flex; flex-direction:column; align-items:{{ 'flex-end' if m.sender_id == my_researcher_id else 'flex-start' }};">
+            <div style="max-width:75%; padding:8px 12px; border-radius:12px; font-size:13.5px;
+                        background:{{ 'var(--scna-accent)' if m.sender_id == my_researcher_id else 'var(--scna-accent-soft)' }};
+                        color:{{ 'white' if m.sender_id == my_researcher_id else 'var(--scna-text)' }};">{{ m.body }}</div>
+            <span style="font-size:11px; color: var(--scna-text-secondary); margin-top:2px;">
+                {{ m.sender_name if m.sender_id != my_researcher_id else 'You' }} &middot; {{ m.created_at.split('T')[0] if m.created_at is string else m.created_at }}
+            </span>
+        </div>
+        {% endfor %}
+        <div id="message-thread-end"></div>
+        {% else %}
+        <p style="font-size:0.85em; color:#666;">No messages yet — say hello.</p>
+        {% endif %}
+    </div>
+    <form method="post" action="{{ url_for('send_message_route', collaboration_id=collaboration.collaboration_id) }}"
+          style="display:flex; gap:8px; margin-top:14px;">
+        <input type="text" name="body" placeholder="Write a message…" required maxlength="5000"
+               style="flex:1; padding:10px 12px; border:1px solid var(--scna-border); border-radius:var(--scna-radius);">
+        <button type="submit" style="margin:0;">Send</button>
+    </form>
+</div>
+{% endblock %}

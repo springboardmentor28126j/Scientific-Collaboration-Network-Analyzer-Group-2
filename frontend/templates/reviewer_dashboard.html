@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "_dash_widgets.html" as dw %}
+{% import "_dash_icons.html" as dicons %}
+{% block title %}Reviewer Dashboard{% endblock %}
+{% block content %}
+<p class="eyebrow">Reviewer</p>
+<h1>Your reviews</h1>
+
+<div class="dash-section">
+    <div class="dash-metric-grid">
+        {{ dw.metric('bell', 'Assigned', counts.assigned, 'amber', 'Awaiting your response', 0, url_for('reviewer_reviews', status='assigned')) }}
+        {{ dw.metric('clock', 'Pending', counts.accepted, 'purple', 'Accepted, in progress', 1, url_for('reviewer_reviews', status='accepted')) }}
+        {{ dw.metric('check-circle', 'Completed', counts.completed, 'green', None, 2, url_for('reviewer_reviews', status='completed')) }}
+        {{ dw.metric('alert', 'Declined', counts.declined, 'gray', None, 3, url_for('reviewer_reviews', status='declined')) }}
+    </div>
+</div>
+
+{% if counts.assigned > 0 %}
+<div class="dash-section">
+    {{ dw.alert('bell', 'You have ' ~ counts.assigned ~ ' review invitation(s) waiting for a response.', 'Respond now', url_for('reviewer_reviews', status='assigned')) }}
+</div>
+{% endif %}
+
+<div class="dash-section">
+    <div class="dash-two-col">
+        <div class="dash-chart-card" style="--i:0">
+            <p class="dash-chart-title">{{ dicons.icon('review', 15) }} Your reviews by status</p>
+            {% if status_chart and status_chart.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(status_chart) }}{{ dw.donut_legend(status_chart) }}</div>
+            {% else %}
+            <div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No reviews assigned yet.</p></div>
+            {% endif %}
+        </div>
+        <div class="dash-chart-card" style="--i:1">
+            <p class="dash-chart-title">{{ dicons.icon('compass', 15) }} Quick actions</p>
+            <div class="dash-actions-grid" style="grid-template-columns:1fr;">
+                {{ dw.action_tile('review', 'My Reviews', 'Full review queue', url_for('reviewer_reviews'), 0) }}
+                {{ dw.action_tile('trending-up', 'Reports', 'Your review activity', url_for('reports'), 1) }}
+                {{ dw.action_tile('bell', 'Notifications', 'Your notification center', url_for('notifications'), 2) }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dash-section">
+    {{ dw.section_header('review', 'Recent', 'View all', url_for('reviewer_reviews')) }}
+    {% if recent_reviews %}
+    <div class="card-list">
+        {% for r in recent_reviews %}
+        <div class="pub-card">
+            <div class="card-row">
+                <div>
+                    <p class="card-title">
+                        {{ dicons.icon('publication' if r.target_type == 'publication' else 'conference', 14) }}
+                        <a href="{{ url_for('review_detail', review_id=r.review_id) }}">
+                            {{ "Publication" if r.target_type == "publication" else "Conference submission" }} #{{ r.target_id }}
+                        </a>
+                    </p>
+                    <p class="card-meta">Assigned {{ r.assigned_at }}</p>
+                </div>
+                <span class="badge badge-{{ r.status }}">{{ r.status | capitalize }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="dash-chart-card">
+        <div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No reviews assigned yet.</p></div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

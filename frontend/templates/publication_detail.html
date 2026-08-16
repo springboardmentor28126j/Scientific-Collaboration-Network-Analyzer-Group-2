@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}{{ publication.title }}{% endblock %}
+{% block content %}
+<h1>{{ publication.title }}</h1>
+<div class="card">
+    <p><strong>Type:</strong> {{ publication.publication_type }}</p>
+    <p><strong>Status:</strong> <span class="badge badge-{{ publication.status }}">{{ publication.status | capitalize }}</span></p>
+    <p><strong>Venue:</strong> {{ publication.venue_name or "—" }}</p>
+    <p><strong>DOI:</strong> {{ publication.doi or "—" }}</p>
+    <p><strong>Publication date:</strong> {{ publication.publication_date or "—" }}</p>
+    <p>{{ publication.abstract or "No abstract." }}</p>
+
+    {% if publication.file_path %}
+    <p><a href="{{ url_for('download_publication', publication_id=publication.publication_id) }}">📄 Download attached file</a></p>
+    {% else %}
+    <p>No file attached yet.</p>
+    {% endif %}
+</div>
+
+{% if account and (account.role == "system_admin" or (account.role == "institution_admin" and publication.institution_id == account.institution_id)) %}
+<div class="card" style="border-left: 4px solid #4f46e5;">
+    <h3>Review status</h3>
+    <p style="font-size:0.85em; color:#666;">
+        Only a system admin, or the institution admin of the author's institution, can set a publication's review status.
+    </p>
+    <form method="post" action="{{ url_for('set_publication_status', publication_id=publication.publication_id) }}" class="card-form">
+        <label for="status">Status</label>
+        <select id="status" name="status" required>
+            {% for s in ["draft", "submitted", "under_review", "accepted", "published", "archived"] %}
+            <option value="{{ s }}" {% if publication.status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Update Status</button>
+    </form>
+</div>
+{% endif %}
+
+{% if account and account.role in ["system_admin", "institution_admin"] %}
+<div class="card" style="border-left: 4px solid #4f46e5;">
+    <h3>Assign a reviewer</h3>
+    {% if reviewers %}
+    <form method="post" action="{{ url_for('assign_publication_reviewer', publication_id=publication.publication_id) }}" class="card-form">
+        <label for="reviewer_id">Reviewer</label>
+        <select id="reviewer_id" name="reviewer_id" required>
+            {% for rv in reviewers %}
+            <option value="{{ rv.user_id }}">{{ rv.email }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Assign</button>
+    </form>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">No reviewer accounts available to assign.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if reviews %}
+<div class="card">
+    <h3>Reviews</h3>
+    <ul class="participant-list">
+        {% for r in reviews %}
+        <li>
+            <span class="badge badge-{{ r.status }}">{{ r.status | capitalize }}</span>
+            {% if r.recommendation %}
+            <span class="badge badge-{{ r.recommendation }}">{{ r.recommendation | replace('_',' ') | capitalize }}</span>
+            {% endif %}
+            {% if r.score %}Score: {{ r.score }}/10{% endif %}
+            {% if r.comments %} — {{ r.comments }}{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% if is_owner or (account and account.role == "system_admin") %}
+<form method="post" action="{{ url_for('upload_publication', publication_id=publication.publication_id) }}"
+      enctype="multipart/form-data" class="card-form">
+    <label for="file">{% if publication.file_path %}Replace file{% else %}Upload file{% endif %} (PDF, DOC, DOCX — max 20MB)</label>
+    <input type="file" id="file" name="file" accept=".pdf,.doc,.docx" required>
+    <button type="submit">Upload</button>
+</form>
+
+<form method="post" action="{{ url_for('delete_publication', publication_id=publication.publication_id) }}"
+      onsubmit="return confirm('Delete this publication? This cannot be undone.');">
+    <a href="{{ url_for('edit_publication', publication_id=publication.publication_id) }}">Edit</a>
+    &nbsp;|&nbsp;
+    <button type="submit">Delete</button>
+</form>
+{% endif %}
+
+<div class="card">
+    <h3>Cite this publication</h3>
+    {% if citation_text %}
+    <div class="citation-formats">
+        {% for style, text in [("APA", citation_text.apa), ("MLA", citation_text.mla), ("BibTeX", citation_text.bibtex)] %}
+        <div class="citation-format-block">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>{{ style }}</strong>
+                <button type="button" class="btn-copy" data-copy-target="cite-{{ style }}">Copy</button>
+            </div>
+            <pre id="cite-{{ style }}" class="citation-text">{{ text }}</pre>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+    document.querySelectorAll('.btn-copy').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var text = document.getElementById(btn.dataset.copyTarget).innerText;
+            navigator.clipboard.writeText(text).then(function () {
+                var original = btn.innerText;
+                btn.innerText = 'Copied!';
+                setTimeout(function () { btn.innerText = original; }, 1500);
+            });
+        });
+    });
+    </script>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">Citation text isn't available right now.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>References ({{ references|length }})</h3>
+    <p style="font-size:0.85em; color:#666;">What this publication cites.</p>
+    {% if references %}
+    <ul class="participant-list">
+        {% for c in references %}
+        <li>
+            {% if c.is_internal %}
+            <a href="{{ url_for('publication_detail', publication_id=c.cited_publication_id) }}">{{ c.display_title }}</a>
+            {% else %}
+            {{ c.display_title }} <span class="badge">external</span>
+            {% endif %}
+            {% if c.display_authors %} — {{ c.display_authors }}{% endif %}
+            {% if c.display_year %} ({{ c.display_year }}){% endif %}
+            {% if c.display_venue %}, {{ c.display_venue }}{% endif %}
+            {% if c.context %}<br><em style="font-size:0.85em; color:#666;">{{ c.context }}</em>{% endif %}
+            {% if is_owner or (account and account.role == "system_admin") %}
+            <form method="post" action="{{ url_for('delete_citation_route', citation_id=c.citation_id) }}" style="display:inline;">
+                <input type="hidden" name="publication_id" value="{{ publication.publication_id }}">
+                <button type="submit" class="link-btn">Remove</button>
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">No references added yet.</p>
+    {% endif %}
+
+    {% if is_owner or (account and account.role == "system_admin") %}
+    <details style="margin-top:12px;">
+        <summary>Add a reference</summary>
+        <form method="post" action="{{ url_for('add_citation_route', publication_id=publication.publication_id) }}" class="card-form">
+            <label for="cited_publication_id">Existing publication ID in this system (optional)</label>
+            <input type="number" id="cited_publication_id" name="cited_publication_id" placeholder="e.g. 42">
+
+            <p style="font-size:0.85em; color:#666;">— or, for a work outside this system —</p>
+
+            <label for="external_title">External title</label>
+            <input type="text" id="external_title" name="external_title" placeholder="Title of the cited work">
+
+            <label for="external_authors">External authors</label>
+            <input type="text" id="external_authors" name="external_authors" placeholder="e.g. Smith J, Doe A">
+
+            <label for="external_venue">External venue</label>
+            <input type="text" id="external_venue" name="external_venue">
+
+            <label for="external_year">External year</label>
+            <input type="number" id="external_year" name="external_year">
+
+            <label for="external_doi">External DOI</label>
+            <input type="text" id="external_doi" name="external_doi">
+
+            <label for="context">Why is this cited? (optional)</label>
+            <textarea id="context" name="context" rows="2"></textarea>
+
+            <button type="submit">Add reference</button>
+        </form>
+    </details>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Cited by ({{ cited_by|length }})</h3>
+    <p style="font-size:0.85em; color:#666;">Other publications in this system that cite this one.</p>
+    {% if cited_by %}
+    <ul class="participant-list">
+        {% for c in cited_by %}
+        <li>
+            <a href="{{ url_for('publication_detail', publication_id=c.citing_publication_id) }}">{{ c.citing_publication_title }}</a>
+            — added by {{ c.added_by_name }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p style="font-size:0.85em; color:#666;">No citations yet.</p>
+    {% endif %}
+</div>
+
+<p><a href="{{ url_for('publications') }}">Back to publications</a></p>
+{% endblock %}

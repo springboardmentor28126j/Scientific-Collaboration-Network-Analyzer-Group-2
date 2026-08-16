@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Inbox</p>
+    <h1 class="page-title">
+      Notifications
+      {% if result.unread_count > 0 %}
+      <span class="notif-count-badge">{{ result.unread_count }} unread</span>
+      {% endif %}
+    </h1>
+  </div>
+  {% if result.unread_count > 0 %}
+  <form method="post" action="{{ url_for('mark_all_notifications_read') }}">
+    <button type="submit" class="btn primary">Mark all as read</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="notif-tabs">
+  <a href="{{ url_for('notifications') }}"
+     class="notif-tab{% if not unread_only %} notif-tab-active{% endif %}">
+    All
+    {% if result.total %}<span class="notif-tab-pill">{{ result.total }}</span>{% endif %}
+  </a>
+  <a href="{{ url_for('notifications', unread_only='true') }}"
+     class="notif-tab{% if unread_only %} notif-tab-active{% endif %}">
+    Unread
+    {% if result.unread_count > 0 %}<span class="notif-tab-pill notif-tab-pill-accent">{{ result.unread_count }}</span>{% endif %}
+  </a>
+</div>
+
+{% if result['items'] %}
+<div class="notif-list">
+  {% for n in result['items'] %}
+
+  {% set t = n.notif_type | default('') | lower %}
+
+  {# --- Extract requester name from notification message for collab requests --- #}
+  {% set is_collab_request = (t == 'collaboration_request_received') %}
+  {% set req_id = none %}
+  {% if is_collab_request %}
+    {# Message format: "First Last wants to connect with you." #}
+    {% set msg_words = (n.message or '').split(' ') %}
+    {% if msg_words | length >= 2 %}
+      {% set requester_name = msg_words[0] ~ ' ' ~ msg_words[1] %}
+      {% set req_id = pending_requests_by_name.get(requester_name) %}
+    {% endif %}
+  {% endif %}
+
+  <div class="notif-row{% if not n.is_read %} notif-row-unread{% endif %}">
+
+    <!-- Unread indicator -->
+    <div class="notif-dot-wrap">
+      <span class="notif-dot{% if n.is_read %} notif-dot-read{% endif %}"></span>
+    </div>
+
+    <!-- Context icon -->
+    <div class="notif-icon notif-icon-{{ t }}">
+      {% if 'collaboration' in t %}
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="13" cy="7" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M2 17c0-2.8 2.2-5 5-5h6c2.8 0 5 2.2 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      {% elif 'review' in t %}
+        <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="10" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="14" cy="14" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M16.5 16.5l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 6h4M6 9h4M6 12h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      {% elif 'publication' in t %}
+        <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      {% elif 'conference' in t %}
+        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 5V3M14 5V3M2 9h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      {% elif 'project' in t %}
+        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 10l2.5 2.5L14 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      {% elif 'affiliation' in t %}
+        <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="8" width="16" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M10 3l8 5H2l8-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="8" y="12" width="4" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      {% elif 'password' in t or 'account' in t %}
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 7v3.5M10 13v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      {% else %}
+        <svg viewBox="0 0 20 20" fill="none"><path d="M10 3C7.2 3 5 5.2 5 8v4l-2 2h14l-2-2V8c0-2.8-2.2-5-5-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 16a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5"/></svg>
+      {% endif %}
+    </div>
+
+    <!-- Content -->
+    <div class="notif-body">
+      <p class="notif-title">
+        {% if n.link_url and not is_collab_request %}
+          <a href="{{ n.link_url }}" class="notif-link">{{ n.title }}</a>
+        {% else %}
+          {{ n.title }}
+        {% endif %}
+        {% if not n.is_read %}
+          <span class="badge badge-registration_open" style="font-size:10px;padding:2px 7px;margin-left:6px;">New</span>
+        {% endif %}
+      </p>
+      {% if n.message %}
+        <p class="notif-message">{{ n.message }}</p>
+      {% endif %}
+      <p class="notif-time">{{ n.created_at | string | truncate(16, True, '') }}</p>
+
+      {# --- Inline Accept / Reject for collaboration requests --- #}
+      {% if is_collab_request and req_id %}
+      <div class="notif-collab-actions">
+        <form method="post" action="{{ url_for('respond_collaboration_request_route', collaboration_request_id=req_id) }}" style="display:inline;">
+          <input type="hidden" name="status" value="accepted">
+          <input type="hidden" name="notification_id" value="{{ n.notification_id }}">
+          <input type="hidden" name="from_notifications" value="1">
+          <button type="submit" class="btn-pill solid notif-accept-btn">Accept</button>
+        </form>
+        <form method="post" action="{{ url_for('respond_collaboration_request_route', collaboration_request_id=req_id) }}" style="display:inline;">
+          <input type="hidden" name="status" value="rejected">
+          <input type="hidden" name="notification_id" value="{{ n.notification_id }}">
+          <input type="hidden" name="from_notifications" value="1">
+          <button type="submit" class="btn-pill danger notif-reject-btn">Decline</button>
+        </form>
+      </div>
+      {% elif is_collab_request and not req_id %}
+        {# Request already responded to — show the notification link instead #}
+        {% if n.link_url %}
+        <p style="margin:6px 0 0;"><a href="{{ n.link_url }}" style="font-size:12px;">View all requests &rarr;</a></p>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Row-level actions: mark read + dismiss -->
+    <div class="notif-actions">
+      {% if not n.is_read %}
+      <form method="post" action="{{ url_for('mark_notification_read', notification_id=n.notification_id) }}">
+        <button type="submit" class="notif-action-btn" title="Mark as read">
+          <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M2 8l4 4 8-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Read
+        </button>
+      </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('delete_notification', notification_id=n.notification_id) }}">
+        <button type="submit" class="notif-action-btn notif-action-btn-danger" title="Dismiss">
+          <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Dismiss
+        </button>
+      </form>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+{% if result.total > result.page_size %}
+<div class="pagination" style="margin-top:1.25rem;">
+  {% if page > 1 %}
+  <a href="{{ url_for('notifications', page=page-1, unread_only=('true' if unread_only else none)) }}">&larr; Previous</a>
+  {% endif %}
+  <span style="color:var(--scna-text-secondary);">
+    Page {{ page }} of {{ ((result.total - 1) // result.page_size + 1) }}
+  </span>
+  {% if page * result.page_size < result.total %}
+  <a href="{{ url_for('notifications', page=page+1, unread_only=('true' if unread_only else none)) }}">Next &rarr;</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="notif-empty">
+  <div class="notif-empty-icon">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 6C18 6 13 11 13 17v6l-3 5h28l-3-5v-6c0-6-5-11-11-11z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M20 38a4 4 0 0 0 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <p class="notif-empty-title">
+    {% if unread_only %}No unread notifications{% else %}You're all caught up{% endif %}
+  </p>
+  <p class="notif-empty-sub">
+    {% if unread_only %}
+      <a href="{{ url_for('notifications') }}">View all notifications</a>
+    {% else %}
+      New notifications will appear here automatically.
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}

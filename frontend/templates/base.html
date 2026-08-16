@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+{% import "_dash_icons.html" as dicons %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}SCNA{% endblock %} — Scientific Collaboration Network Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+{% if session.get('access_token') %}
+<div class="app-shell" id="appShell">
+
+    <!-- Sidebar toggle button (always visible, outside sidebar) -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle sidebar" aria-label="Toggle sidebar">
+        <span class="toggle-bar"></span>
+        <span class="toggle-bar"></span>
+        <span class="toggle-bar"></span>
+    </button>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="logo">S</div>
+            <span class="name">SCNA</span>
+        </div>
+
+        {% set dashboard_endpoints = ['dashboard','admin_dashboard','institution_admin_dashboard','reviewer_dashboard'] %}
+        {% set collab_endpoints = ['my_collaborations','collaboration_network','suggested_collaborators','collaboration_timeline','collaboration_requests','collaboration_detail'] %}
+        {% set collab_active = request.endpoint in collab_endpoints %}
+
+        <!-- Scrollable nav area: everything between the brand and the profile
+             card scrolls independently, so the full menu stays reachable
+             (via mouse wheel, trackpad, or a touch drag) no matter how many
+             role-specific links are added below, or how short the viewport is. -->
+        <div class="sidebar-nav" id="sidebarNav">
+            <a class="nav-link {% if request.endpoint in dashboard_endpoints %}active{% endif %}" href="{{ url_for('dashboard') }}">{{ dicons.icon('home', 18) }}Dashboard</a>
+            <a class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}" href="{{ url_for('notifications') }}">
+                {{ dicons.icon('bell', 18) }}Notifications
+                {% if unread_notification_count and unread_notification_count > 0 %}
+                <span class="nav-badge">{{ unread_notification_count }}</span>
+                {% endif %}
+            </a>
+            {% if session.get('user_role') == 'system_admin' %}
+            <a class="nav-link {% if request.endpoint == 'admin_users' %}active{% endif %}" href="{{ url_for('admin_users') }}">{{ dicons.icon('users', 18) }}Users</a>
+            {% elif session.get('user_role') not in ['institution_admin', 'reviewer'] %}
+            <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">{{ dicons.icon('researcher', 18) }}My profile</a>
+            <a class="nav-link {% if request.endpoint == 'researcher_directory' %}active{% endif %}" href="{{ url_for('researcher_directory') }}">{{ dicons.icon('users', 18) }}Researcher directory</a>
+            {% endif %}
+            {% if session.get('user_role') != 'reviewer' %}
+            <a class="nav-link {% if request.endpoint == 'institutions' %}active{% endif %}" href="{{ url_for('institutions') }}">{{ dicons.icon('institution', 18) }}Institutions</a>
+            <a class="nav-link {% if request.endpoint in ['publications','publication_detail','new_publication','edit_publication'] %}active{% endif %}" href="{{ url_for('publications') }}">{{ dicons.icon('publication', 18) }}Publications</a>
+            <a class="nav-link {% if request.endpoint in ['conferences','conference_detail','new_conference','edit_conference'] %}active{% endif %}" href="{{ url_for('conferences') }}">{{ dicons.icon('conference', 18) }}Conferences</a>
+            {% endif %}
+            {% if session.get('user_role') not in ['system_admin', 'reviewer'] %}
+            <a class="nav-link {% if request.endpoint in ['projects','project_detail','new_project','edit_project'] %}active{% endif %}" href="{{ url_for('projects') }}">{{ dicons.icon('project', 18) }}Projects</a>
+            {% endif %}
+            {% if session.get('user_role') not in ['system_admin', 'institution_admin', 'reviewer'] %}
+            <a class="nav-link {% if request.endpoint == 'citation_reports' %}active{% endif %}" href="{{ url_for('citation_reports') }}">{{ dicons.icon('trending-up', 18) }}Citation Impact</a>
+
+            <!-- Collaborations: an actual expand/collapse dropdown rather than
+                 a sub-list that only appears once you're already inside it. -->
+            <div class="nav-group">
+                <button type="button"
+                        class="nav-link nav-group-toggle{% if collab_active %} active expanded{% endif %}"
+                        id="navGroupToggle-collab"
+                        onclick="toggleNavGroup('collab')"
+                        aria-expanded="{{ 'true' if collab_active else 'false' }}"
+                        aria-controls="navGroup-collab">
+                    {{ dicons.icon('network', 18) }}<span class="nav-group-label">Collaborations</span>
+                    {% if unread_message_count and unread_message_count > 0 %}<span class="nav-badge">{{ unread_message_count }}</span>{% endif %}
+                    <svg class="nav-caret" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 2.5 8 6l-4 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="nav-group-content{% if collab_active %} expanded{% endif %}" id="navGroup-collab">
+                    <a class="nav-link nav-sublink {% if request.endpoint == 'my_collaborations' %}active{% endif %}" href="{{ url_for('my_collaborations') }}">My Collaborators</a>
+                    <a class="nav-link nav-sublink {% if request.endpoint == 'collaboration_network' %}active{% endif %}" href="{{ url_for('collaboration_network') }}">Network Graph</a>
+                    <a class="nav-link nav-sublink {% if request.endpoint == 'suggested_collaborators' %}active{% endif %}" href="{{ url_for('suggested_collaborators') }}">Suggested Collaborators</a>
+                    <a class="nav-link nav-sublink {% if request.endpoint == 'collaboration_timeline' %}active{% endif %}" href="{{ url_for('collaboration_timeline') }}">Collaboration Timeline</a>
+                    <a class="nav-link nav-sublink {% if request.endpoint == 'collaboration_requests' %}active{% endif %}" href="{{ url_for('collaboration_requests') }}">Requests</a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if session.get('user_role') == 'system_admin' %}
+            <a class="nav-link {% if request.endpoint in ['reports','report_researcher','report_institution','report_publications','report_projects','report_conferences','report_reviews','report_collaborations','report_system'] %}active{% endif %}" href="{{ url_for('reports') }}">{{ dicons.icon('bar-chart', 18) }}Reports</a>
+            <a class="nav-link {% if request.endpoint == 'admin_audit_logs' %}active{% endif %}" href="{{ url_for('admin_audit_logs') }}">{{ dicons.icon('audit', 18) }}Audit Logs</a>
+            <a class="nav-link {% if request.endpoint == 'admin_settings' %}active{% endif %}" href="{{ url_for('admin_settings') }}">{{ dicons.icon('settings', 18) }}Settings</a>
+            {% endif %}
+
+            {% if session.get('user_role') == 'institution_admin' %}
+            <p class="nav-section-label">Institution Admin</p>
+            <a class="nav-link {% if request.endpoint in ['reports','report_researcher','report_institution','report_publications','report_projects','report_conferences','report_reviews','report_collaborations'] %}active{% endif %}" href="{{ url_for('reports') }}">{{ dicons.icon('bar-chart', 18) }}Reports</a>
+            <a class="nav-link {% if request.endpoint == 'institution_admin_researchers' %}active{% endif %}" href="{{ url_for('institution_admin_researchers') }}">{{ dicons.icon('users', 18) }}Researchers</a>
+            {% endif %}
+
+            {% if session.get('user_role') == 'researcher' %}
+            <p class="nav-section-label">My Reports</p>
+            <a class="nav-link {% if request.endpoint in ['reports','report_researcher','report_publications','report_projects','report_collaborations'] %}active{% endif %}" href="{{ url_for('reports') }}">{{ dicons.icon('bar-chart', 18) }}Reports</a>
+            {% endif %}
+
+            {% if session.get('user_role') == 'reviewer' %}
+            <p class="nav-section-label">Reviewer</p>
+            <a class="nav-link {% if request.endpoint == 'reviewer_reviews' %}active{% endif %}" href="{{ url_for('reviewer_reviews') }}">{{ dicons.icon('review', 18) }}My Reviews</a>
+            <a class="nav-link {% if request.endpoint in ['reports','report_reviews','report_publications'] %}active{% endif %}" href="{{ url_for('reports') }}">{{ dicons.icon('bar-chart', 18) }}Reports</a>
+            {% endif %}
+        </div>
+
+        <!-- Profile section at bottom of sidebar -->
+        <div class="sidebar-profile">
+    <!-- Top row: avatar + name/role -->
+    <div class="sidebar-profile-top">
+        <div class="avatar">{{ session.get('user_initials', '··') }}</div>
+        <div class="who">
+            <p class="username">{{ session.get('user_username', session.get('user_email', '').split('@')[0]) }}</p>
+            <p class="role">{{ session.get('user_role', '') | replace('_', ' ') | capitalize }}</p>
+        </div>
+    </div>
+    <!-- Logout sits below, full width -->
+    <a class="logout-btn" href="{{ url_for('logout') }}">Logout</a>
+</div>
+    </nav>
+
+    <!-- Overlay for mobile (click to close sidebar) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <main class="main" id="mainContent">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ── AI chatbot widget (FAQ/navigation help + live data Q&A) ── -->
+    <button id="chatbotToggle" class="chatbot-toggle" aria-label="Open assistant" aria-expanded="false" onclick="Chatbot.toggle()">
+        <svg class="chatbot-toggle-icon-open" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 3.2 6.4L4 20l1.2-3.5A7.96 7.96 0 0 1 4 12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/></svg>
+        <svg class="chatbot-toggle-icon-close" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+
+    <div id="chatbotPanel" class="chatbot-panel" role="dialog" aria-label="Assistant" aria-hidden="true">
+        <div class="chatbot-header">
+            <div>
+                <p class="chatbot-header-title">Assistant</p>
+                <p class="chatbot-header-sub">Ask about your data, or how to do something on SCNA</p>
+            </div>
+            <button class="chatbot-clear-btn" type="button" onclick="Chatbot.clear()" title="Clear conversation">Clear</button>
+        </div>
+        <div id="chatbotMessages" class="chatbot-messages">
+            <div class="chatbot-msg chatbot-msg-bot">
+                <p>Hi{{ ' ' ~ session.get('user_username') if session.get('user_username') else '' }}! I can help you find your way around SCNA, or answer questions about your own publications, projects, reviews, and more. What would you like to know?</p>
+            </div>
+        </div>
+        <div id="chatbotSuggestions" class="chatbot-suggestions">
+            <button type="button" onclick="Chatbot.ask('How do I submit a publication?')">How do I submit a publication?</button>
+            <button type="button" onclick="Chatbot.ask('What are my publications?')">What are my publications?</button>
+            <button type="button" onclick="Chatbot.ask('Do I have any pending reviews?')">Pending reviews?</button>
+        </div>
+        <form id="chatbotForm" class="chatbot-input-row" onsubmit="return Chatbot.submit(event)">
+            <input id="chatbotInput" type="text" autocomplete="off" placeholder="Type your question…" maxlength="4000">
+            <button type="submit" class="chatbot-send-btn" aria-label="Send">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M4 12l16-7-6.5 16-2.5-6.5L4 12z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const sidebar    = document.getElementById('sidebar');
+    const appShell   = document.getElementById('appShell');
+    const overlay    = document.getElementById('sidebarOverlay');
+    const toggleBtn  = document.getElementById('sidebarToggle');
+    const STORAGE_KEY = 'scna_sidebar_collapsed';
+
+    function toggleSidebar() {
+        const isCollapsed = appShell.classList.toggle('sidebar-collapsed');
+        overlay.classList.toggle('visible', !isCollapsed && window.innerWidth <= 768);
+        localStorage.setItem(STORAGE_KEY, isCollapsed ? '1' : '0');
+        updateToggleIcon(isCollapsed);
+    }
+
+    function updateToggleIcon(collapsed) {
+        toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+
+    // Expand/collapse a dropdown nav group (e.g. "Collaborations") inside the
+    // scrollable sidebar. Independent of the current-page "active" state --
+    // toggling open/closed never changes which link is marked as current.
+    function toggleNavGroup(id) {
+        const content = document.getElementById('navGroup-' + id);
+        const toggle = document.getElementById('navGroupToggle-' + id);
+        if (!content || !toggle) return;
+        const nowExpanded = content.classList.toggle('expanded');
+        toggle.classList.toggle('expanded', nowExpanded);
+        toggle.setAttribute('aria-expanded', nowExpanded ? 'true' : 'false');
+    }
+
+    // Restore last state on page load
+    (function () {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === '1') {
+            appShell.classList.add('sidebar-collapsed');
+            updateToggleIcon(true);
+        }
+        // On mobile, always start collapsed
+        if (window.innerWidth <= 768) {
+            appShell.classList.add('sidebar-collapsed');
+        }
+    })();
+
+    // Dashboard metric count-up. Purely a number-text animation (the card/
+    // chart/bar entrance motion itself is handled by CSS keyframes in
+    // style.css and needs no JS). No-op on any page without these elements.
+    (function () {
+        const targets = document.querySelectorAll('.dash-metric-value[data-countup]');
+        if (!targets.length) return;
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        targets.forEach(function (el) {
+            const target = parseFloat(el.getAttribute('data-countup'));
+            if (isNaN(target)) return;
+            if (reduceMotion) { el.textContent = target.toLocaleString(); return; }
+            const duration = 700;
+            const start = performance.now();
+            function step(now) {
+                const p = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(target * eased).toLocaleString();
+                if (p < 1) requestAnimationFrame(step);
+                else el.textContent = target.toLocaleString();
+            }
+            requestAnimationFrame(step);
+        });
+    })();
+</script>
+
+<script src="{{ url_for('static', filename='js/chatbot.js') }}" data-endpoint="{{ url_for('chatbot_message') }}"></script>
+
+{% else %}
+<div class="auth-shell{% block auth_shell_extra_class %}{% endblock %}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {% block auth_content %}{% endblock %}
+</div>
+{% endif %}
+</body>
+</html>

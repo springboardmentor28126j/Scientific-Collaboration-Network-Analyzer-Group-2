@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Institution Report{% endblock %}
+{% block content %}
+
+<div class="report-topbar">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('reports') }}">Reports</a> &rsaquo; Institution</p>
+    <h1>{{ institution.name if institution else 'Institution Report' }}</h1>
+  </div>
+  <div style="display:flex; gap:8px;">
+    {% if institution %}
+    <a href="{{ url_for('report_institution_export', fmt='xlsx', institution_id=selected_institution_id) }}" class="btn report-print-btn">Export Excel</a>
+    <a href="{{ url_for('report_institution_export', fmt='pdf', institution_id=selected_institution_id) }}" class="btn report-print-btn">Export PDF</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if role == 'system_admin' %}
+<div class="report-section">
+  <form method="get" style="display:flex;align-items:center;gap:10px;">
+    <label for="institution_id" style="font-size:13px;font-weight:600;color:var(--scna-text);">Institution</label>
+    {% if institutions %}
+    <select name="institution_id" id="institution_id" onchange="this.form.submit()" class="form-control" style="max-width:320px;">
+      {% for inst in institutions %}
+      <option value="{{ inst.institution_id }}" {% if inst.institution_id == selected_institution_id %}selected{% endif %}>{{ inst.name }}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <p class="report-empty-inline" style="margin:0;">No institutions exist in the system yet.</p>
+    {% endif %}
+  </form>
+</div>
+{% endif %}
+
+{% if institution %}
+<!-- ── Institution Profile ── -->
+<div class="report-section">
+  <p class="report-section-label">Institution Profile</p>
+  <div class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;">
+    <div><p class="report-field-label">Type</p><p class="report-field-value">{{ institution.type | replace('_',' ') | capitalize if institution.type else '—' }}</p></div>
+    <div><p class="report-field-label">Country</p><p class="report-field-value">{{ institution.country or '—' }}</p></div>
+    <div><p class="report-field-label">Email Domain</p><p class="report-field-value">{{ institution.email_domain or '—' }}</p></div>
+    <div><p class="report-field-label">Address</p><p class="report-field-value">{{ institution.address or '—' }}</p></div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Key metrics ── -->
+{% if stats %}
+<div class="report-section">
+  <p class="report-section-label">At a Glance</p>
+  <div class="metrics-grid">
+    <div class="metric-card"><p class="metric-label">Researchers</p><p class="metric-value">{{ stats.total_researchers | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Departments</p><p class="metric-value">{{ stats.total_departments | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Publications</p><p class="metric-value">{{ stats.total_publications | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Projects</p><p class="metric-value">{{ stats.total_projects | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Conferences</p><p class="metric-value">{{ stats.total_conferences | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Pending Affiliations</p>
+      <p class="metric-value {% if stats.pending_affiliation_requests > 0 %}warn{% endif %}">{{ stats.pending_affiliation_requests | default(0) }}</p>
+    </div>
+  </div>
+</div>
+
+  <!-- ── Breakdowns ── -->
+  <div class="report-section">
+    <p class="report-section-label">Breakdowns</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+      {% if stats.publications_by_status %}
+      <div class="report-breakdown-card">
+        <p class="report-breakdown-title">Publications by Status</p>
+        {% for label, count in stats.publications_by_status.items() %}
+        <div class="report-pill-row">
+          <span class="badge badge-{{ label }}">{{ label | replace('_',' ') | capitalize }}</span>
+          <span class="report-bar-value">{{ count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if stats.projects_by_status %}
+      <div class="report-breakdown-card">
+        <p class="report-breakdown-title">Projects by Status</p>
+        {% for label, count in stats.projects_by_status.items() %}
+        <div class="report-pill-row">
+          <span class="badge badge-{{ label }}">{{ label | replace('_',' ') | capitalize }}</span>
+          <span class="report-bar-value">{{ count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+<!-- ── Researchers ── -->
+<div class="report-section">
+  <div class="report-section-header">
+    <p class="report-section-label">Researchers ({{ researchers | length }})</p>
+    <a href="{{ url_for('institution_admin_researchers') }}" class="report-view-all">Manage &rarr;</a>
+  </div>
+  {% if researchers %}
+  <table class="data-table">
+    <thead><tr><th>Name</th><th>Email</th><th>Affiliation Status</th></tr></thead>
+    <tbody>
+    {% for r in researchers %}
+    <tr>
+      <td>{{ r.name }}</td>
+      <td>{{ r.email }}</td>
+      <td><span class="badge badge-{{ r.affiliation_status | default('pending') }}">{{ r.affiliation_status | default('pending') | replace('_',' ') | capitalize }}</span></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="report-empty-inline">No researchers affiliated yet.</p>
+  {% endif %}
+</div>
+
+<!-- ── Publications ── -->
+<div class="report-section">
+  <div class="report-section-header">
+    <p class="report-section-label">Publications ({{ publications | length }})</p>
+    <a href="{{ url_for('publications') }}" class="report-view-all">View all &rarr;</a>
+  </div>
+  {% if publications %}
+  <table class="data-table">
+    <thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Date</th></tr></thead>
+    <tbody>
+    {% for p in publications[:15] %}
+    <tr>
+      <td><a href="{{ url_for('publication_detail', publication_id=p.publication_id) }}">{{ p.title | truncate(55) }}</a></td>
+      <td>{{ p.publication_type | replace('_',' ') | capitalize }}</td>
+      <td><span class="badge badge-{{ p.status }}">{{ p.status | replace('_',' ') | capitalize }}</span></td>
+      <td>{{ p.publication_date[:7] if p.publication_date else '—' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if publications | length > 15 %}
+  <p style="font-size:12px;color:var(--scna-text-muted);margin-top:8px;">Showing 15 of {{ publications|length }}.</p>
+  {% endif %}
+  {% else %}
+  <p class="report-empty-inline">No publications found.</p>
+  {% endif %}
+</div>
+
+<!-- ── Conferences ── -->
+<div class="report-section">
+  <div class="report-section-header">
+    <p class="report-section-label">Conferences ({{ conferences | length }})</p>
+    <a href="{{ url_for('conferences') }}" class="report-view-all">View all &rarr;</a>
+  </div>
+  {% if conferences %}
+  <table class="data-table">
+    <thead><tr><th>Name</th><th>Status</th><th>Start</th><th>Location</th></tr></thead>
+    <tbody>
+    {% for c in conferences %}
+    <tr>
+      <td><a href="{{ url_for('conference_detail', conference_id=c.conference_id) }}">{{ c.name | truncate(50) }}</a></td>
+      <td><span class="badge badge-{{ c.status }}">{{ c.status | replace('_',' ') | capitalize }}</span></td>
+      <td>{{ c.start_date[:10] if c.start_date else '—' }}</td>
+      <td>{{ c.location or '—' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="report-empty-inline">No conferences found.</p>
+  {% endif %}
+</div>
+
+<!-- ── Projects ── -->
+<div class="report-section">
+  <div class="report-section-header">
+    <p class="report-section-label">Projects ({{ projects | length }})</p>
+    <a href="{{ url_for('projects') }}" class="report-view-all">View all &rarr;</a>
+  </div>
+  {% if projects %}
+  <table class="data-table">
+    <thead><tr><th>Title</th><th>Status</th><th>Start</th></tr></thead>
+    <tbody>
+    {% for p in projects %}
+    <tr>
+      <td><a href="{{ url_for('project_detail', project_id=p.project_id) }}">{{ p.title | truncate(55) }}</a></td>
+      <td><span class="badge badge-{{ p.status }}">{{ p.status | capitalize }}</span></td>
+      <td>{{ p.start_date[:10] if p.start_date else '—' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="report-empty-inline">No projects found.</p>
+  {% endif %}
+</div>
+
+<!-- ── Citation note ── -->
+<div class="report-section">
+  <div class="report-citation-note">
+    <svg viewBox="0 0 16 16" fill="none" width="15" height="15" style="flex-shrink:0;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 7v5M8 5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Citation statistics are not yet available in this version.
+  </div>
+</div>
+
+{% if not institution and role != 'system_admin' %}
+<div class="card">
+  <p style="color:var(--scna-text-secondary);">Your account is not linked to an institution. Contact a system admin to assign your institution.</p>
+</div>
+{% endif %}
+
+{% endblock %}

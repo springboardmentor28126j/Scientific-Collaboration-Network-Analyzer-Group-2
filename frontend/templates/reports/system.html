@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}System Report{% endblock %}
+{% block content %}
+
+<div class="report-topbar">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('reports') }}">Reports</a> &rsaquo; System</p>
+    <h1>System Report</h1>
+    <p style="color:var(--scna-text-secondary);margin:2px 0 0;font-size:13px;">Platform-wide statistics — System Admin only</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('report_system_export', fmt='xlsx') }}" class="btn report-print-btn">Export Excel</a>
+    <a href="{{ url_for('report_system_export', fmt='pdf') }}" class="btn report-print-btn">Export PDF</a>
+  </div>
+</div>
+
+{% if stats %}
+
+<!-- ── Platform totals ── -->
+<div class="report-section">
+  <p class="report-section-label">Platform Totals</p>
+  <div class="metrics-grid">
+    <div class="metric-card"><p class="metric-label">Total Users</p><p class="metric-value">{{ stats.total_users | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Institutions</p><p class="metric-value">{{ stats.total_institutions | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Researchers</p><p class="metric-value">{{ stats.total_researchers | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Reviewers</p><p class="metric-value">{{ stats.total_reviewers | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Publications</p><p class="metric-value">{{ stats.total_publications | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Projects</p><p class="metric-value">{{ stats.total_projects | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Conferences</p><p class="metric-value">{{ stats.total_conferences | default('—') }}</p></div>
+    <div class="metric-card"><p class="metric-label">Audit Entries</p><p class="metric-value">{{ stats.recent_audit_log_count | default('—') }}</p></div>
+  </div>
+</div>
+
+<!-- ── Users by role ── -->
+{% if stats.users_by_role %}
+<div class="report-section">
+  <p class="report-section-label">Users by Role</p>
+  <div class="report-breakdown-card" style="max-width:520px;">
+    {% set role_colors = {'researcher':'var(--scna-accent)','institution_admin':'#0EA66B','reviewer':'#D97706','system_admin':'#64748B'} %}
+    {% for r, count in stats.users_by_role.items() %}
+    <div class="report-bar-row">
+      <span class="report-bar-label" style="min-width:140px;">{{ r | replace('_',' ') | capitalize }}</span>
+      <div class="report-bar-track">
+        <div class="report-bar-fill" style="width:{{ ((count / stats.total_users)*100)|round|int if stats.total_users else 0 }}%;background:{{ role_colors.get(r,'var(--scna-accent)') }};"></div>
+      </div>
+      <span class="report-bar-value">{{ count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Content breakdowns ── -->
+<div class="report-section">
+  <p class="report-section-label">Content Breakdowns</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">
+
+    {% if stats.publications_by_status %}
+    <div class="report-breakdown-card">
+      <p class="report-breakdown-title">Publications by Status</p>
+      {% for label, count in stats.publications_by_status.items() %}
+      <div class="report-pill-row">
+        <span class="badge badge-{{ label }}">{{ label | replace('_',' ') | capitalize }}</span>
+        <span class="report-bar-value">{{ count }}</span>
+      </div>
+      {% endfor %}
+      <a href="{{ url_for('report_publications') }}" class="report-card-link">Full report &rarr;</a>
+    </div>
+    {% endif %}
+
+    {% if stats.conferences_by_status %}
+    <div class="report-breakdown-card">
+      <p class="report-breakdown-title">Conferences by Status</p>
+      {% for label, count in stats.conferences_by_status.items() %}
+      <div class="report-pill-row">
+        <span class="badge badge-{{ label }}">{{ label | replace('_',' ') | capitalize }}</span>
+        <span class="report-bar-value">{{ count }}</span>
+      </div>
+      {% endfor %}
+      <a href="{{ url_for('report_conferences') }}" class="report-card-link">Full report &rarr;</a>
+    </div>
+    {% endif %}
+
+    {% if stats.projects_by_status %}
+    <div class="report-breakdown-card">
+      <p class="report-breakdown-title">Projects by Status</p>
+      {% for label, count in stats.projects_by_status.items() %}
+      <div class="report-pill-row">
+        <span class="badge badge-{{ label }}">{{ label | replace('_',' ') | capitalize }}</span>
+        <span class="report-bar-value">{{ count }}</span>
+      </div>
+      {% endfor %}
+      <a href="{{ url_for('report_projects') }}" class="report-card-link">Full report &rarr;</a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- ── Quick admin actions ── -->
+<div class="report-section">
+  <p class="report-section-label">Quick Actions</p>
+  <div class="reports-actions-grid">
+    <a href="{{ url_for('admin_users') }}" class="report-action-card">
+      <span class="report-action-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 18c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+      <span class="report-action-label">Manage Users</span>
+      <span class="report-action-desc">Roles, access, accounts</span>
+    </a>
+    <a href="{{ url_for('admin_audit_logs') }}" class="report-action-card">
+      <span class="report-action-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+      <span class="report-action-label">Audit Logs</span>
+      <span class="report-action-desc">Full activity history</span>
+    </a>
+    <a href="{{ url_for('institutions') }}" class="report-action-card">
+      <span class="report-action-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="8" width="16" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M10 3l8 5H2l8-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+      <span class="report-action-label">Institutions</span>
+      <span class="report-action-desc">Manage all institutions</span>
+    </a>
+    <a href="{{ url_for('admin_settings') }}" class="report-action-card">
+      <span class="report-action-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+      <span class="report-action-label">Settings</span>
+      <span class="report-action-desc">Platform configuration</span>
+    </a>
+  </div>
+</div>
+
+<!-- ── Citation note ── -->
+<div class="report-section">
+  <div class="report-citation-note">
+    <svg viewBox="0 0 16 16" fill="none" width="15" height="15" style="flex-shrink:0;"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 7v5M8 5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Citation statistics and platform growth trends are not yet available in this version.
+  </div>
+</div>
+
+{% else %}
+<div class="card" style="margin-top:1rem;">
+  <p style="color:var(--scna-text-secondary);">Could not load system statistics. Check the backend connection.</p>
+</div>
+{% endif %}
+
+{% endblock %}

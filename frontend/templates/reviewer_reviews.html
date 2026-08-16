@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}My Reviews{% endblock %}
+{% block content %}
+<p class="eyebrow">Reviewer</p>
+<h1>My reviews</h1>
+
+<p class="filter-bar">
+    <a href="{{ url_for('reviewer_reviews') }}"{% if not status_filter %} class="active"{% endif %}>All</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('reviewer_reviews', status='assigned') }}"{% if status_filter == 'assigned' %} class="active"{% endif %}>Assigned</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('reviewer_reviews', status='accepted') }}"{% if status_filter == 'accepted' %} class="active"{% endif %}>Pending</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('reviewer_reviews', status='completed') }}"{% if status_filter == 'completed' %} class="active"{% endif %}>Completed</a>
+</p>
+
+{% if reviews %}
+<div class="card-list">
+    {% for r in reviews %}
+    <div class="card">
+        <div class="card-row">
+            <div>
+                <p class="card-title"><a href="{{ url_for('review_detail', review_id=r.review_id) }}">
+                    {{ "Publication" if r.target_type == "publication" else "Conference submission" }} #{{ r.target_id }}
+                </a></p>
+                <p class="card-meta">Assigned {{ r.assigned_at }}</p>
+                {% if r.recommendation %}<p class="card-meta">Recommendation: {{ r.recommendation | replace('_',' ') | capitalize }}</p>{% endif %}
+            </div>
+            <span class="badge badge-{{ r.status }}">{{ r.status | capitalize }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No reviews found for this filter.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "_dash_widgets.html" as dw %}
+{% import "_dash_icons.html" as dicons %}
+{% block title %}Institution Dashboard{% endblock %}
+{% block content %}
+<p class="eyebrow">Institution Admin</p>
+<h1>{{ institution.name if institution else "Your institution" }}</h1>
+
+{% if stats %}
+
+<div class="dash-section">
+    <div class="dash-metric-grid">
+        {{ dw.metric('researcher', 'Researchers', stats.total_researchers, 'purple', index=0, href=url_for('institution_admin_researchers')) }}
+        {{ dw.metric('department', 'Departments', stats.total_departments, 'blue', index=1, href=(url_for('institution_detail', institution_id=institution.institution_id) if institution else None)) }}
+        {{ dw.metric('bell', 'Pending affiliations', stats.pending_affiliation_requests, ('red' if stats.pending_affiliation_requests else 'gray'), index=2, href=url_for('institution_admin_researchers', affiliation_status='pending')) }}
+        {{ dw.metric('publication', 'Publications', stats.total_publications, 'green', index=3, href=url_for('publications', institution_id=stats.institution_id)) }}
+        {{ dw.metric('conference', 'Conferences', stats.total_conferences, 'amber', index=4, href=url_for('conferences', ours='true')) }}
+        {{ dw.metric('project', 'Projects', stats.total_projects, 'purple', index=5, href=url_for('projects', ours='true')) }}
+    </div>
+</div>
+
+{% if stats.pending_affiliation_requests > 0 %}
+<div class="dash-section">
+    {{ dw.alert('bell', stats.pending_affiliation_requests ~ ' researcher(s) are waiting on affiliation approval.', 'Review now', url_for('institution_admin_researchers', affiliation_status='pending')) }}
+</div>
+{% endif %}
+
+<div class="dash-section">
+    {{ dw.section_header('trending-up', 'Activity breakdown') }}
+    <div class="dash-charts-grid">
+        <div class="dash-chart-card" style="--i:0">
+            <p class="dash-chart-title">{{ dicons.icon('publication', 15) }} Publications by status</p>
+            {% if charts.publications and charts.publications.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(charts.publications) }}{{ dw.donut_legend(charts.publications) }}</div>
+            {% else %}<div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No publications yet.</p></div>{% endif %}
+        </div>
+        <div class="dash-chart-card" style="--i:1">
+            <p class="dash-chart-title">{{ dicons.icon('conference', 15) }} Conferences by status</p>
+            {% if charts.conferences and charts.conferences.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(charts.conferences) }}{{ dw.donut_legend(charts.conferences) }}</div>
+            {% else %}<div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No conferences yet.</p></div>{% endif %}
+        </div>
+        <div class="dash-chart-card" style="--i:2">
+            <p class="dash-chart-title">{{ dicons.icon('project', 15) }} Projects by status</p>
+            {% if charts.projects and charts.projects.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(charts.projects) }}{{ dw.donut_legend(charts.projects) }}</div>
+            {% else %}<div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No projects yet.</p></div>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="dash-section">
+    {{ dw.section_header('settings', 'Manage') }}
+    <div class="dash-actions-grid">
+        {{ dw.action_tile('researcher', 'Researchers', 'Roster, approvals, deactivation', url_for('institution_admin_researchers'), 0) }}
+        {% if institution %}
+        {{ dw.action_tile('institution', 'Institution profile', 'Departments & details', url_for('institution_detail', institution_id=institution.institution_id), 1) }}
+        {% endif %}
+        {{ dw.action_tile('publication', 'Publications', 'From your institution', url_for('publications', institution_id=stats.institution_id), 2) }}
+        {{ dw.action_tile('conference', 'Our conferences', 'Organized by your institution', url_for('conferences', ours='true'), 3) }}
+        {{ dw.action_tile('conference', 'Create a conference', 'Start a new conference', url_for('new_conference'), 4) }}
+        {{ dw.action_tile('project', 'Our projects', 'Active institution projects', url_for('projects', ours='true'), 5) }}
+        {{ dw.action_tile('project', 'Create a project', 'Start a new project', url_for('new_project'), 6) }}
+        {{ dw.action_tile('bell', 'Notifications', 'Your notification center', url_for('notifications'), 7) }}
+    </div>
+</div>
+
+{% else %}
+<p>Could not load institution reports.</p>
+{% endif %}
+{% endblock %}

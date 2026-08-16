@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Suggested Collaborators{% endblock %}
+{% block content %}
+<h1>Suggested Collaborators</h1>
+<p class="card-meta" style="margin-bottom:1rem;">People you might want to connect with, based on mutual collaborators and shared research interests.</p>
+
+{% if suggestions %}
+<div class="connection-list">
+    {% for s in suggestions %}
+    <div class="connection-row">
+        <div class="connection-avatar">{{ (s.researcher.first_name[0] ~ s.researcher.last_name[0]) | upper }}</div>
+        <div class="connection-info">
+            <p class="connection-name">{{ s.researcher.first_name }} {{ s.researcher.last_name }}</p>
+            <p class="connection-title">{{ s.researcher.academic_title or "Researcher" }}{% if s.researcher.institution_name %} at {{ s.researcher.institution_name }}{% endif %}</p>
+            <p class="connection-meta">{{ s.reason }}</p>
+        </div>
+        <div class="connection-actions">
+            <form method="post" action="{{ url_for('send_collaboration_request_route', researcher_id=s.researcher.researcher_id) }}">
+                <button type="submit" class="btn-pill solid">Connect</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No suggestions right now &mdash; as you connect with more collaborators and add skills/interests to your profile, we'll surface people you might know here.</p>
+{% endif %}
+{% endblock %}

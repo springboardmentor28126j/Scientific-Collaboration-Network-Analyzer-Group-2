@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block auth_content %}
+<h1>Create an account</h1>
+<form method="post" class="card-form" id="registrationForm">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required>
+    <div id="email-check-msg" style="font-size:0.9em; margin-top:0.25rem; display:none;"></div>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required minlength="8">
+
+    <label for="role">Role</label>
+    <select id="role" name="role" required>
+        <option value="researcher" {% if preselect_role == "researcher" %}selected{% endif %}>Researcher</option>
+        <option value="institution_admin" {% if preselect_role == "institution_admin" %}selected{% endif %}>Institution Admin</option>
+        <option value="reviewer" {% if preselect_role == "reviewer" %}selected{% endif %}>Reviewer</option>
+    </select>
+
+    <div id="institution-field" style="display:none;">
+        <label for="institution_id">Institution</label>
+        <select id="institution_id" name="institution_id">
+            <option value="">— No existing institution selected —</option>
+            {% for inst in institutions %}
+            <option value="{{ inst.institution_id }}">{{ inst.name }}{% if inst.email_domain %} (@{{ inst.email_domain }}){% endif %}</option>
+            {% endfor %}
+        </select>
+        <p id="institution-hint" style="font-size:0.85em; color:#666;"></p>
+
+        <div id="new-institution-request" style="display:none; margin-top:0.75rem;">
+            <h4 style="margin-bottom:0.5rem;">Request a new institution</h4>
+            <p style="margin-top:0; font-size:0.9em; color:#666;">
+                Leave the institution selection blank and provide the details below to create a pending request for approval.
+            </p>
+
+            <label for="institution_name">Institution name</label>
+            <input type="text" id="institution_name" name="institution_name">
+
+            <label for="website">Website</label>
+            <input type="url" id="website" name="website">
+
+            <label for="domain">Email domain</label>
+            <input type="text" id="domain" name="domain" placeholder="example.org">
+
+            <label for="address">Address</label>
+            <input type="text" id="address" name="address">
+
+            <label for="official_email">Official email</label>
+            <input type="email" id="official_email" name="official_email">
+        </div>
+    </div>
+
+    <button type="submit" id="registerBtn">Register</button>
+</form>
+<p>Already have an account? <a href="{{ url_for('login') }}">Log in</a>.</p>
+
+<script>
+const roleSelect = document.getElementById('role');
+const institutionField = document.getElementById('institution-field');
+const institutionSelect = document.getElementById('institution_id');
+const institutionHint = document.getElementById('institution-hint');
+const newInstitutionRequest = document.getElementById('new-institution-request');
+
+const memberHint = "Institution is optional -- if your email domain matches a known institution, your affiliation is verified " +
+    "automatically. If you pick an institution whose domain doesn't match your email, registration will be rejected " +
+    "(institutional accounts require your institution's official email address). Leave this as " +
+    "\u201cNo existing institution selected\u201d to register as independent.";
+const adminHint = "Applying as Institution Admin -- for either an existing or a newly-requested institution -- always " +
+    "requires System Admin approval before your account is activated.";
+
+function toggleInstitutionField() {
+    const role = roleSelect.value;
+    const showsInstitution = role === 'institution_admin' || role === 'reviewer' || role === 'researcher';
+    institutionField.style.display = showsInstitution ? 'block' : 'none';
+    institutionSelect.required = false;
+
+    const showNewInstitutionRequest = role === 'institution_admin' && !institutionSelect.value;
+    newInstitutionRequest.style.display = showNewInstitutionRequest ? 'block' : 'none';
+
+    institutionHint.textContent = role === 'institution_admin' ? adminHint : memberHint;
+}
+roleSelect.addEventListener('change', toggleInstitutionField);
+institutionSelect.addEventListener('change', toggleInstitutionField);
+toggleInstitutionField();
+
+const emailInput = document.getElementById('email');
+const msg = document.getElementById('email-check-msg');
+const registerBtn = document.getElementById('registerBtn');
+
+// This is a best-effort, non-blocking pre-check. The account still requires
+// clicking the emailed verification link afterward -- this just catches
+// obvious typos/fake addresses before the user submits the form.
+emailInput.addEventListener('blur', async function () {
+    const email = emailInput.value.trim();
+    if (!email) {
+        msg.style.display = "none";
+        return;
+    }
+
+    msg.textContent = "Checking email...";
+    msg.style.color = "gray";
+    msg.style.display = "block";
+
+    try {
+        const res = await fetch("/check-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+
+        if (!data.checked) {
+            // Inconclusive (not configured / API down) -- say so plainly instead
+            // of just vanishing, so it's clear nothing is broken.
+            msg.textContent = "ℹ️ Could not verify deliverability right now — you can still continue.";
+            msg.style.color = "gray";
+            return;
+        }
+        if (data.is_valid) {
+            msg.textContent = "✅ Looks like a valid, deliverable email.";
+            msg.style.color = "green";
+        } else {
+            msg.textContent = "⚠️ This email address doesn't appear to exist. Double-check it before continuing.";
+            msg.style.color = "#b45309";
+        }
+    } catch (err) {
+        // Network/backend issue -- fail open, never block registration on this.
+        msg.style.display = "none";
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Collaboration Timeline{% endblock %}
+{% block content %}
+<h1>Collaboration Timeline</h1>
+<p class="card-meta" style="margin-bottom:1rem;">Your collaborations in chronological order, from your first shared publication with each collaborator to your most recent.</p>
+
+{% if events %}
+<div class="timeline">
+    {% for c in events %}
+    <div class="timeline-item">
+        <p class="timeline-date">{{ c.first_collaboration or c.created_at[:10] }}</p>
+        <p class="timeline-title">
+            <a href="{{ url_for('collaboration_detail', collaboration_id=c.collaboration_id) }}">Started collaborating with {{ c.partner.first_name }} {{ c.partner.last_name }}</a>
+        </p>
+        <p class="timeline-meta">
+            {{ c.strength }} shared publication{{ 's' if c.strength != 1 else '' }}
+            {% if c.last_collaboration and c.last_collaboration != c.first_collaboration %} &middot; most recently in {{ c.last_collaboration }}{% endif %}
+        </p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>Your collaboration timeline will show up here once you've connected with other researchers. <a href="{{ url_for('researcher_directory') }}">Find researchers to connect with.</a></p>
+{% endif %}
+{% endblock %}

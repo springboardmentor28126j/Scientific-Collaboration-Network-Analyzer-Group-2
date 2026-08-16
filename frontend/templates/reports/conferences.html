@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Conferences Report{% endblock %}
+{% block content %}
+
+<div class="report-topbar">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('reports') }}">Reports</a> &rsaquo; Conferences</p>
+    <h1>Conferences Report</h1>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('report_conferences_export', fmt='xlsx', mine=('true' if mine else none)) }}" class="btn report-print-btn">Export Excel</a>
+    <a href="{{ url_for('report_conferences_export', fmt='pdf', mine=('true' if mine else none)) }}" class="btn report-print-btn">Export PDF</a>
+  </div>
+</div>
+
+<div class="filter-bar" style="margin-bottom:1.5rem;">
+  <a href="{{ url_for('report_conferences') }}" class="btn{% if not mine %} primary{% endif %}">All Conferences</a>
+  <a href="{{ url_for('report_conferences', mine='true') }}" class="btn{% if mine %} primary{% endif %}">Mine Only</a>
+</div>
+
+<!-- ── Summary ── -->
+<div class="report-section">
+  <p class="report-section-label">Summary</p>
+  <div class="metrics-grid">
+    <div class="metric-card"><p class="metric-label">Total</p><p class="metric-value">{{ conferences | length }}</p></div>
+    <div class="metric-card"><p class="metric-label">Open</p><p class="metric-value">{{ by_status.get('registration_open', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Ongoing</p><p class="metric-value">{{ by_status.get('ongoing', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Completed</p><p class="metric-value">{{ by_status.get('completed', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Planned</p><p class="metric-value">{{ by_status.get('planned', 0) }}</p></div>
+  </div>
+</div>
+
+{% if conferences %}
+<!-- ── Status breakdown ── -->
+<div class="report-section">
+  <p class="report-section-label">By Status</p>
+  <div class="report-breakdown-card" style="max-width:480px;">
+    {% for label, count in by_status.items() %}
+    <div class="report-bar-row">
+      <span class="badge badge-{{ label }}" style="min-width:130px;justify-content:center;">{{ label | replace('_',' ') | capitalize }}</span>
+      <div class="report-bar-track">
+        <div class="report-bar-fill" style="width:{{ ((count/conferences|length)*100)|round|int }}%;background:var(--scna-accent);"></div>
+      </div>
+      <span class="report-bar-value">{{ count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ── Conference table ── -->
+<div class="report-section">
+  <p class="report-section-label">All Records ({{ conferences | length }})</p>
+  <table class="data-table">
+    <thead>
+      <tr><th>Name</th><th>Status</th><th>Start</th><th>End</th><th>Location</th><th>Participants</th></tr>
+    </thead>
+    <tbody>
+    {% for c in conferences %}
+    <tr>
+      <td><a href="{{ url_for('conference_detail', conference_id=c.conference_id) }}">{{ c.name | truncate(50) }}</a></td>
+      <td><span class="badge badge-{{ c.status }}">{{ c.status | replace('_',' ') | capitalize }}</span></td>
+      <td>{{ c.start_date[:10] if c.start_date else '—' }}</td>
+      <td>{{ c.end_date[:10] if c.end_date else '—' }}</td>
+      <td>{{ c.location | truncate(30) if c.location else '—' }}</td>
+      <td>{{ c.participant_count | default('—') }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="notif-empty" style="margin-top:1.5rem;">
+  <p class="notif-empty-title">No conferences found</p>
+  <p class="notif-empty-sub"><a href="{{ url_for('new_conference') }}">Create a conference</a></p>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{% if institution %}Edit Institution{% else %}New Institution{% endif %}{% endblock %}
+{% block content %}
+<h1>{% if institution %}Edit Institution{% else %}New Institution{% endif %}</h1>
+<form method="post" class="card-form">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required value="{{ institution.name if institution else '' }}">
+
+    <label for="type">Type</label>
+    <select id="type" name="type">
+        <option value="">—</option>
+        {% for t in ["university", "lab", "publisher", "funding_org", "government"] %}
+        <option value="{{ t }}" {% if institution and institution.type == t %}selected{% endif %}>{{ t|replace("_"," ")|capitalize }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="country">Country</label>
+    <input type="text" id="country" name="country" value="{{ institution.country if institution else '' }}">
+
+    <label for="address">Address</label>
+    <input type="text" id="address" name="address" value="{{ institution.address if institution else '' }}">
+
+    <label for="email_domain">Email domain</label>
+    <input type="text" id="email_domain" name="email_domain" placeholder="e.g. srm.edu.in"
+           value="{{ institution.email_domain if institution else '' }}">
+    <p style="font-size:0.85em; color:#666;">
+        If set, institution admins and reviewers registering under this institution must use an email ending in this domain.
+    </p>
+
+    <button type="submit">{% if institution %}Save Changes{% else %}Create Institution{% endif %}</button>
+</form>
+
+{% if institution %}
+<p><a href="{{ url_for('institution_detail', institution_id=institution.institution_id) }}">Back to institution</a></p>
+{% else %}
+<p><a href="{{ url_for('institutions') }}">Back to institutions</a></p>
+{% endif %}
+{% endblock %}

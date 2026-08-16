@@ -1,5 +1,8 @@
 export const getToken = () => {
-  return localStorage.getItem("access_token");
+  return (
+    localStorage.getItem("access_token") ||
+    sessionStorage.getItem("access_token")
+  );
 };
 
 export const isAuthenticated = () => {
@@ -9,10 +12,15 @@ export const isAuthenticated = () => {
 export const logout = () => {
   localStorage.removeItem("access_token");
   localStorage.removeItem("user");
+
+  sessionStorage.removeItem("access_token");
+  sessionStorage.removeItem("user");
 };
 
 export const getCurrentUser = () => {
-  const user = localStorage.getItem("user");
+  const user =
+    localStorage.getItem("user") ||
+    sessionStorage.getItem("user");
 
   if (!user) return null;
 
@@ -63,5 +71,8 @@ export const isAdmin = () => {
 };
 
 export const isLoggedIn = () => {
-  return !!localStorage.getItem("access_token");
+  return !!(
+    localStorage.getItem("access_token") ||
+    sessionStorage.getItem("access_token")
+  );
 };

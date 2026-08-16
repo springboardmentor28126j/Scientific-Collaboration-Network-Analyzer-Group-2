@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dashboard</title>
+</head>
+
+<body>
+
+<h1>Scientific Collaboration Network Analyzer</h1>
+
+<h2>Researcher Dashboard</h2>
+
+
+<button onclick="loadResearchers()">
+    View Researchers
+</button>
+<h3>Add New Researcher</h3>
+
+<input type="text" id="full_name" placeholder="Full Name"><br><br>
+
+<input type="text" id="department" placeholder="Department"><br><br>
+
+<input type="text" id="skills" placeholder="Skills"><br><br>
+
+<input type="text" id="designation" placeholder="Designation"><br><br>
+
+<input type="text" id="institution" placeholder="Institution"><br><br>
+
+<input type="text" id="research_interest" placeholder="Research Interest"><br><br>
+
+<button onclick="addResearcher()">
+    Add Researcher
+</button>
+
+
+<h3>Researchers List:</h3>
+
+<ul id="researcherList"></ul>
+
+
+<script src="script.js"></script>
+
+</body>
+
+</html>

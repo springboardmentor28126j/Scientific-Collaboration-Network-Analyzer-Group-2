@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Projects{% endblock %}
+{% block content %}
+<h1>{{ "My Projects" if mine else ("Our Projects" if ours else "Projects") }}</h1>
+
+{% if session.get('user_role') == 'researcher' %}
+<p class="filter-bar">
+    <a href="{{ url_for('projects') }}"{% if not mine %} class="active"{% endif %}>All</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('projects', mine='true') }}"{% if mine %} class="active"{% endif %}>My Projects</a>
+</p>
+{% endif %}
+
+{% if session.get('user_role') == 'institution_admin' %}
+<p class="filter-bar">
+    <a href="{{ url_for('projects') }}"{% if not ours %} class="active"{% endif %}>All</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('projects', ours='true') }}"{% if ours %} class="active"{% endif %}>Our Projects</a>
+</p>
+{% endif %}
+
+{% if session.get('user_role') in ['researcher', 'institution_admin', 'system_admin'] %}
+<p><a href="{{ url_for('new_project') }}">+ New Project</a></p>
+{% endif %}
+
+{% if projects %}
+<div class="card-list">
+    {% for proj in projects %}
+    <div class="card">
+        <div class="card-row">
+            <div>
+                <p class="card-title"><a href="{{ url_for('project_detail', project_id=proj.project_id) }}">{{ proj.title }}</a></p>
+                <p class="card-meta">{{ proj.start_date or "" }} {% if proj.end_date %}— {{ proj.end_date }}{% endif %}</p>
+            </div>
+            <span class="badge badge-{{ proj.status }}">{{ proj.status | capitalize }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>{{ "You're not leading or part of any projects yet." if mine else ("Your institution hasn't got any projects yet." if ours else "No projects yet.") }}</p>
+{% endif %}
+{% endblock %}

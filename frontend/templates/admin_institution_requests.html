@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Institution Requests{% endblock %}
+{% block content %}
+<h1>Pending Institution Requests</h1>
+{% if requests %}
+<ul class="card-list">
+    {% for req in requests %}
+    <li class="card-item">
+        <div>
+            <h3>{{ req.institution_name }}</h3>
+            <p><strong>Domain:</strong> {{ req.domain or '—' }}</p>
+            <p><strong>Website:</strong> {{ req.website or '—' }}</p>
+            <p><strong>Address:</strong> {{ req.address or '—' }}</p>
+            <p><strong>Official email:</strong> {{ req.official_email or '—' }}</p>
+        </div>
+        <div class="inline-actions">
+            <form method="post" action="{{ url_for('admin_approve_institution_request', request_id=req.request_id) }}">
+                <button type="submit" class="primary">Approve</button>
+            </form>
+            <form method="post" action="{{ url_for('admin_reject_institution_request', request_id=req.request_id) }}">
+                <button type="submit" class="secondary">Reject</button>
+            </form>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No pending institution requests.</p>
+{% endif %}
+{% endblock %}

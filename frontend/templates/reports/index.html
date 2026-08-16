@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+
+<p class="eyebrow">Analytics</p>
+<h1>Reports</h1>
+<p style="color:var(--scna-text-secondary);margin-top:0;margin-bottom:2rem;">
+  Select a report type below. Reports read live data — they never create or modify anything.
+</p>
+
+<div class="report-index-grid">
+
+  {# --- Researcher --- #}
+  {% if 'researcher' in allowed_reports %}
+  <a href="{{ url_for('report_researcher') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#EEEDFE;color:#5B4FE8;">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">Researcher Report</p>
+      <p class="report-index-desc">Profile, publications, projects, collaborations{% if role == 'reviewer' %}, reviews{% endif %}</p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+  {# --- Publications --- #}
+  {% if 'publications' in allowed_reports %}
+  <a href="{{ url_for('report_publications') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#E1F5EE;color:#085041;">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">Publications Report</p>
+      <p class="report-index-desc">Status breakdown, types, submission history</p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+  {# --- Projects --- #}
+  {% if 'projects' in allowed_reports %}
+  <a href="{{ url_for('report_projects') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#FEF3C7;color:#92400E;">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.5"/><path d="M8 12l2.5 2.5L16 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">Projects Report</p>
+      <p class="report-index-desc">Status, members, timeline overview</p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+  {# --- Conferences --- #}
+  {% if 'conferences' in allowed_reports %}
+  <a href="{{ url_for('report_conferences') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#EEEDFE;color:#3C3489;">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 6V3M17 6V3M2 11h20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">Conferences Report</p>
+      <p class="report-index-desc">Participation, status, organiser view</p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+  {# --- Collaborations --- #}
+  {% if 'collaborations' in allowed_reports %}
+  <a href="{{ url_for('report_collaborations') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#FBE7E7;color:#7A1F1F;">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 20c0-3.3 2.7-6 6-6h8c3.3 0 6 2.7 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">Collaborations Report</p>
+      <p class="report-index-desc">Network strength, shared publications, connections</p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+  {# --- Reviews --- #}
+  {% if 'reviews' in allowed_reports %}
+  <a href="{{ url_for('report_reviews') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#FAEEDA;color:#633806;">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="17" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M20 20l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7 8h6M7 11h6M7 14h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">Reviews Report</p>
+      <p class="report-index-desc">
+        {% if role == 'system_admin' %}All reviewers, system-wide{% else %}Assigned, completed, pending, recommendations{% endif %}
+      </p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+  {# --- Institution --- #}
+  {% if 'institution' in allowed_reports %}
+  <a href="{{ url_for('report_institution') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#E1F5EE;color:#085041;">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="20" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M12 4l10 6H2l10-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="10" y="15" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">Institution Report</p>
+      <p class="report-index-desc">
+        {% if role == 'system_admin' %}Pick any institution to inspect{% else %}Researchers, departments, publications, conferences{% endif %}
+      </p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+  {# --- System --- #}
+  {% if 'system' in allowed_reports %}
+  <a href="{{ url_for('report_system') }}" class="report-index-card">
+    <div class="report-index-icon" style="background:#F1EFE8;color:#444441;">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+    <div class="report-index-text">
+      <p class="report-index-title">System Report</p>
+      <p class="report-index-desc">Platform-wide stats, all users, all institutions</p>
+    </div>
+    <span class="report-index-arrow">&rarr;</span>
+  </a>
+  {% endif %}
+
+</div>
+
+<p style="margin-top:2rem;font-size:12px;color:var(--scna-text-muted);">
+  All reports display live data. Citation tracking is not yet available in this version.
+</p>
+
+{% endblock %}

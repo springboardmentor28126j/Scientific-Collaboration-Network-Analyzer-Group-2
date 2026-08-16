@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% block title %}Login{% endblock %}
+{% block auth_shell_extra_class %} auth-shell-wide{% endblock %}
+{% block auth_content %}
+<h1 class="login-select-title">Login</h1>
+<p class="login-select-subtitle">Select User Type</p>
+
+<div class="user-type-grid">
+    <a class="user-type-card" href="{{ url_for('login_role', role='researcher') }}">
+        <span class="user-type-icon">{{ icons.icon_researcher() }}</span>
+        <span class="user-type-label">Researcher</span>
+    </a>
+    <a class="user-type-card" href="{{ url_for('login_role', role='institution_admin') }}">
+        <span class="user-type-icon">{{ icons.icon_institution_admin() }}</span>
+        <span class="user-type-label">University / Institution (Admin)</span>
+    </a>
+    <a class="user-type-card" href="{{ url_for('login_role', role='reviewer') }}">
+        <span class="user-type-icon">{{ icons.icon_reviewer() }}</span>
+        <span class="user-type-label">Reviewer</span>
+    </a>
+    <a class="user-type-card" href="{{ url_for('login_role', role='system_admin') }}">
+        <span class="user-type-icon">{{ icons.icon_system_admin() }}</span>
+        <span class="user-type-label">System Admin</span>
+    </a>
+</div>
+{% endblock %}

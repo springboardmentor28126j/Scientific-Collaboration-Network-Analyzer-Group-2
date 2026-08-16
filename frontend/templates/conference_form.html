@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{% if conference %}Edit Conference{% else %}New Conference{% endif %}{% endblock %}
+{% block content %}
+<h1>{% if conference %}Edit Conference{% else %}New Conference{% endif %}</h1>
+<form method="post" class="card-form">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required value="{{ conference.name if conference else '' }}">
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="4">{{ conference.description if conference else '' }}</textarea>
+
+    <label for="start_date">Start date</label>
+    <input type="date" id="start_date" name="start_date" required
+           value="{{ conference.start_date if conference else '' }}">
+
+    <label for="end_date">End date</label>
+    <input type="date" id="end_date" name="end_date" required
+           value="{{ conference.end_date if conference else '' }}">
+
+    <label for="location">Location</label>
+    <input type="text" id="location" name="location" value="{{ conference.location if conference else '' }}">
+
+    <label for="website_url">Website</label>
+    <input type="url" id="website_url" name="website_url" value="{{ conference.website_url if conference else '' }}">
+
+    {% if conference %}
+    <label for="status">Status</label>
+    <select id="status" name="status" required>
+        {% for s in ["planned", "registration_open", "ongoing", "completed", "cancelled"] %}
+        <option value="{{ s }}" {% if conference.status == s %}selected{% endif %}>{{ s|replace("_", " ")|capitalize }}</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+
+    <button type="submit">{% if conference %}Save Changes{% else %}Create Conference{% endif %}</button>
+</form>
+
+{% if conference %}
+<p><a href="{{ url_for('conference_detail', conference_id=conference.conference_id) }}">Back to conference</a></p>
+{% else %}
+<p><a href="{{ url_for('conferences') }}">Back to conferences</a></p>
+{% endif %}
+{% endblock %}

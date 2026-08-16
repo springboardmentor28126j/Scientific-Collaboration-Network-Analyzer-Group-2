@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}System Settings{% endblock %}
+{% block content %}
+<p class="eyebrow">System Admin</p>
+<h1>System configuration</h1>
+
+{% if settings %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+            <th>Description</th>
+            <th>Last updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in settings %}
+        <tr>
+            <td>{{ s.key }}</td>
+            <td>{{ s.value }}</td>
+            <td>{{ s.description or "" }}</td>
+            <td>{{ s.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No settings configured yet.</p>
+{% endif %}
+
+<p class="section-label">Add / update a setting</p>
+<form method="post" class="card-form">
+    <label for="key">Key</label>
+    <input type="text" id="key" name="key" required placeholder="e.g. registration_open">
+
+    <label for="value">Value</label>
+    <input type="text" id="value" name="value" placeholder="e.g. true">
+
+    <label for="description">Description (optional)</label>
+    <input type="text" id="description" name="description" placeholder="What this setting controls">
+
+    <button type="submit" class="primary">Save setting</button>
+</form>
+{% endblock %}

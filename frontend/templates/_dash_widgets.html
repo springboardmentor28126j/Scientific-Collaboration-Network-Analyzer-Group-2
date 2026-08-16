@@ -1,0 +1,132 @@
+{% import "_dash_icons.html" as dicons %}
+{#
+  Reusable dashboard building blocks, shared by researcher_dashboard.html,
+  admin_dashboard.html, institution_admin_dashboard.html and
+  reviewer_dashboard.html. Chart geometry (segments, offsets, bar percents)
+  is computed server-side in app.py (donut_chart_data / bar_chart_data) --
+  these macros only turn that already-computed data into markup.
+#}
+
+{% macro section_header(icon_name, title, action_label=None, action_url=None) %}
+<div class="dash-section-header">
+    <span class="dash-section-icon">{{ dicons.icon(icon_name, 16) }}</span>
+    <h2>{{ title }}</h2>
+    {% if action_label and action_url %}
+    <a href="{{ action_url }}" class="dash-section-action">{{ action_label }} {{ dicons.icon('chevron-right', 14) }}</a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro metric(icon_name, label, value, color='purple', sublabel=None, index=0, href=None) %}
+{% set tag = 'a' if href else 'div' %}
+<{{ tag }}{% if href %} href="{{ href }}"{% endif %} class="dash-metric-card" style="--i:{{ index }}">
+    <span class="dash-metric-icon dash-metric-icon--{{ color }}">{{ dicons.icon(icon_name, 18) }}</span>
+    <span class="dash-metric-value" {% if value is number %}data-countup="{{ value }}"{% endif %}>{{ value }}</span>
+    <span class="dash-metric-label">{{ label }}</span>
+    {% if sublabel %}<span class="dash-metric-sublabel">{{ sublabel }}</span>{% endif %}
+</{{ tag }}>
+{% endmacro %}
+
+{% macro donut_svg(data, index=0) %}
+<div class="dash-donut-visual" style="--i:{{ index }}">
+    <svg viewBox="0 0 {{ data.size }} {{ data.size }}" class="dash-donut" role="img" aria-label="Breakdown chart">
+        <circle cx="{{ data.center }}" cy="{{ data.center }}" r="{{ data.radius }}" class="dash-donut-track"
+                fill="none" stroke-width="{{ data.stroke }}"/>
+        {% if data.segments %}
+        <g class="dash-donut-group" style="transform-origin:{{ data.center }}px {{ data.center }}px;">
+            {% for seg in data.segments %}
+            <circle class="dash-donut-seg" cx="{{ data.center }}" cy="{{ data.center }}" r="{{ data.radius }}"
+                    fill="none" stroke="{{ seg.color }}" stroke-width="{{ data.stroke }}"
+                    stroke-dasharray="{{ seg.dash }}" stroke-dashoffset="{{ seg.offset }}">
+                <title>{{ seg.display_label }}: {{ seg.count }} ({{ seg.pct }}%)</title>
+            </circle>
+            {% endfor %}
+        </g>
+        {% endif %}
+    </svg>
+    <div class="dash-donut-center">
+        <span class="dash-donut-total">{{ data.total }}</span>
+        <span class="dash-donut-total-label">total</span>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro donut_legend(data) %}
+<div class="dash-legend">
+    {% for seg in data.segments %}
+    <div class="dash-legend-row">
+        <span class="dash-legend-dot" style="background:{{ seg.color }}"></span>
+        <span class="dash-legend-label">{{ seg.display_label }}</span>
+        <span class="dash-legend-value">{{ seg.count }}</span>
+    </div>
+    {% endfor %}
+    {% if not data.segments %}
+    <p class="dash-empty-note">No data yet.</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro chart_card(icon_name, title, data, index=0) %}
+<div class="dash-chart-card" style="--i:{{ index }}">
+    <p class="dash-chart-title">{{ dicons.icon(icon_name, 15) }} {{ title }}</p>
+    {% if data.total %}
+    <div class="dash-donut-row">
+        {{ donut_svg(data) }}
+        {{ donut_legend(data) }}
+    </div>
+    {% else %}
+    <div class="dash-empty">
+        {{ dicons.icon('inbox', 22) }}
+        <p>No data yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro bar_list(items, index=0) %}
+<div class="dash-bar-list" style="--i:{{ index }}">
+    {% for item in items %}
+    <div class="dash-bar-row">
+        <span class="dash-bar-label">{{ item.display_label }}</span>
+        <span class="dash-bar-track"><span class="dash-bar-fill" style="--w:{{ item.pct }}%; --i:{{ loop.index0 }}; background:{{ item.color }}"></span></span>
+        <span class="dash-bar-value">{{ item.count }}</span>
+    </div>
+    {% else %}
+    <p class="dash-empty-note">No data yet.</p>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro leaderboard_list(items, name_key, value_key, value_suffix='', sub_key=None, sub_suffix='', empty_text='No data yet.') %}
+<div class="dash-leaderboard">
+    {% for item in items[:5] %}
+    <div class="dash-leaderboard-row" style="--i:{{ loop.index0 }}">
+        <span class="dash-rank dash-rank--{{ loop.index if loop.index <= 3 else 'other' }}">{{ loop.index }}</span>
+        <span class="dash-leaderboard-name">{{ item[name_key] }}</span>
+        {% if sub_key %}<span class="dash-leaderboard-sub">{{ item[sub_key] }}{{ sub_suffix }}</span>{% endif %}
+        <span class="dash-leaderboard-value">{{ item[value_key] }}{{ value_suffix }}</span>
+    </div>
+    {% else %}
+    <p class="dash-empty-note">{{ empty_text }}</p>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro action_tile(icon_name, label, desc, url, index=0) %}
+<a href="{{ url }}" class="dash-action-tile" style="--i:{{ index }}">
+    <span class="dash-action-icon">{{ dicons.icon(icon_name, 18) }}</span>
+    <span class="dash-action-text">
+        <span class="dash-action-label">{{ label }}</span>
+        {% if desc %}<span class="dash-action-desc">{{ desc }}</span>{% endif %}
+    </span>
+    <span class="dash-action-arrow">{{ dicons.icon('arrow-right', 15) }}</span>
+</a>
+{% endmacro %}
+
+{% macro alert(icon_name, message, cta_label=None, cta_url=None, tone='warning') %}
+<div class="dash-alert dash-alert--{{ tone }}">
+    <span class="dash-alert-icon">{{ dicons.icon(icon_name, 18) }}</span>
+    <p class="dash-alert-text">{{ message }}</p>
+    {% if cta_label and cta_url %}<a href="{{ cta_url }}" class="dash-alert-cta">{{ cta_label }}</a>{% endif %}
+</div>
+{% endmacro %}

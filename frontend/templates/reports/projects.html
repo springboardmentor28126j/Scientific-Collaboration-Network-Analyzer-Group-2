@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Projects Report{% endblock %}
+{% block content %}
+
+<div class="report-topbar">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('reports') }}">Reports</a> &rsaquo; Projects</p>
+    <h1>Projects Report</h1>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('report_projects_export', fmt='xlsx', mine=('true' if mine else none)) }}" class="btn report-print-btn">Export Excel</a>
+    <a href="{{ url_for('report_projects_export', fmt='pdf', mine=('true' if mine else none)) }}" class="btn report-print-btn">Export PDF</a>
+  </div>
+</div>
+
+<div class="filter-bar" style="margin-bottom:1.5rem;">
+  <a href="{{ url_for('report_projects') }}" class="btn{% if not mine %} primary{% endif %}">All Projects</a>
+  <a href="{{ url_for('report_projects', mine='true') }}" class="btn{% if mine %} primary{% endif %}">Mine Only</a>
+</div>
+
+<!-- ── Summary ── -->
+<div class="report-section">
+  <p class="report-section-label">Summary</p>
+  <div class="metrics-grid">
+    <div class="metric-card"><p class="metric-label">Total</p><p class="metric-value">{{ projects | length }}</p></div>
+    <div class="metric-card"><p class="metric-label">Active</p><p class="metric-value">{{ by_status.get('active', 0) + by_status.get('ongoing', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Completed</p><p class="metric-value">{{ by_status.get('completed', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Planned</p><p class="metric-value">{{ by_status.get('planned', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Cancelled</p><p class="metric-value">{{ by_status.get('cancelled', 0) }}</p></div>
+  </div>
+</div>
+
+{% if projects %}
+<!-- ── Status breakdown bar ── -->
+<div class="report-section">
+  <p class="report-section-label">By Status</p>
+  <div class="report-breakdown-card" style="max-width:480px;">
+    {% for label, count in by_status.items() %}
+    <div class="report-bar-row">
+      <span class="badge badge-{{ label }}" style="min-width:90px;justify-content:center;">{{ label | capitalize }}</span>
+      <div class="report-bar-track">
+        <div class="report-bar-fill" style="width:{{ ((count/projects|length)*100)|round|int }}%;background:var(--scna-accent);"></div>
+      </div>
+      <span class="report-bar-value">{{ count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ── Projects table ── -->
+<div class="report-section">
+  <p class="report-section-label">All Records ({{ projects | length }})</p>
+  <table class="data-table">
+    <thead>
+      <tr><th>Title</th><th>Leader</th><th>Status</th><th>Start</th><th>End</th><th>Members</th></tr>
+    </thead>
+    <tbody>
+    {% for p in projects %}
+    <tr>
+      <td><a href="{{ url_for('project_detail', project_id=p.project_id) }}">{{ p.title | truncate(50) }}</a></td>
+      <td>{{ p.leader.first_name ~ ' ' ~ p.leader.last_name if p.leader else '—' }}</td>
+      <td><span class="badge badge-{{ p.status }}">{{ p.status | capitalize }}</span></td>
+      <td>{{ p.start_date[:10] if p.start_date else '—' }}</td>
+      <td>{{ p.end_date[:10] if p.end_date else '—' }}</td>
+      <td>{{ p.member_count | default('—') }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="notif-empty" style="margin-top:1.5rem;">
+  <p class="notif-empty-title">No projects found</p>
+  <p class="notif-empty-sub"><a href="{{ url_for('new_project') }}">Create a project</a></p>
+</div>
+{% endif %}
+
+{% endblock %}

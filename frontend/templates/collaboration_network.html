@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Collaboration Network{% endblock %}
+{% block content %}
+<h1>Network Graph</h1>
+<p class="card-meta" style="margin-bottom:1rem;">Your collaboration network, centered on you. Line thickness reflects how many shared publications back each connection.</p>
+
+<p class="filter-bar">
+    <a href="{{ url_for('collaboration_network', depth=1) }}"{% if depth == 1 %} class="active"{% endif %}>Direct connections</a>
+    &nbsp;&middot;&nbsp;
+    <a href="{{ url_for('collaboration_network', depth=2) }}"{% if depth == 2 %} class="active"{% endif %}>2 degrees</a>
+    &nbsp;&middot;&nbsp;
+    <a href="{{ url_for('collaboration_network', depth=3) }}"{% if depth == 3 %} class="active"{% endif %}>3 degrees</a>
+</p>
+
+{% if graph.nodes|length > 1 %}
+<div class="network-graph-wrap">
+    <svg viewBox="0 0 {{ svg_width }} {{ svg_height }}" width="100%" height="440" xmlns="http://www.w3.org/2000/svg">
+        {% for e in graph.edges %}
+        {% set p1 = positions[e.researcher1_id] %}
+        {% set p2 = positions[e.researcher2_id] %}
+        {% if p1 and p2 %}
+        <line class="network-edge" x1="{{ p1[0] }}" y1="{{ p1[1] }}" x2="{{ p2[0] }}" y2="{{ p2[1] }}"
+              style="stroke-width: {{ 1.5 + (e.strength * 0.6) }}px;">
+            <title>{{ e.strength }} shared publication{{ 's' if e.strength != 1 else '' }}</title>
+        </line>
+        {% endif %}
+        {% endfor %}
+
+        {% for n in graph.nodes %}
+        <g class="{{ 'network-node-center' if n.is_center else 'network-node' }}">
+            <circle cx="{{ n.x }}" cy="{{ n.y }}" r="{{ 22 if n.is_center else 16 }}">
+                <title>{{ n.name }}{% if n.institution_name %} &mdash; {{ n.institution_name }}{% endif %}</title>
+            </circle>
+            <text class="network-node-label" x="{{ n.x }}" y="{{ n.y + (38 if n.is_center else 30) }}" text-anchor="middle">{{ n.name }}</text>
+        </g>
+        {% endfor %}
+    </svg>
+</div>
+{% else %}
+<p>Your network graph will appear here once you have at least one collaborator. <a href="{{ url_for('researcher_directory') }}">Find researchers to connect with.</a></p>
+{% endif %}
+{% endblock %}

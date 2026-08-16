@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% import "_dash_widgets.html" as dw %}
+{% import "_dash_icons.html" as dicons %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<p class="eyebrow">System Admin</p>
+<h1>Platform overview</h1>
+
+{% if stats %}
+
+<div class="dash-section">
+    <div class="dash-metric-grid">
+        {{ dw.metric('users', 'Total users', stats.total_users, 'purple', index=0, href=url_for('admin_users')) }}
+        {{ dw.metric('institution', 'Institutions', stats.total_institutions, 'blue', index=1, href=url_for('institutions')) }}
+        {{ dw.metric('publication', 'Publications', stats.total_publications, 'green', index=2, href=url_for('publications')) }}
+        {{ dw.metric('conference', 'Conferences', stats.total_conferences, 'amber', index=3, href=url_for('conferences')) }}
+        {{ dw.metric('project', 'Projects', stats.total_projects, 'purple', index=4, href=url_for('projects')) }}
+        {{ dw.metric('review', 'Reviewers', stats.total_reviewers, 'green', index=5) }}
+        {{ dw.metric('audit', 'Audit log entries', stats.recent_audit_log_count, 'gray', index=6, href=url_for('admin_audit_logs')) }}
+    </div>
+</div>
+
+<div class="dash-section">
+    {{ dw.section_header('trending-up', 'Platform activity') }}
+    <div class="dash-charts-grid">
+        <div class="dash-chart-card" style="--i:0">
+            <p class="dash-chart-title">{{ dicons.icon('users', 15) }} Users by role</p>
+            {% if charts.roles and charts.roles.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(charts.roles) }}{{ dw.donut_legend(charts.roles) }}</div>
+            {% else %}<div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No users yet.</p></div>{% endif %}
+        </div>
+        <div class="dash-chart-card" style="--i:1">
+            <p class="dash-chart-title">{{ dicons.icon('publication', 15) }} Publications by status</p>
+            {% if charts.publications and charts.publications.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(charts.publications) }}{{ dw.donut_legend(charts.publications) }}</div>
+            {% else %}<div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No publications yet.</p></div>{% endif %}
+        </div>
+        <div class="dash-chart-card" style="--i:2">
+            <p class="dash-chart-title">{{ dicons.icon('conference', 15) }} Conferences by status</p>
+            {% if charts.conferences and charts.conferences.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(charts.conferences) }}{{ dw.donut_legend(charts.conferences) }}</div>
+            {% else %}<div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No conferences yet.</p></div>{% endif %}
+        </div>
+        <div class="dash-chart-card" style="--i:3">
+            <p class="dash-chart-title">{{ dicons.icon('project', 15) }} Projects by status</p>
+            {% if charts.projects and charts.projects.total %}
+            <div class="dash-donut-row">{{ dw.donut_svg(charts.projects) }}{{ dw.donut_legend(charts.projects) }}</div>
+            {% else %}<div class="dash-empty">{{ dicons.icon('inbox', 22) }}<p>No projects yet.</p></div>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="dash-section">
+    {{ dw.section_header('trophy', 'Top performers') }}
+    <div class="dash-two-col">
+        <div class="dash-chart-card" style="--i:4">
+            <p class="dash-chart-title">{{ dicons.icon('researcher', 15) }} Most cited researchers</p>
+            {% if leaderboard and leaderboard.top_researchers %}
+            {{ dw.leaderboard_list(leaderboard.top_researchers, 'name', 'total_citations', ' cit.', 'publication_count', ' pubs') }}
+            {% else %}<div class="dash-empty">{{ dicons.icon('trophy', 22) }}<p>No citation data yet.</p></div>{% endif %}
+        </div>
+        <div class="dash-chart-card" style="--i:5">
+            <p class="dash-chart-title">{{ dicons.icon('institution', 15) }} Highest-impact institutions</p>
+            {% if leaderboard and leaderboard.top_institutions %}
+            {{ dw.leaderboard_list(leaderboard.top_institutions, 'name', 'total_citations', ' cit.', 'publication_count', ' pubs') }}
+            {% else %}<div class="dash-empty">{{ dicons.icon('trophy', 22) }}<p>No citation data yet.</p></div>{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="dash-section">
+    {{ dw.section_header('settings', 'Manage') }}
+    <div class="dash-actions-grid">
+        {{ dw.action_tile('users', 'Users', 'Create, edit roles, deactivate', url_for('admin_users'), 0) }}
+        {{ dw.action_tile('institution', 'Institutions', 'Full CRUD across all institutions', url_for('institutions'), 1) }}
+        {{ dw.action_tile('publication', 'Publications', 'View and moderate all submissions', url_for('publications'), 2) }}
+        {{ dw.action_tile('conference', 'Conferences', 'View and moderate all conferences', url_for('conferences'), 3) }}
+        {{ dw.action_tile('project', 'Projects', 'View and moderate all projects', url_for('projects'), 4) }}
+        {{ dw.action_tile('building', 'Institution Requests', 'Review pending institution requests', url_for('admin_institution_requests'), 5) }}
+        {{ dw.action_tile('audit', 'Audit Logs', 'Full activity history', url_for('admin_audit_logs'), 6) }}
+        {{ dw.action_tile('settings', 'Settings', 'System-wide configuration', url_for('admin_settings'), 7) }}
+        {{ dw.action_tile('bell', 'Notifications', 'Your notification center', url_for('notifications'), 8) }}
+    </div>
+</div>
+
+{% else %}
+<p>Could not load dashboard stats.</p>
+{% endif %}
+{% endblock %}

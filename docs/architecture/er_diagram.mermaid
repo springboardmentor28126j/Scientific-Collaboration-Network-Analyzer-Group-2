@@ -1,0 +1,188 @@
+erDiagram
+
+    INSTITUTION ||--o{ USER : employs
+    INSTITUTION ||--o{ DEPARTMENT : has
+    INSTITUTION ||--o{ INSTITUTIONAL_COLLABORATION : "party to"
+
+    USER ||--o| RESEARCHER_PROFILE : "has (if role=Researcher)"
+    USER {
+        int user_id PK
+        string email
+        string password_hash
+        string role
+        int institution_id FK
+        string status
+        datetime created_at
+        datetime updated_at
+    }
+
+    RESEARCHER_PROFILE {
+        int researcher_id PK
+        int user_id FK
+        int department_id FK
+        string first_name
+        string last_name
+        string academic_title
+        string orcid_id
+        text bio
+        datetime created_at
+    }
+
+    DEPARTMENT {
+        int department_id PK
+        int institution_id FK
+        string name
+        string code
+    }
+
+    DEPARTMENT ||--o{ RESEARCHER_PROFILE : contains
+
+    RESEARCHER_PROFILE ||--o{ RESEARCHER_SKILL : lists
+    SKILL ||--o{ RESEARCHER_SKILL : "linked via"
+    SKILL {
+        int skill_id PK
+        string name
+    }
+    RESEARCHER_SKILL {
+        int researcher_skill_id PK
+        int researcher_id FK
+        int skill_id FK
+    }
+
+    RESEARCHER_PROFILE ||--o{ RESEARCHER_INTEREST : lists
+    RESEARCH_INTEREST {
+        int interest_id PK
+        string name
+    }
+    RESEARCHER_INTEREST {
+        int researcher_interest_id PK
+        int researcher_id FK
+        int interest_id FK
+    }
+    RESEARCH_INTEREST ||--o{ RESEARCHER_INTEREST : "linked via"
+
+    RESEARCHER_PROFILE ||--o{ PUBLICATION_AUTHOR : writes
+    PUBLICATION ||--o{ PUBLICATION_AUTHOR : "authored by"
+    PUBLICATION {
+        int publication_id PK
+        string title
+        string type
+        string status
+        text abstract
+        date publication_date
+        string doi
+        string file_path
+        int submitted_by FK
+        datetime created_at
+        datetime updated_at
+    }
+    PUBLICATION_AUTHOR {
+        int publication_author_id PK
+        int publication_id FK
+        int researcher_id FK
+        int author_order
+        boolean is_corresponding_author
+    }
+
+    PUBLICATION ||--o{ CITATION : "cited by / cites"
+    CITATION {
+        int citation_id PK
+        int citing_publication_id FK
+        int cited_publication_id FK
+        string citation_context
+        datetime created_at
+    }
+
+    PUBLICATION ||--o{ REFERENCE : "reference list"
+    REFERENCE {
+        int reference_id PK
+        int publication_id FK
+        string reference_text
+        string external_doi
+    }
+
+    PROJECT ||--o{ PROJECT_MEMBER : "staffed by"
+    RESEARCHER_PROFILE ||--o{ PROJECT_MEMBER : "participates in"
+    PROJECT {
+        int project_id PK
+        string title
+        text description
+        string funding_source
+        decimal budget
+        date start_date
+        date end_date
+        string status
+        int lead_researcher_id FK
+        datetime created_at
+    }
+    PROJECT_MEMBER {
+        int project_member_id PK
+        int project_id FK
+        int researcher_id FK
+        string role_in_project
+        date joined_date
+    }
+
+    PROJECT ||--o{ INSTITUTIONAL_COLLABORATION : "backed by"
+    INSTITUTIONAL_COLLABORATION {
+        int collaboration_id PK
+        int project_id FK
+        int institution_id FK
+        string agreement_type
+        date start_date
+        date end_date
+    }
+
+    RESEARCHER_PROFILE ||--o{ COAUTHOR_LINK : "co-authors with"
+    COAUTHOR_LINK {
+        int coauthor_link_id PK
+        int researcher_id_a FK
+        int researcher_id_b FK
+        int publication_id FK
+        int collaboration_strength
+    }
+
+    CONFERENCE ||--o{ CONFERENCE_PARTICIPATION : hosts
+    RESEARCHER_PROFILE ||--o{ CONFERENCE_PARTICIPATION : attends
+    CONFERENCE {
+        int conference_id PK
+        string name
+        string location
+        date start_date
+        date end_date
+        string website_url
+    }
+    CONFERENCE_PARTICIPATION {
+        int participation_id PK
+        int conference_id FK
+        int researcher_id FK
+        string role
+        string presentation_title
+        datetime registered_at
+    }
+
+    PUBLICATION ||--o| CONFERENCE : "presented at (optional)"
+
+    USER ||--o{ AUDIT_LOG : generates
+    AUDIT_LOG {
+        int audit_id PK
+        int user_id FK
+        string action
+        string entity_type
+        int entity_id
+        text details
+        string ip_address
+        datetime created_at
+    }
+
+    USER ||--o{ FILE_UPLOAD : uploads
+    FILE_UPLOAD {
+        int file_id PK
+        int uploaded_by FK
+        string entity_type
+        int entity_id
+        string file_name
+        string storage_path
+        string mime_type
+        datetime uploaded_at
+    }

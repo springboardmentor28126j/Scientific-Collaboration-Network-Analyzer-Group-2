@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Reviews Report{% endblock %}
+{% block content %}
+
+<div class="report-topbar">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('reports') }}">Reports</a> &rsaquo; Reviews</p>
+    <h1>{% if scope == 'all' %}All Reviews (System-wide){% else %}My Reviews Report{% endif %}</h1>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('report_reviews_export', fmt='xlsx') }}" class="btn report-print-btn">Export Excel</a>
+    <a href="{{ url_for('report_reviews_export', fmt='pdf') }}" class="btn report-print-btn">Export PDF</a>
+  </div>
+</div>
+
+<!-- ── Summary ── -->
+<div class="report-section">
+  <p class="report-section-label">Summary</p>
+  <div class="metrics-grid">
+    <div class="metric-card"><p class="metric-label">Total Assigned</p><p class="metric-value">{{ reviews | length }}</p></div>
+    <div class="metric-card"><p class="metric-label">Completed</p><p class="metric-value">{{ by_status.get('completed', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Pending</p><p class="metric-value">{{ by_status.get('assigned', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Accepted</p><p class="metric-value">{{ by_recommendation.get('accept', 0) }}</p></div>
+    <div class="metric-card"><p class="metric-label">Rejected</p><p class="metric-value">{{ by_recommendation.get('reject', 0) }}</p></div>
+    <div class="metric-card">
+      <p class="metric-label">Acceptance Ratio</p>
+      <p class="metric-value">
+        {% set total_rec = (by_recommendation.get('accept',0) + by_recommendation.get('reject',0)) %}
+        {% if total_rec > 0 %}{{ ((by_recommendation.get('accept',0) / total_rec)*100)|round|int }}%{% else %}—{% endif %}
+      </p>
+    </div>
+  </div>
+</div>
+
+{% if reviews %}
+<!-- ── Breakdowns ── -->
+<div class="report-section">
+  <p class="report-section-label">Breakdowns</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+    <div class="report-breakdown-card">
+      <p class="report-breakdown-title">By Status</p>
+      {% for label, count in by_status.items() %}
+      <div class="report-bar-row">
+        <span class="badge badge-{{ label }}" style="min-width:100px;justify-content:center;">{{ label | capitalize }}</span>
+        <div class="report-bar-track">
+          <div class="report-bar-fill" style="width:{{ ((count/reviews|length)*100)|round|int }}%;background:var(--scna-accent);"></div>
+        </div>
+        <span class="report-bar-value">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="report-breakdown-card">
+      <p class="report-breakdown-title">By Recommendation</p>
+      {% for label, count in by_recommendation.items() %}
+      <div class="report-bar-row">
+        <span class="badge badge-{{ label }}" style="min-width:120px;justify-content:center;">{{ label | replace('_',' ') | capitalize }}</span>
+        <div class="report-bar-track">
+          <div class="report-bar-fill" style="width:{{ ((count/reviews|length)*100)|round|int }}%;background:#D97706;"></div>
+        </div>
+        <span class="report-bar-value">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="report-breakdown-card">
+      <p class="report-breakdown-title">By Target Type</p>
+      {% for label, count in by_type.items() %}
+      <div class="report-bar-row">
+        <span class="report-bar-label">{{ label | replace('_',' ') | capitalize }}</span>
+        <div class="report-bar-track">
+          <div class="report-bar-fill" style="width:{{ ((count/reviews|length)*100)|round|int }}%;background:#0EA66B;"></div>
+        </div>
+        <span class="report-bar-value">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Review table ── -->
+<div class="report-section">
+  <p class="report-section-label">{% if scope == 'all' %}All Reviews{% else %}My Reviews{% endif %} ({{ reviews | length }})</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        {% if scope == 'all' %}<th>Reviewer</th>{% endif %}
+        <th>Target</th><th>Type</th><th>Status</th><th>Recommendation</th><th>Due Date</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in reviews %}
+    <tr>
+      {% if scope == 'all' %}<td>{{ r.reviewer_name | default('—') }}</td>{% endif %}
+      <td>{{ r.target_title | default('—') | truncate(50) }}</td>
+      <td>{{ r.target_type | replace('_',' ') | capitalize }}</td>
+      <td><span class="badge badge-{{ r.status }}">{{ r.status | capitalize }}</span></td>
+      <td>
+        {% if r.recommendation %}
+          <span class="badge badge-{{ r.recommendation }}">{{ r.recommendation | replace('_',' ') | capitalize }}</span>
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ r.due_date[:10] if r.due_date else '—' }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="notif-empty" style="margin-top:1.5rem;">
+  <p class="notif-empty-title">No reviews {% if scope == 'all' %}in the system yet{% else %}assigned{% endif %}</p>
+  <p class="notif-empty-sub">Reviews will appear here when assigned by an administrator.</p>
+</div>
+{% endif %}
+
+{% endblock %}

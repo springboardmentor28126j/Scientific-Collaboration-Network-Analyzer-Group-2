@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Review #{{ review.review_id }}{% endblock %}
+{% block content %}
+<p class="eyebrow">Reviewer</p>
+<h1>{{ "Publication" if review.target_type == "publication" else "Conference submission" }} #{{ review.target_id }}</h1>
+<span class="badge badge-{{ review.status }}">{{ review.status | capitalize }}</span>
+
+{% if target %}
+<div class="card" style="margin-top:1rem;">
+    <p><strong>{{ target.title }}</strong></p>
+    <p class="card-meta">{{ target.publication_type | replace('_',' ') | capitalize }}</p>
+    <p>{{ target.abstract or "No abstract." }}</p>
+    {% if target.file_path %}
+    <p><a href="{{ url_for('download_publication', publication_id=target.publication_id) }}">📄 Download attached file</a></p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if review.status == "assigned" %}
+<div class="card" style="margin-top:1rem;">
+    <p>You've been invited to review this. Do you accept?</p>
+    <form method="post" action="{{ url_for('accept_review_route', review_id=review.review_id) }}" style="display:inline;">
+        <button type="submit" class="primary">Accept</button>
+    </form>
+    <form method="post" action="{{ url_for('decline_review_route', review_id=review.review_id) }}" style="display:inline;"
+          onsubmit="return confirm('Decline this review invitation?');">
+        <button type="submit">Decline</button>
+    </form>
+</div>
+{% endif %}
+
+{% if review.status == "accepted" %}
+<div class="card" style="margin-top:1rem;">
+    <h3>Submit your evaluation</h3>
+    <form method="post" action="{{ url_for('submit_review_route', review_id=review.review_id) }}" class="card-form">
+        <label for="score">Score (1-10, optional)</label>
+        <input type="number" id="score" name="score" min="1" max="10">
+
+        <label for="comments">Comments</label>
+        <textarea id="comments" name="comments" rows="5"></textarea>
+
+        <label for="recommendation">Recommendation</label>
+        <select id="recommendation" name="recommendation" required>
+            <option value="accept">Accept</option>
+            <option value="minor_revision">Minor Revision</option>
+            <option value="major_revision">Major Revision</option>
+            <option value="reject">Reject</option>
+        </select>
+
+        <button type="submit" class="primary">Submit review</button>
+    </form>
+</div>
+{% endif %}
+
+{% if review.status == "completed" %}
+<div class="card" style="margin-top:1rem;">
+    <h3>Your evaluation</h3>
+    <p><strong>Recommendation:</strong> <span class="badge badge-{{ review.recommendation }}">{{ review.recommendation | replace('_',' ') | capitalize }}</span></p>
+    {% if review.score %}<p><strong>Score:</strong> {{ review.score }}/10</p>{% endif %}
+    {% if review.comments %}<p><strong>Comments:</strong> {{ review.comments }}</p>{% endif %}
+    <p class="card-meta">Completed {{ review.completed_at }}</p>
+</div>
+{% endif %}
+
+{% if review.status == "declined" %}
+<div class="card" style="margin-top:1rem;">
+    <p>You declined this review invitation.</p>
+</div>
+{% endif %}
+
+<p style="margin-top:1rem;"><a href="{{ url_for('reviewer_reviews') }}">Back to my reviews</a></p>
+{% endblock %}

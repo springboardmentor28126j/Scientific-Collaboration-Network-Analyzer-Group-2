@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% import "_dash_widgets.html" as dw %}
+{% import "_dash_icons.html" as dicons %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<p class="eyebrow">Welcome back</p>
+<h1>Your research overview</h1>
+
+{% if account and account.role == "researcher" %}
+
+<div class="dash-section">
+    <div class="dash-metric-grid">
+        {{ dw.metric('publication', 'Publications', publication_count if publication_count is defined and publication_count is not none else "—", 'purple', index=0, href=url_for('publications', mine='true')) }}
+        {% if institution %}
+        {{ dw.metric('institution', 'Institution', institution.name, 'blue', index=1, href=url_for('institution_detail', institution_id=institution.institution_id)) }}
+        {% else %}
+        <div class="dash-metric-card dash-metric-card--form" style="--i:1">
+            <span class="dash-metric-icon dash-metric-icon--blue">{{ dicons.icon('institution', 18) }}</span>
+            <span class="dash-metric-value" style="font-size:15px;">Not set</span>
+            <span class="dash-metric-label">Institution</span>
+            <form method="post" action="{{ url_for('set_my_institution_route') }}" style="margin-top:10px; display:flex; gap:6px;">
+                <select name="institution_id" required style="flex:1; min-width:0; font-size:12.5px;">
+                    <option value="" disabled selected>Select yours…</option>
+                    {% for inst in institution_options %}
+                    <option value="{{ inst.institution_id }}">{{ inst.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" style="font-size:12.5px; padding:4px 10px;">Set</button>
+            </form>
+        </div>
+        {% endif %}
+        {{ dw.metric('bell', 'Notifications', unread_notification_count if unread_notification_count is defined and unread_notification_count else 0, 'amber', index=2, href=url_for('notifications')) }}
+    </div>
+</div>
+
+<div class="dash-section">
+    <div class="dash-two-col">
+        <div class="dash-chart-card" style="--i:3">
+            <p class="dash-chart-title">{{ dicons.icon('publication', 15) }} Your publications by status</p>
+            {% if pub_status_chart and pub_status_chart.total %}
+            <div class="dash-donut-row">
+                {{ dw.donut_svg(pub_status_chart) }}
+                {{ dw.donut_legend(pub_status_chart) }}
+            </div>
+            {% else %}
+            <div class="dash-empty">
+                {{ dicons.icon('inbox', 22) }}
+                <p>No publications yet — <a href="{{ url_for('new_publication') }}">add your first one</a>.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="dash-chart-card" style="--i:4">
+            <p class="dash-chart-title">{{ dicons.icon('trophy', 15) }} Most cited researchers, platform-wide</p>
+            {% if leaderboard and leaderboard.top_researchers %}
+            {{ dw.leaderboard_list(leaderboard.top_researchers, 'name', 'total_citations', ' cit.', 'publication_count', ' pubs', 'No citation data yet.') }}
+            {% else %}
+            <div class="dash-empty">
+                {{ dicons.icon('trophy', 22) }}
+                <p>No citation data yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="dash-section">
+    {{ dw.section_header('researcher', 'Your profile', ('Edit profile' if profile else None), (url_for('profile') if profile else None)) }}
+    <div class="dash-chart-card" style="--i:5">
+        {% if profile %}
+        <div class="dash-profile-card">
+            <div class="dash-profile-avatar">{{ (profile.first_name[0] ~ profile.last_name[0]) | upper if profile.first_name and profile.last_name else "?" }}</div>
+            <div class="dash-profile-info">
+                <p class="dash-profile-name">{{ profile.first_name }} {{ profile.last_name }}</p>
+                <p class="dash-profile-title">{{ profile.academic_title or "No title set" }}{% if profile.department %} · {{ profile.department.name }}{% endif %}</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="dash-empty">
+            {{ dicons.icon('researcher', 22) }}
+            <p>You haven't created a researcher profile yet. <a href="{{ url_for('profile') }}">Set it up</a>.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if recent_publications %}
+<div class="dash-section">
+    {{ dw.section_header('publication', 'Recent publications', 'View all', url_for('publications', mine='true')) }}
+    <div class="card-list">
+        {% for p in recent_publications %}
+        <div class="pub-card">
+            <div class="card-row">
+                <div>
+                    <p class="card-title"><a href="{{ url_for('publication_detail', publication_id=p.publication_id) }}">{{ p.title }}</a></p>
+                    <p class="card-meta">{{ p.publication_type | replace('_',' ') | capitalize }}{% if p.venue_name %} · {{ p.venue_name }}{% endif %}</p>
+                </div>
+                <span class="badge badge-{{ p.status }}">{{ p.status | replace('_',' ') | capitalize }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="dash-section">
+    {{ dw.section_header('compass', 'Quick actions') }}
+    <div class="dash-actions-grid">
+        {{ dw.action_tile('publication', 'My Publications', 'Manage your submissions', url_for('publications', mine='true'), 0) }}
+        {{ dw.action_tile('conference', 'My Conferences', 'Registrations & submissions', url_for('conferences', mine='true'), 1) }}
+        {{ dw.action_tile('project', 'My Projects', 'Active collaborations', url_for('projects', mine='true'), 2) }}
+        {{ dw.action_tile('users', 'Find Collaborators', 'Browse the researcher directory', url_for('researcher_directory'), 3) }}
+        {{ dw.action_tile('trending-up', 'Citation Impact', 'See who and what is most cited', url_for('citation_reports'), 4) }}
+    </div>
+</div>
+
+{% else %}
+    {# institution_admin, reviewer, and system_admin are redirected to their own
+       dashboards from the /dashboard route before this template ever renders.
+       This fallback only covers an account that failed to load or an
+       unrecognized role. #}
+    <div class="card">
+        <p>Signed in as <span class="role-pill">{{ account.role if account else "unknown" }}</span></p>
+    </div>
+{% endif %}
+
+{% endblock %}

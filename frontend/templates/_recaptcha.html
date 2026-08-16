@@ -1,0 +1,13 @@
+{% macro recaptcha_fields(captcha_required, recaptcha_site_key) %}
+{% if captcha_required %}
+<div class="captcha-box">
+    <p class="captcha-notice">Too many failed attempts. Please verify you're not a robot to continue logging in:</p>
+    {% if recaptcha_site_key %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+    {% else %}
+    <p class="captcha-notice">The CAPTCHA couldn't be loaded right now. Please refresh the page and try again.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endmacro %}

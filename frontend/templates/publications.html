@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Publications{% endblock %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+    <h1>{{ "My Publications" if mine else "Publications" }}</h1>
+    <a href="{{ url_for('new_publication') }}">+ New Publication</a>
+</div>
+
+{% if session.get('user_role') == 'researcher' %}
+<p class="filter-bar">
+    <a href="{{ url_for('publications') }}"{% if not mine %} class="active"{% endif %}>All</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('publications', mine='true') }}"{% if mine %} class="active"{% endif %}>My Publications</a>
+</p>
+{% endif %}
+
+<form method="get" class="filter-bar">
+    {% if mine %}<input type="hidden" name="mine" value="true">{% endif %}
+    <input type="text" name="q" placeholder="Search title, author, institution, year..." value="{{ q }}">
+    <input type="number" name="year" placeholder="Year" value="{{ year or '' }}" style="width:80px;">
+    <select name="sort_by">
+        <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Sort by date</option>
+        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort alphabetically</option>
+    </select>
+    <select name="sort_dir">
+        <option value="desc" {% if sort_dir == 'desc' %}selected{% endif %}>Descending</option>
+        <option value="asc" {% if sort_dir == 'asc' %}selected{% endif %}>Ascending</option>
+    </select>
+    <button type="submit">Apply</button>
+</form>
+
+{% if result['items'] %}
+<div class="card-list">
+    {% for pub in result['items'] %}
+    <div class="card">
+        <div class="card-row">
+            <div>
+                <p class="card-title">
+                    <a href="{{ url_for('publication_detail', publication_id=pub.publication_id) }}">{{ pub.title }}</a>
+                </p>
+                <p class="card-meta">{{ pub.publication_type | replace('_',' ') | capitalize }}</p>
+                <p class="card-meta">{{ pub.venue_name or "" }} {{ pub.publication_date or "" }}</p>
+            </div>
+            <span class="badge badge-{{ pub.status }}">{{ pub.status | capitalize }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="pagination" style="margin-top:1rem;">
+    {% if page > 1 %}
+    <a href="{{ url_for('publications', page=page-1, page_size=page_size, mine=('true' if mine else none), q=(q or none), year=(year or none), sort_by=sort_by, sort_dir=sort_dir) }}">&laquo; Previous</a>
+    {% endif %}
+    <span>Page {{ page }} ({{ result.total }} total)</span>
+    {% if page * page_size < result.total %}
+    <a href="{{ url_for('publications', page=page+1, page_size=page_size, mine=('true' if mine else none), q=(q or none), year=(year or none), sort_by=sort_by, sort_dir=sort_dir) }}">Next &raquo;</a>
+    {% endif %}
+</div>
+
+<form method="get" style="margin-top:1rem;">
+    {% if mine %}<input type="hidden" name="mine" value="true">{% endif %}
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    {% if year %}<input type="hidden" name="year" value="{{ year }}">{% endif %}
+    <input type="hidden" name="sort_by" value="{{ sort_by }}">
+    <input type="hidden" name="sort_dir" value="{{ sort_dir }}">
+    <label for="page_size">Per page:</label>
+    <select id="page_size" name="page_size" onchange="this.form.submit()">
+        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+        <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+    </select>
+</form>
+
+{% else %}
+<p>{{ "You haven't created any publications yet." if mine else "No publications match your filters." }} <a href="{{ url_for('new_publication') }}">Create your first one.</a></p>
+{% endif %}
+
+{% endblock %}

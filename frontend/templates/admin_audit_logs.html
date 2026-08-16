@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs{% endblock %}
+{% block content %}
+<p class="eyebrow">System Admin</p>
+<h1>Audit logs</h1>
+
+<form method="get" class="filter-bar">
+    <input type="text" name="entity_type" placeholder="Entity type (e.g. publication)" value="{{ entity_type }}">
+    <input type="text" name="action" placeholder="Action (e.g. CREATE)" value="{{ action }}">
+    <button type="submit" class="btn">Filter</button>
+</form>
+
+{% if result['items'] %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>When</th>
+            <th>User ID</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in result['items'] %}
+        <tr>
+            <td>{{ log.created_at }}</td>
+            <td>{{ log.user_id or "—" }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.entity_type }}{% if log.entity_id %} #{{ log.entity_id }}{% endif %}</td>
+            <td>{{ log.details or "" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('admin_audit_logs', page=page-1, entity_type=entity_type, action=action) }}">&larr; Previous</a>
+    {% endif %}
+    <span>Page {{ page }} · {{ result.total }} total</span>
+    {% if page * result.page_size < result.total %}
+    <a href="{{ url_for('admin_audit_logs', page=page+1, entity_type=entity_type, action=action) }}">Next &rarr;</a>
+    {% endif %}
+</div>
+{% else %}
+<p>No audit log entries found.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Researchers{% endblock %}
+{% block content %}
+<p class="eyebrow">Institution Admin</p>
+<h1>Researchers</h1>
+
+<form method="get" class="filter-bar">
+    <select name="affiliation_status" onchange="this.form.submit()">
+        <option value="" {% if not affiliation_filter %}selected{% endif %}>All</option>
+        <option value="pending" {% if affiliation_filter == "pending" %}selected{% endif %}>Pending approval</option>
+        <option value="approved" {% if affiliation_filter == "approved" %}selected{% endif %}>Approved</option>
+        <option value="rejected" {% if affiliation_filter == "rejected" %}selected{% endif %}>Rejected</option>
+    </select>
+</form>
+
+{% if researchers %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Affiliation</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in researchers %}
+        <tr>
+            <td>{{ u.email }}</td>
+            <td>{% if u.is_active %}<span class="badge badge-completed">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</td>
+            <td>
+                {% if u.affiliation_status == "pending" %}<span class="badge badge-registration_open">Pending</span>
+                {% elif u.affiliation_status == "approved" %}<span class="badge badge-completed">Approved</span>
+                {% elif u.affiliation_status == "rejected" %}<span class="badge badge-cancelled">Rejected</span>
+                {% else %}<span class="badge badge-planned">—</span>{% endif %}
+            </td>
+            <td>
+                {% if u.affiliation_status == "pending" %}
+                <form method="post" action="{{ url_for('institution_admin_approve_researcher', user_id=u.user_id) }}" style="display:inline;">
+                    <button type="submit" class="btn">Approve</button>
+                </form>
+                <form method="post" action="{{ url_for('institution_admin_reject_researcher', user_id=u.user_id) }}" style="display:inline;"
+                      onsubmit="return confirm('Reject this affiliation request?');">
+                    <button type="submit" class="btn">Reject</button>
+                </form>
+                {% endif %}
+                {% if u.is_active %}
+                <form method="post" action="{{ url_for('institution_admin_deactivate_researcher', user_id=u.user_id) }}" style="display:inline;"
+                      onsubmit="return confirm('Deactivate this researcher?');">
+                    <button type="submit" class="btn">Deactivate</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No researchers found.</p>
+{% endif %}
+{% endblock %}

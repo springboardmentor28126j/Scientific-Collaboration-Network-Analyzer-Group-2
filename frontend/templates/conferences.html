@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Conferences{% endblock %}
+{% block content %}
+<h1>{{ "My Conferences" if mine else ("Our Conferences" if ours else "Conferences") }}</h1>
+
+{% if session.get('user_role') == 'researcher' %}
+<p class="filter-bar">
+    <a href="{{ url_for('conferences') }}"{% if not mine %} class="active"{% endif %}>All</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('conferences', mine='true') }}"{% if mine %} class="active"{% endif %}>My Conferences</a>
+</p>
+{% endif %}
+
+{% if session.get('user_role') == 'institution_admin' %}
+<p class="filter-bar">
+    <a href="{{ url_for('conferences') }}"{% if not ours %} class="active"{% endif %}>All</a>
+    &nbsp;·&nbsp;
+    <a href="{{ url_for('conferences', ours='true') }}"{% if ours %} class="active"{% endif %}>Our Conferences</a>
+</p>
+{% endif %}
+
+{% if session.get('user_role') in ['system_admin', 'institution_admin'] %}
+<p><a href="{{ url_for('new_conference') }}">+ New Conference</a></p>
+{% endif %}
+
+<form method="get" class="filter-bar">
+    {% if mine %}<input type="hidden" name="mine" value="true">{% endif %}
+    {% if ours %}<input type="hidden" name="ours" value="true">{% endif %}
+    <input type="text" name="q" placeholder="Search name, location, institution, year..." value="{{ q }}">
+    <input type="number" name="year" placeholder="Year" value="{{ year or '' }}" style="width:80px;">
+    <select name="sort_by">
+        <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Sort by date</option>
+        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sort alphabetically</option>
+    </select>
+    <select name="sort_dir">
+        <option value="desc" {% if sort_dir == 'desc' %}selected{% endif %}>Descending</option>
+        <option value="asc" {% if sort_dir == 'asc' %}selected{% endif %}>Ascending</option>
+    </select>
+    <button type="submit">Apply</button>
+</form>
+
+{% if result['items'] %}
+<div class="card-list">
+    {% for conf in result['items'] %}
+    <div class="card">
+        <h3><a href="{{ url_for('conference_detail', conference_id=conf.conference_id) }}">{{ conf.name }}</a></h3>
+        <p>{{ conf.start_date }} — {{ conf.end_date }} | {{ conf.location or "" }}</p>
+        <span class="badge badge-{{ conf.status }}">{{ conf.status | replace('_',' ') | capitalize }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="pagination" style="margin-top:1rem;">
+    {% if page > 1 %}
+    <a href="{{ url_for('conferences', page=page-1, page_size=page_size, mine=('true' if mine else none), ours=('true' if ours else none), q=(q or none), year=(year or none), sort_by=sort_by, sort_dir=sort_dir) }}">&laquo; Previous</a>
+    {% endif %}
+    <span>Page {{ page }} ({{ result.total }} total)</span>
+    {% if page * page_size < result.total %}
+    <a href="{{ url_for('conferences', page=page+1, page_size=page_size, mine=('true' if mine else none), ours=('true' if ours else none), q=(q or none), year=(year or none), sort_by=sort_by, sort_dir=sort_dir) }}">Next &raquo;</a>
+    {% endif %}
+</div>
+
+<form method="get" style="margin-top:1rem;">
+    {% if mine %}<input type="hidden" name="mine" value="true">{% endif %}
+    {% if ours %}<input type="hidden" name="ours" value="true">{% endif %}
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    {% if year %}<input type="hidden" name="year" value="{{ year }}">{% endif %}
+    <input type="hidden" name="sort_by" value="{{ sort_by }}">
+    <input type="hidden" name="sort_dir" value="{{ sort_dir }}">
+    <label for="page_size">Per page:</label>
+    <select id="page_size" name="page_size" onchange="this.form.submit()">
+        <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+        <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+        <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+    </select>
+</form>
+{% else %}
+<p>{{ "You're not registered for any conferences yet." if mine else ("Your institution hasn't organized any conferences yet." if ours else "No conferences match your filters.") }}</p>
+{% endif %}
+{% endblock %}

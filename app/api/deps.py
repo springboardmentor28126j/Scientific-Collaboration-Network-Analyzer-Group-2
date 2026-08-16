@@ -15,6 +15,7 @@ from app.services.notification_service import NotificationService
 from app.services.publication_conference_service import PublicationConferenceService
 from app.services.publication_conference_service import PublicationConferenceService
 from app.services.publication_reference_service import PublicationReferenceService
+from app.services.publication_indexing_service import PublicationIndexingService
 from app.services.review_assignment_service import ReviewAssignmentService
 from app.services.user_service import UserService
 from app.services.publication_service import PublicationService
@@ -46,8 +47,11 @@ def get_institution_service(
     return InstitutionService(session, auth_service, turnstile)
 
 
-def get_user_service(session: AsyncSession = Depends(get_session)) -> UserService:
-    return UserService(session)
+def get_user_service(
+    session: AsyncSession = Depends(get_session),
+    turnstile: TurnstileService = Depends(get_turnstile_service),
+) -> UserService:
+    return UserService(session, turnstile)
 
 
 def get_dashboard_service(
@@ -94,6 +98,12 @@ def get_publication_reference_service(
     session: AsyncSession = Depends(get_session),
 ) -> PublicationReferenceService:
     return PublicationReferenceService(session)
+
+
+def get_publication_indexing_service(
+    session: AsyncSession = Depends(get_session),
+) -> PublicationIndexingService:
+    return PublicationIndexingService(session)
 
 
 def get_notification_service(

@@ -12,6 +12,8 @@ class TurnstileService:
         self,
         token: str,
     ) -> None:
+        if settings.ENVIRONMENT == "development":
+            return
         payload = {
             "secret": settings.TURNSTILE_SECRET_KEY,
             "response": token,

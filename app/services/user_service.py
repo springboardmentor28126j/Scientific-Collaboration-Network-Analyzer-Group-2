@@ -9,6 +9,7 @@ from app.models.token import VerificationPurpose
 from app.models.user import User, UserRole
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import ResearcherRead, UserCreateByInstitution
+from app.services.turnstile_service import TurnstileService
 from app.services.auth_service import AuthService
 from app.services.email_service import EmailService
 
@@ -21,10 +22,14 @@ class UserService:
     institution_id explicitly and filters by it.
     """
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        turnstile: TurnstileService,
+    ) -> None:
         self.session = session
         self.users = UserRepository(session)
-        self.auth_service = AuthService(session)
+        self.auth_service = AuthService(session, turnstile)
 
     async def create_institution_user(
         self, institution_id: uuid.UUID, institution_name: str, payload: UserCreateByInstitution

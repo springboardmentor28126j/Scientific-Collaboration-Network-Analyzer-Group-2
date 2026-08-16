@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from app.models.institution import Institution
     from app.models.publication_reference import PublicationReference
     from app.models.notification import Notification
+    from app.models.publication_chunk import PublicationChunk
 
 
 class PublicationStatus(StrEnum):
@@ -187,4 +188,9 @@ class Publication(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification",
         back_populates="publication",
+    )
+    chunks: Mapped[list["PublicationChunk"]] = relationship(
+        "PublicationChunk",
+        back_populates="publication",
+        cascade="all, delete-orphan",
     )

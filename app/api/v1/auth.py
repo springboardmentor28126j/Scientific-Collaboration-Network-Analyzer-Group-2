@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Form, status
+from fastapi import APIRouter, Depends, Form, status, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import get_auth_service
 from app.core.dependencies import get_current_user
+from app.core.config import settings
 from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
@@ -31,16 +32,32 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
         "active), not by role."
     ),
 )
+@router.post(
+    "/login",
+    response_model=TokenPair,
+    summary="Log in with email + password",
+    description=(
+        "OAuth2-password-flow-compatible login. Use your email as the "
+        "`username` field. Works identically for institution admins, "
+        "researchers, and reviewers."
+    ),
+)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    turnstile_token: str = Form(...),
+    turnstile_token: str | None = Form(None),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> TokenPair:
+
+    if settings.ENVIRONMENT != "development" and not turnstile_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Turnstile token is required.",
+        )
 
     return await auth_service.login(
         username=form_data.username,
         password=form_data.password,
-        turnstile_token=turnstile_token,
+        turnstile_token=turnstile_token or "",
     )
 
 

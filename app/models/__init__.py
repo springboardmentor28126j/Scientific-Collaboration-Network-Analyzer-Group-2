@@ -14,6 +14,7 @@ from app.models.publication_history import PublicationHistory, PublicationHistor
 from app.models.publication_conference import PublicationConference, ConferenceOutcome
 from app.models.publication_reference import PublicationReference
 from app.models.notification import Notification
+from app.models.publication_chunk import PublicationChunk
 
 __all__ = [
     "Institution",
@@ -24,6 +25,7 @@ __all__ = [
     "PublicationStatus",
     "PublicationHistory",
     "PublicationConference",
+    "PublicationChunk",
     "ConferenceOutcome",
     "PublicationHistoryAction",
     "PublicationReference",

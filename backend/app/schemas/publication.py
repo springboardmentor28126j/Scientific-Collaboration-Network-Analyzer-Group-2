@@ -1,12 +1,11 @@
+import re
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 from app.models.publication import PublicationStatus, PublicationType
 
-
-from pydantic import model_validator
 
 class PublicationAuthorOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -29,10 +28,21 @@ class PublicationBase(BaseModel):
     title: str
     year: int | None = None
     venue: str | None = None
-    doi_link: str | None = None
+    doi_link: str | None = Field(default=None, max_length=500)
     abstract: str | None = None
     type: PublicationType | None = None
     status: PublicationStatus = PublicationStatus.DRAFT
+
+    @field_validator("doi_link")
+    @classmethod
+    def validate_doi_format(cls, v: str | None) -> str | None:
+        if v is None or not v.strip():
+            return None
+        v = v.strip()
+        doi_pattern = re.compile(r"^(https?://(dx\.)?doi\.org/)?10\.\d{4,9}/\S+$", re.IGNORECASE)
+        if not doi_pattern.match(v):
+            raise ValueError("DOI must look like '10.xxxx/xxxxx' or a full https://doi.org/10.xxxx/xxxxx link")
+        return v
 
 
 class PublicationCreate(PublicationBase):

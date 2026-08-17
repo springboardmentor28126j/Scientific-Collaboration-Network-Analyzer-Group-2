@@ -126,4 +126,35 @@ class CollaborationRequestStatusReport(BaseModel):
 class TopCollaborationReport(BaseModel):
     researcher1_email: str
     researcher2_email: str
-    strength: int    
+    strength: int
+
+
+# ==========================================================
+# Citation Analytics
+# ==========================================================
+
+class TopCitedPublicationReport(BaseModel):
+    publication_id: int
+    title: str
+    citation_count: int
+
+
+class InfluentialPublicationReport(BaseModel):
+    publication_id: int
+    title: str
+    influence_score: int
+
+
+class TopCitedResearcherReport(BaseModel):
+    researcher_id: int
+    name: str
+    total_citations: int
+    publication_count: int
+
+
+class TopCitedInstitutionReport(BaseModel):
+    institution_id: int
+    name: str
+    total_citations: int
+    publication_count: int
+    avg_citations_per_publication: float  

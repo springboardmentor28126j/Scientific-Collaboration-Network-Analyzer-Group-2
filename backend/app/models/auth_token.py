@@ -12,6 +12,7 @@ from app.db.base_class import Base, utcnow
 class AuthTokenType(str, enum.Enum):
     EMAIL_VERIFICATION = "email_verification"
     PASSWORD_RESET = "password_reset"
+    MFA_OTP = "mfa_otp"
 
 
 class AuthToken(Base):
@@ -37,6 +38,16 @@ class AuthToken(Base):
             token=secrets.token_urlsafe(32),
             token_type=token_type,
             expires_at=datetime.utcnow() + timedelta(hours=hours_valid),
+        )
+
+    @staticmethod
+    def generate_otp(user_id: int, minutes_valid: int = 10) -> "AuthToken":
+        code = f"{secrets.randbelow(1_000_000):06d}"
+        return AuthToken(
+            user_id=user_id,
+            token=code,
+            token_type=AuthTokenType.MFA_OTP,
+            expires_at=datetime.utcnow() + timedelta(minutes=minutes_valid),
         )
 
     @property

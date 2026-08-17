@@ -27,6 +27,8 @@ class User(Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+   
     created_at: Mapped[str] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     researcher: Mapped["Researcher"] = relationship(

@@ -1,43 +1,46 @@
-# Backend (FastAPI) 
+# Backend (FastAPI)
 
-## Setup
+## Setup for local
 
-# Navigate to backend folder
-cd "Scientific-Collaboration-Network-Analyzer-Group-2/backend"
+## macOS:
 
-# --- First time only ---
+cd backend
+python3 -m venv venv          # first time only
 source venv/bin/activate
 pip install -r requirements.txt
-
+cp .env.example .env          # first time only, then fill in the values
 alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 
+## Windows (PowerShell):
 
-`DATABASE_URL` in `.env.example` points at PostgreSQL. Make sure a local
-PostgreSQL server is running and the `scna` database/user in the URL exist
-before running migrations, e.g.:
-```sql
-CREATE USER scna_user WITH PASSWORD 'scna_password';
-CREATE DATABASE scna OWNER scna_user;
-```
-— Milestone 1
-
-## Run migrations
-```bash
+cd backend
+python -m venv venv           # first time only
+venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env        # first time only, then fill in the values
 alembic upgrade head
-```
-This creates `users`, `institutions`, and `researchers` tables (see `../SCHEMA.md`).
-
-## Run the API
-```bash
 uvicorn app.main:app --reload --port 8000
-```
-Health check: http://127.0.0.1:8000/health
-Interactive docs: http://127.0.0.1:8000/docs
 
-## Endpoints (Milestone 1)
-- `POST /auth/register` — create a user (defaults to researcher role)
-- `POST /auth/login` — OAuth2 password flow, returns a JWT access token
-- `GET /researchers/me` — get the logged-in researcher's profile (auth required)
-- `POST /researchers/me` — create the logged-in researcher's profile (auth required)
-- `PUT /researchers/me` — update the logged-in researcher's profile (auth required)
+## Running with Docker
+
+Docker Compose is defined at the **project root**, not inside `backend/` — 
+run these from the repository root, not from this folder:
+
+```bash
+cd ..                       # back to the project root
+docker compose build
+docker compose up -d
+docker compose ps           # backend should show "healthy"
+docker compose logs -f backend
+```
+
+To build/run just the backend container in isolation (useful for quickly 
+checking the Dockerfile itself without spinning up the frontend too):
+
+```bash
+docker build -t scna-backend .
+docker run --env-file .env -p 8000:8000 scna-backend
+```
+
+Either way, health check: http://127.0.0.1:8000/health

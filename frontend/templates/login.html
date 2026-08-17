@@ -4,14 +4,27 @@
 <div class="container">
   <h1>Login</h1>
   <form method="POST" action="{{ url_for('login') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="email">Email</label>
     <input type="email" id="email" name="email" required value="{{ unverified_email or '' }}">
 
     <label for="password">Password</label>
     <input type="password" id="password" name="password" required>
 
+    <input type="text" name="website" style="position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
+
+    <label style="font-weight:400; display:flex; align-items:center; gap:6px; margin:10px 0;">
+      <input type="checkbox" name="remember_me" style="width:auto;"> Remember me on this device
+    </label>
+
+    {% if show_captcha %}
+    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin:14px 0;"></div>
+    <p class="section-sub" style="font-size:12px;">We noticed a few failed attempts — please verify you're human.</p>
+    {% endif %}
+
     <button type="submit">Log in</button>
   </form>
+  {% if show_captcha %}<script src="https://www.google.com/recaptcha/api.js" async defer></script>{% endif %}
 
   <div style="text-align:center; margin:16px 0; color:var(--muted); font-size:13px;">or</div>
 
@@ -25,6 +38,7 @@
   <div class="empty-state" style="margin-top:16px;">
     <p>Your email isn't verified yet.</p>
     <form method="POST" action="{{ url_for('resend_verification') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="email" value="{{ unverified_email }}">
       <button type="submit" class="btn-inline btn-purple">Resend verification email</button>
     </form>
@@ -38,11 +52,19 @@
     const form = document.createElement("form");
     form.method = "POST";
     form.action = "{{ url_for('auth_google') }}";
+
+    const csrfInput = document.createElement("input");
+    csrfInput.type = "hidden";
+    csrfInput.name = "csrf_token";
+    csrfInput.value = "{{ csrf_token() }}";
+    form.appendChild(csrfInput);
+
     const input = document.createElement("input");
     input.type = "hidden";
     input.name = "credential";
     input.value = response.credential;
     form.appendChild(input);
+
     document.body.appendChild(form);
     form.submit();
   }

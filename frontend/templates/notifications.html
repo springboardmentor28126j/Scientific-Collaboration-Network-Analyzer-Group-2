@@ -9,6 +9,7 @@
     </div>
     {% if items %}
     <form method="POST" action="{{ url_for('mark_all_notifications_read') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn-inline btn-purple">Mark all as read</button>
     </form>
     {% endif %}
@@ -25,12 +26,14 @@
       <div class="item-actions">
         {% if n.link %}
         <form method="POST" action="{{ url_for('mark_notification_read', notification_id=n.id) }}" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="next" value="{{ n.link }}">
           <button type="submit" class="link-edit" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">View &rarr;</button>
         </form>
         {% endif %}
         {% if not n.is_read %}
         <form method="POST" action="{{ url_for('mark_notification_read', notification_id=n.id) }}" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Mark read</button>
         </form>
         {% endif %}

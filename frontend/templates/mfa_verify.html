@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Enter Login Code{% endblock %}
+{% block content %}
+<div class="container">
+  <h1>Enter your login code</h1>
+  <p class="section-sub">We emailed a 6-digit code to your address. It expires in 10 minutes.</p>
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="pre_auth_token" value="{{ pre_auth_token }}">
+    <label for="code">6-digit code</label>
+    <input type="text" id="code" name="code" required maxlength="6" pattern="[0-9]{6}" autofocus>
+    <button type="submit" class="btn-inline btn-purple" style="margin-top:12px;">Verify</button>
+  </form>
+  <form method="POST" action="{{ url_for('mfa_resend') }}" style="margin-top:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="pre_auth_token" value="{{ pre_auth_token }}">
+    <button type="submit" class="btn-inline">Resend code</button>
+  </form>
+</div>
+{% endblock %}

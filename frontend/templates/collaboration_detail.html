@@ -9,6 +9,7 @@
         {% if collaboration.partner and collaboration.partner.department %}{{ collaboration.partner.department }}{% endif %}
       </div>
     </div>
+    <a href="{{ url_for('collaboration_messages', collaboration_id=collaboration.id) }}" class="btn-inline btn-teal">Messages</a>
     <a href="{{ url_for('collaborations') }}" class="btn-inline btn-purple">Back to Collaborations</a>
   </div>
 

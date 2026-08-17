@@ -49,6 +49,7 @@
       <div class="item-actions">
         <a href="{{ url_for('edit_publication', publication_id=pub.id) }}" class="link-edit">Edit</a>
         <form method="POST" action="{{ url_for('delete_publication', publication_id=pub.id) }}" onsubmit="return confirm('Delete this publication?');" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="link-delete" style="all:unset; cursor:pointer;">Delete</button>
         </form>
       </div>

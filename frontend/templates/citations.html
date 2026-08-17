@@ -14,6 +14,7 @@
   <div style="background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:24px;">
     <h2 style="font-size:15px; margin-top:0;">Add a citation</h2>
     <form method="POST" action="{{ url_for('citations') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label for="citing_publication_id">Your publication (the one doing the citing)</label>
       <select id="citing_publication_id" name="citing_publication_id" required>
         <option value="">-- Select one of your publications --</option>
@@ -86,6 +87,7 @@
         <td>{{ c.created_at[:10] }}</td>
         <td>
           <form method="POST" action="{{ url_for('delete_citation', citation_id=c.id) }}" onsubmit="return confirm('Delete this citation?');" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Delete</button>
           </form>
         </td>

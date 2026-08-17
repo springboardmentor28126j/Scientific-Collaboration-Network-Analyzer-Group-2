@@ -14,6 +14,7 @@
             {% if item.status in ['registered', 'confirmed'] %}
             <form method="POST" action="{{ url_for('update_participation_status', participation_id=item.id) }}"
                   onsubmit="return confirm('Cancel this registration?');" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="status" value="cancelled">
               <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Cancel</button>
             </form>
@@ -31,13 +32,14 @@
 
 {% if item.file_url %}
   <div style="font-size:14px; margin-top:8px;">
-    <a class="muted-link" href="{{ backend_url }}{{ item.file_url }}" target="_blank">
+    <a class="muted-link" href="{{ item.file_url }}" target="_blank">
       &#128206; {{ item.original_filename }}
     </a>
   </div>
 {% else %}
   <form method="POST" action="{{ url_for('upload_presentation', participation_id=item.id) }}"
         enctype="multipart/form-data" style="margin-top:10px;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="file-{{ item.id }}">Attach presentation file (PDF/PPT/DOC, max 10MB)</label>
     <input type="file" id="file-{{ item.id }}" name="file" accept=".pdf,.ppt,.pptx,.doc,.docx">
     <button type="submit">Upload</button>

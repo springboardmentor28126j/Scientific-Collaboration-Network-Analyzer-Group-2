@@ -4,11 +4,16 @@
 <div class="container">
   <h1>Create your account</h1>
   <form method="POST" action="{{ url_for('register') }}" id="register-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="email">Email</label>
     <input type="email" id="email" name="email" required>
 
     <label for="password">Password</label>
     <input type="password" id="password" name="password" required minlength="8">
+
+    <input type="text" name="website" style="position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
+
+    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" style="margin:14px 0;"></div>
 
     <label style="margin-top:14px;">Account type</label>
     <div style="display:flex; gap:20px; margin-bottom:10px;">

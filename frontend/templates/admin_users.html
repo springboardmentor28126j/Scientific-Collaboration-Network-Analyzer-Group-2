@@ -78,6 +78,7 @@
       </td>
       <td>
         <form method="POST" action="{{ url_for('admin_update_user', user_id=u.id) }}" style="display:flex; gap:6px; align-items:center;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="role">
             <option value="researcher" {% if u.role == 'researcher' %}selected{% endif %}>Researcher</option>
             <option value="institution_admin" {% if u.role == 'institution_admin' %}selected{% endif %}>Institution Admin</option>
@@ -89,6 +90,7 @@
       </td>
       <td>
         <form method="POST" action="{{ url_for('admin_update_user', user_id=u.id) }}" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="is_active" value="{{ 'false' if u.is_active else 'true' }}">
           <button type="submit" class="btn-inline" style="background:#fff; color:{{ 'var(--danger)' if u.is_active else 'var(--accent-2)' }}; border:1px solid var(--border); margin:0; padding:6px 12px;">
             {{ "Deactivate" if u.is_active else "Activate" }}

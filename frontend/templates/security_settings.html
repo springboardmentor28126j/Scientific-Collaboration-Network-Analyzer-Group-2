@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Security Settings — SCNA{% endblock %}
+{% block content %}
+<div class="container">
+  <h1>Security</h1>
+  <p class="section-sub">Manage two-factor authentication for your account.</p>
+
+  <div class="empty-state" style="text-align:left; padding:20px;">
+    {% if mfa_enabled %}
+      <p><strong>Two-factor authentication is ON.</strong> We'll email you a code each time you log in.</p>
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="disable">
+        <button type="submit" class="btn-inline">Disable two-factor authentication</button>
+      </form>
+    {% else %}
+      <p><strong>Two-factor authentication is OFF.</strong> Turn it on for an extra layer of protection — we'll email you a code at each login.</p>
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="enable">
+        <button type="submit" class="btn-inline btn-purple">Enable two-factor authentication</button>
+      </form>
+    {% endif %}
+    {% if is_admin_role %}
+      <p class="section-sub" style="margin-top:10px;">Two-factor authentication is required for admin accounts and can't be turned off here.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

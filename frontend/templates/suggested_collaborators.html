@@ -25,6 +25,7 @@
         <span class="pill pill-gray">{{ s.mutual_collaborator_count }} mutual</span>
         {% endif %}
         <form method="POST" action="{{ url_for('send_collaboration_request') }}" style="display:inline;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="addressee_researcher_id" value="{{ s.researcher.researcher_id }}">
           <button type="submit" class="link-edit" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Send request</button>
         </form>

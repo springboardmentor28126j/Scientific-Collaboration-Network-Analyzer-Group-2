@@ -4,6 +4,7 @@
 <div class="container wide">
   <h1>Researcher Profile</h1>
   <form method="POST" action="{{ url_for('profile') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="department">Department</label>
     <input type="text" id="department" name="department" value="{{ researcher.department or '' }}">
 

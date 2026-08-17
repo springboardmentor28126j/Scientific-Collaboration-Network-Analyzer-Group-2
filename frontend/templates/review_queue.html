@@ -22,10 +22,11 @@
         <p class="item-title">{{ pub.title }}</p>
         <div class="item-sub">{% for a in pub.authors %}{{ a.email }}{{ ', ' if not loop.last }}{% endfor %}</div>
         {% if pub.abstract %}<p style="font-size:13px; color:var(--muted); margin-top:6px;">{{ pub.abstract }}</p>{% endif %}
-        {% if pub.file_url %}<a href="{{ backend_url }}{{ pub.file_url }}" class="item-link" style="color:#534AB7;" target="_blank" rel="noopener">View file &rarr;</a>{% endif %}
+        {% if pub.file_url %}<a href="{{ pub.file_url }}" class="item-link" style="color:#534AB7;" target="_blank" rel="noopener">View file &rarr;</a>{% endif %}
       </div>
 
       <form method="POST" action="{{ url_for('review_publication', publication_id=pub.id) }}" style="width:100%; margin-top:14px; display:flex; flex-direction:column; gap:8px;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="comment-{{ pub.id }}">Comment (required if rejecting, optional if approving)</label>
         <textarea id="comment-{{ pub.id }}" name="comment" rows="2" placeholder="Feedback for the author"></textarea>
         <div style="display:flex; gap:10px;">

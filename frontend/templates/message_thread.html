@@ -26,9 +26,12 @@
     {% endif %}
   </div>
 
-  <form method="POST" style="margin-top:16px; display:flex; gap:10px;">
-    <input type="text" name="body" placeholder="Write a message..." required style="flex:1;">
-    <button type="submit" class="btn-inline btn-purple">Send</button>
+  <form method="POST" style="margin-top:16px; display:grid; grid-template-columns: 1fr 90px; gap:10px; align-items:end;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <textarea name="body" placeholder="Write a message..." required rows="4"
+      style="width:100%; box-sizing:border-box; resize:vertical; min-height:90px; padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; font-size:14px; line-height:1.4;"
+      onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); this.form.submit();}"></textarea>
+    <button type="submit" class="btn-inline btn-purple" style="padding:10px 0; width:90px;">Send</button>
   </form>
 </div>
 {% endblock %}

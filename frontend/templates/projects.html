@@ -1,36 +1,37 @@
 {% extends "base.html" %}
-{% block title %}Projects{% endblock %}
+{% block title %}Projects — SCNA{% endblock %}
 {% block content %}
-
 <div class="container wide">
   <div class="section-header">
     <div>
-      <h1>Projects</h1>
-      <p class="section-sub">Projects you lead or are a member of.</p>
+      <h1>Research Projects</h1>
+      <div class="section-sub">{{ projects|length }} project{{ '' if projects|length == 1 else 's' }}</div>
     </div>
-    <a class="btn-inline btn-purple" href="{{ url_for('new_project') }}">New Project</a>
+    <div class="toolbar">
+      <a href="{{ url_for('new_project') }}" class="btn-inline btn-teal">+ New project</a>
+    </div>
   </div>
 
   {% if projects %}
-    <div class="card-list">
-      {% for p in projects %}
-      <div class="item-card">
+  <div class="card-list">
+    {% for p in projects %}
+    <div class="item-card conf">
+      <div>
         <div>
-          <p class="item-title">{{ p.title }}</p>
-          <p class="item-sub">
-            Status: {{ p.status }}
-            {% if p.start_date %} · Starts {{ p.start_date }}{% endif %}
-            {% if p.end_date %} · Ends {{ p.end_date }}{% endif %}
-          </p>
+          <span class="pill {{ 'pill-teal' if p.status == 'ongoing' else 'pill-blue' if p.status == 'planned' else 'pill-purple' if p.status == 'completed' else 'pill-gray' }}">{{ p.status.replace('_', ' ') | capitalize }}</span>
         </div>
-        <div class="item-actions">
-          <a class="item-link" href="{{ url_for('project_detail', project_id=p.id) }}">View →</a>
-        </div>
+        <p class="item-title">{{ p.title }}</p>
+        <div class="item-sub">{{ p.members | length }} member{{ '' if p.members | length == 1 else 's' }}{% if p.start_date %} &middot; starts {{ p.start_date }}{% endif %}</div>
+        <a href="{{ url_for('project_detail', project_id=p.id) }}" class="item-link">View details &amp; team &rarr;</a>
       </div>
-      {% endfor %}
+      <div class="item-actions">
+        <a href="{{ url_for('project_detail', project_id=p.id) }}" class="link-edit">View</a>
+      </div>
     </div>
+    {% endfor %}
+  </div>
   {% else %}
-    <div class="empty-state">You're not on any projects yet. Start one!</div>
+  <div class="empty-state">No projects yet. Start your first one to get a team assembled.</div>
   {% endif %}
 </div>
 {% endblock %}

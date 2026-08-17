@@ -8,6 +8,7 @@
       <h1>{{ project.title }}</h1>
       <p class="section-sub">Status: {{ project.status }}</p>
     </div>
+    <a href="{{ url_for('project_messages', project_id=project.id) }}" class="btn-inline btn-teal">Messages</a>
   </div>
 
   {% if project.description %}<p>{{ project.description }}</p>{% endif %}
@@ -24,10 +25,12 @@
           {{ m.status }}
           {% if m.status == "pending" and m.researcher_id == my_researcher_id %}
             <form method="POST" action="{{ url_for('respond_project_invite', project_id=project.id, member_id=m.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="accept" value="1">
               <button type="submit" class="btn-inline btn-teal">Accept</button>
             </form>
             <form method="POST" action="{{ url_for('respond_project_invite', project_id=project.id, member_id=m.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="accept" value="0">
               <button type="submit" class="btn-inline">Decline</button>
             </form>
@@ -36,6 +39,7 @@
         <td>
           {% if is_lead and m.role != "lead" %}
             <form method="POST" action="{{ url_for('remove_project_member', project_id=project.id, member_id=m.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="link-delete" style="background:none;border:none;cursor:pointer;">Remove</button>
             </form>
           {% endif %}
@@ -59,6 +63,7 @@
             <p class="item-title">{{ r.user.email if r.user else "Researcher #" ~ r.id }}</p>
             <p class="item-sub">Researcher ID: {{ r.id }}{% if r.department %} · {{ r.department }}{% endif %}</p>
           <form method="POST" action="{{ url_for('invite_project_member', project_id=project.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="researcher_id" value="{{ r.id }}">
             <button type="submit" class="btn-inline btn-purple">Invite</button>
           </form>

@@ -18,6 +18,7 @@
   <div class="profile-field" style="flex-direction:column; align-items:flex-start; padding:16px 0; margin-top:16px;">
     <strong>Not registered yet</strong>
     <form method="POST" action="{{ url_for('register_conference', conference_id=conference_id) }}" style="width:100%; margin-top:10px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label for="role">Register as</label>
       <select id="role" name="role">
         <option value="attendee">Attendee</option>
@@ -60,6 +61,7 @@
         {% if is_organizer %}
         <form method="POST" action="{{ url_for('update_participation_status', participation_id=p.id) }}"
               style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="status">
             <option value="registered" {% if p.status == 'registered' %}selected{% endif %}>Registered</option>
             <option value="confirmed" {% if p.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
@@ -70,6 +72,7 @@
         </form>
         <form method="POST" action="{{ url_for('update_participation_role', participation_id=p.id) }}"
               style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="role">
             <option value="attendee" {% if p.role == 'attendee' %}selected{% endif %}>Attendee</option>
             <option value="presenter" {% if p.role == 'presenter' %}selected{% endif %}>Presenter</option>
@@ -81,6 +84,7 @@
         {% elif p.researcher_id == my_researcher_id and p.status in ['registered', 'confirmed'] %}
         <form method="POST" action="{{ url_for('update_participation_status', participation_id=p.id) }}"
               onsubmit="return confirm('Cancel your registration?');" style="margin-top:8px;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="status" value="cancelled">
           <button type="submit" class="link-delete" style="all:unset; cursor:pointer; font-size:12px; font-weight:600;">Cancel my registration</button>
         </form>
@@ -114,6 +118,7 @@
 
   <h2 style="font-size:16px; margin-top:32px;">Add a session</h2>
   <form method="POST" action="{{ url_for('create_session', conference_id=conference_id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="title">Title</label>
     <input type="text" id="title" name="title" required>
 

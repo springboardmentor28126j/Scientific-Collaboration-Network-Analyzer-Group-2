@@ -7,18 +7,79 @@ and store the JWT access token in the Flask session.
 import os
 
 import requests
-from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, jsonify, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, jsonify, g, abort
+
+from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+from datetime import timedelta
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=14)
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"
+
+csrf = CSRFProtect(app)
+
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY", "")
+RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY", "")
+
+
+def _verify_recaptcha(token: str) -> bool:
+    if not RECAPTCHA_SECRET_KEY:
+        return True  # captcha not configured — don't lock out local dev
+    if not token:
+        return False
+    try:
+        resp = requests.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data={"secret": RECAPTCHA_SECRET_KEY, "response": token},
+            timeout=10,
+        )
+        return resp.json().get("success", False)
+    except requests.RequestException:
+        return False
+
+
+def _honeypot_tripped() -> bool:
+    return bool(request.form.get("website", "").strip())
 
 
 def _auth_headers() -> dict:
     token = session.get("token")
     return {"Authorization": f"Bearer {token}"} if token else {}
+
+
+@app.route("/uploads/<path:filepath>")
+def serve_upload(filepath):
+    """Proxies uploaded files (publication PDFs, presentation slides, etc.)
+    through the frontend instead of linking straight to BACKEND_URL.
+
+    Templates used to build links as ``{{ backend_url }}{{ item.file_url }}``.
+    BACKEND_URL is set for server-to-server calls (e.g. the docker-compose
+    value ``http://backend:8000``, which only resolves *inside* the docker
+    network) and is not necessarily reachable from the user's browser, so
+    clicking those links could fail even though the upload itself worked.
+    Routing the download through this frontend endpoint means the browser
+    only ever talks to the frontend's own host, and this view does the
+    backend fetch server-side where BACKEND_URL is guaranteed to resolve.
+    """
+    if not session.get("token"):
+        return redirect(url_for("login"))
+    try:
+        resp = requests.get(f"{BACKEND_URL}/uploads/{filepath}", timeout=15)
+    except requests.RequestException:
+        abort(502)
+    if resp.status_code != 200:
+        abort(404)
+    return Response(
+        resp.content,
+        mimetype=resp.headers.get("Content-Type", "application/octet-stream"),
+        headers={"Content-Disposition": resp.headers.get("Content-Disposition", "inline")},
+    )
 
 def _current_role():
     """The logged-in user's role ('researcher', 'institution_admin',
@@ -162,6 +223,16 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        show_captcha = session.get("show_captcha", False)
+
+        if show_captcha:
+            if _honeypot_tripped():
+                flash("Something went wrong. Please try again.", "error")
+                return redirect(url_for("login"))
+            if not _verify_recaptcha(request.form.get("g-recaptcha-response", "")):
+                flash("Please complete the CAPTCHA verification.", "error")
+                return redirect(url_for("login"))
+
         email = request.form.get("email", "")
         password = request.form.get("password", "")
         try:
@@ -175,15 +246,35 @@ def login():
             return redirect(url_for("login"))
 
         if resp.status_code != 200:
+            fail_count = session.get("login_fail_count", 0) + 1
+            session["login_fail_count"] = fail_count
+            if fail_count >= 2:
+                session["show_captcha"] = True
+
             detail = resp.json().get("detail", "Incorrect email or password.") if resp.content else "Incorrect email or password."
             flash(detail, "error")
             if resp.status_code == 403 and "verify" in detail.lower():
                 session["unverified_email"] = email
             return redirect(url_for("login"))
 
+        session.pop("login_fail_count", None)
+        session.pop("show_captcha", None)
+
         data = resp.json()
+        if data.get("mfa_required"):
+            session["pre_auth_token"] = data["pre_auth_token"]
+            session["pre_auth_email"] = email
+            return redirect(url_for("mfa_verify"))
         session["token"] = data["access_token"]
         session["email"] = email
+        session.permanent = bool(request.form.get("remember_me"))
+
+        me_resp = requests.get(f"{BACKEND_URL}/auth/me", headers=_auth_headers(), timeout=10)
+        role = me_resp.json().get("role") if me_resp.status_code == 200 else None
+        if role in ("system_admin", "institution_admin"):
+            flash("Two-factor authentication is required for admin accounts. We'll set it up now — check your email for a confirmation code after you continue.", "error")
+            enable_resp = requests.post(f"{BACKEND_URL}/auth/mfa/enable", headers=_auth_headers(), timeout=10)
+
         flash("Logged in successfully.", "success")
         return redirect(url_for("dashboard"))
 
@@ -191,12 +282,58 @@ def login():
         "login.html",
         unverified_email=session.pop("unverified_email", None),
         google_client_id=GOOGLE_CLIENT_ID,
+        recaptcha_site_key=RECAPTCHA_SITE_KEY,
+        show_captcha=session.get("show_captcha", False),
     )
+
+
+@app.route("/mfa/verify", methods=["GET", "POST"])
+def mfa_verify():
+    pre_auth_token = session.get("pre_auth_token")
+    if not pre_auth_token:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        code = request.form.get("code", "")
+        resp = requests.post(
+            f"{BACKEND_URL}/auth/mfa/verify-login",
+            json={"pre_auth_token": pre_auth_token, "code": code},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            flash("Invalid or expired code. Please try again.", "error")
+            return redirect(url_for("mfa_verify"))
+
+        data = resp.json()
+        session["token"] = data["access_token"]
+        session["email"] = session.pop("pre_auth_email", "")
+        session.pop("pre_auth_token", None)
+        flash("Logged in successfully.", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("mfa_verify.html", pre_auth_token=pre_auth_token)
+
+
+@app.route("/mfa/resend", methods=["POST"])
+def mfa_resend():
+    pre_auth_token = request.form.get("pre_auth_token") or session.get("pre_auth_token")
+    if not pre_auth_token:
+        return redirect(url_for("login"))
+    requests.post(f"{BACKEND_URL}/auth/mfa/resend-otp", json={"pre_auth_token": pre_auth_token}, timeout=10)
+    flash("A new code has been sent to your email.", "success")
+    session["pre_auth_token"] = pre_auth_token
+    return redirect(url_for("mfa_verify"))
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        if _honeypot_tripped():
+            flash("Something went wrong. Please try again.", "error")
+            return redirect(url_for("register"))
+        if not _verify_recaptcha(request.form.get("g-recaptcha-response", "")):
+            flash("Please complete the CAPTCHA verification.", "error")
+            return redirect(url_for("register"))
         email = request.form.get("email", "")
         password = request.form.get("password", "")
         role = request.form.get("role", "researcher")
@@ -226,7 +363,7 @@ def register():
 
     inst_resp = requests.get(f"{BACKEND_URL}/institutions/public", timeout=10)
     institutions = inst_resp.json() if inst_resp.status_code == 200 else []
-    return render_template("register.html", institutions=institutions, google_client_id=GOOGLE_CLIENT_ID)
+    return render_template("register.html", institutions=institutions, google_client_id=GOOGLE_CLIENT_ID, recaptcha_site_key=RECAPTCHA_SITE_KEY)
 
 
 @app.route("/dashboard")
@@ -399,6 +536,32 @@ def _to_int_or_none(value: str | None) -> int | None:
     except ValueError:
         return None
 
+
+@app.route("/security", methods=["GET", "POST"])
+def security_settings():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    me_resp = requests.get(f"{BACKEND_URL}/auth/me", headers=_auth_headers(), timeout=10)
+    if me_resp.status_code != 200:
+        flash("Could not load your account details.", "error")
+        return redirect(url_for("dashboard"))
+    me = me_resp.json()
+    is_admin_role = me.get("role") in ("system_admin", "institution_admin")
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "disable" and is_admin_role:
+            flash("Two-factor authentication is required for admin accounts.", "error")
+            return redirect(url_for("security_settings"))
+
+        endpoint = "enable" if action == "enable" else "disable"
+        requests.post(f"{BACKEND_URL}/auth/mfa/{endpoint}", headers=_auth_headers(), timeout=10)
+        flash(f"Two-factor authentication {'enabled' if endpoint == 'enable' else 'disabled'}.", "success")
+        return redirect(url_for("security_settings"))
+
+    return render_template("security_settings.html", mfa_enabled=me.get("mfa_enabled", False), is_admin_role=is_admin_role)
+    
 
 @app.route("/institution", methods=["GET", "POST"])
 def institution():
@@ -678,6 +841,101 @@ def delete_institution(institution_id):
         )
 
     return redirect(url_for("institution"))
+
+
+@app.route("/institutions/collaborations", methods=["GET", "POST"])
+def institution_collaborations():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        my_institution_id = request.form.get("my_institution_id")
+        payload = {
+            "partner_institution_id": int(request.form.get("partner_institution_id")),
+            "title": request.form.get("title"),
+            "description": request.form.get("description") or None,
+            "start_date": request.form.get("start_date") or None,
+            "end_date": request.form.get("end_date") or None,
+        }
+        try:
+            resp = requests.post(
+                f"{BACKEND_URL}/institution-collaborations",
+                params={"my_institution_id": my_institution_id},
+                json=payload,
+                headers=_auth_headers(),
+                timeout=10,
+            )
+            if resp.status_code == 201:
+                flash("Partnership proposal sent.", "success")
+            elif resp.status_code == 401:
+                session.clear()
+                flash("Session expired. Please log in again.", "error")
+                return redirect(url_for("login"))
+            else:
+                flash(resp.json().get("detail", "Could not create the partnership."), "error")
+        except requests.RequestException:
+            flash("Backend server is not running.", "error")
+        return redirect(url_for("institution_collaborations"))
+
+    try:
+        institutions_resp = requests.get(f"{BACKEND_URL}/institutions/", headers=_auth_headers(), timeout=10)
+        all_institutions = institutions_resp.json() if institutions_resp.status_code == 200 else []
+    except requests.RequestException:
+        all_institutions = []
+        flash("Backend server is not running.", "error")
+
+    me_resp = requests.get(f"{BACKEND_URL}/auth/me", headers=_auth_headers(), timeout=10)
+    me = me_resp.json() if me_resp.status_code == 200 else {}
+    current_user_id = me.get("id")
+    is_system_admin = me.get("role") == "system_admin"
+
+    my_institutions = all_institutions if is_system_admin else [
+        i for i in all_institutions if i.get("admin_user_id") == current_user_id
+    ]
+
+    filter_institution_id = request.args.get("institution_id", type=int)
+    try:
+        params = {"institution_id": filter_institution_id} if filter_institution_id else {}
+        collab_resp = requests.get(f"{BACKEND_URL}/institution-collaborations", params=params, headers=_auth_headers(), timeout=10)
+        collaborations = collab_resp.json() if collab_resp.status_code == 200 else []
+    except requests.RequestException:
+        collaborations = []
+
+    return render_template(
+        "institution_collaborations.html",
+        collaborations=collaborations,
+        my_institutions=my_institutions,
+        all_institutions=all_institutions,
+        filter_institution_id=filter_institution_id,
+        current_user_id=current_user_id,
+    )
+
+
+@app.route("/institutions/collaborations/<int:collaboration_id>/status", methods=["POST"])
+def update_institution_collaboration_status(collaboration_id):
+    if not session.get("token"):
+        return redirect(url_for("login"))
+
+    new_status = request.form.get("status")
+    try:
+        resp = requests.patch(
+            f"{BACKEND_URL}/institution-collaborations/{collaboration_id}/status",
+            json={"status": new_status},
+            headers=_auth_headers(),
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            flash(f"Partnership marked as {new_status}.", "success")
+        elif resp.status_code == 401:
+            session.clear()
+            flash("Session expired. Please log in again.", "error")
+            return redirect(url_for("login"))
+        else:
+            flash(resp.json().get("detail", "Could not update status."), "error")
+    except requests.RequestException:
+        flash("Backend server is not running.", "error")
+
+    return redirect(url_for("institution_collaborations"))
 
 
 def _parse_coauthor_ids(raw: str) -> list[int]:
@@ -1492,6 +1750,10 @@ def reports():
     skills = requests.get(f"{BACKEND_URL}/reports/skills", headers=headers).json()
     collaboration_status = requests.get(f"{BACKEND_URL}/reports/collaborations/status", headers=headers).json()
     top_collaborations = requests.get(f"{BACKEND_URL}/reports/collaborations/top", headers=headers).json()
+    top_cited_papers = requests.get(f"{BACKEND_URL}/reports/citations/top-papers", headers=headers).json()
+    influential_papers = requests.get(f"{BACKEND_URL}/reports/citations/influential-papers", headers=headers).json()
+    top_cited_researchers = requests.get(f"{BACKEND_URL}/reports/citations/top-researchers", headers=headers).json()
+    top_cited_institutions = requests.get(f"{BACKEND_URL}/reports/citations/top-institutions", headers=headers).json()
 
     return render_template(
         "reports.html",
@@ -1507,6 +1769,10 @@ def reports():
         skills=skills,
         collaboration_status=collaboration_status,
         top_collaborations=top_collaborations,
+        top_cited_papers=top_cited_papers,
+        influential_papers=influential_papers,
+        top_cited_researchers=top_cited_researchers,
+        top_cited_institutions=top_cited_institutions,
     )
 
 
@@ -1534,6 +1800,34 @@ def download_report_pdf():
     )
 
 
+@app.route("/reports/download/compliance/excel")
+def download_compliance_excel():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+    resp = requests.get(f"{BACKEND_URL}/reports/compliance/excel", headers=_auth_headers())
+    if resp.status_code == 403:
+        flash("Only a System Admin can export the compliance report.", "error")
+        return redirect(url_for("reports"))
+    return Response(
+        resp.content,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment;filename=compliance_report.xlsx"},
+    )
+
+
+@app.route("/reports/download/compliance/pdf")
+def download_compliance_pdf():
+    if not session.get("token"):
+        return redirect(url_for("login"))
+    resp = requests.get(f"{BACKEND_URL}/reports/compliance/pdf", headers=_auth_headers())
+    if resp.status_code == 403:
+        flash("Only a System Admin can export the compliance report.", "error")
+        return redirect(url_for("reports"))
+    return Response(
+        resp.content,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": "attachment;filename=compliance_report.pdf"},
+    )
 
 @app.route("/citations", methods=["GET", "POST"])
 def citations():
@@ -2058,12 +2352,18 @@ def resend_verification():
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
+        if _honeypot_tripped():
+            flash("If that email is registered, a reset link has been sent.", "success")
+            return redirect(url_for("login"))
+        if not _verify_recaptcha(request.form.get("g-recaptcha-response", "")):
+            flash("Please complete the CAPTCHA verification.", "error")
+            return redirect(url_for("forgot_password"))
         email = request.form.get("email", "").strip()
         requests.post(f"{BACKEND_URL}/auth/forgot-password", json={"email": email}, timeout=10)
         flash("If that email is registered, a reset link has been sent.", "success")
         return redirect(url_for("login"))
 
-    return render_template("forgot_password.html")
+    return render_template("forgot_password.html", recaptcha_site_key=RECAPTCHA_SITE_KEY)
 
 
 @app.route("/reset-password", methods=["GET", "POST"])
@@ -2092,36 +2392,75 @@ def reset_password():
     return render_template("reset_password.html", token=token)
 
 
-@app.route("/admin/audit-logs")
-def audit_logs():
+@app.route("/audit")
+def audit_log():
     if not session.get("token"):
         return redirect(url_for("login"))
+    if _current_role() != "system_admin":
+        flash("Only a System Admin can view the audit log.", "error")
+        return redirect(url_for("dashboard"))
 
     action = request.args.get("action", "").strip()
     entity_type = request.args.get("entity_type", "").strip()
+    user_id = request.args.get("user_id", type=int)
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
     page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("page_size", 25, type=int)
 
-    params = {"page": page, "page_size": 50}
+    params = {"page": page, "page_size": page_size if page_size in {10, 25, 50, 100} else 25}
     if action:
         params["action"] = action
     if entity_type:
         params["entity_type"] = entity_type
+    if user_id is not None:
+        params["user_id"] = user_id
+    if date_from:
+        params["date_from"] = date_from
+    if date_to:
+        params["date_to"] = date_to
 
     resp = requests.get(f"{BACKEND_URL}/audit-logs", params=params, headers=_auth_headers(), timeout=10)
     if resp.status_code == 403:
-        flash("You don't have permission to view audit logs.", "error")
+        flash("Only a System Admin can view the audit log.", "error")
         return redirect(url_for("dashboard"))
 
-    data = resp.json() if resp.status_code == 200 else {"items": [], "total": 0, "page": 1, "page_size": 50}
+    data = resp.json() if resp.status_code == 200 else {"items": [], "total": 0, "page": 1, "page_size": 25}
+
+    actions_resp = requests.get(f"{BACKEND_URL}/audit-logs/actions", headers=_auth_headers(), timeout=10)
+    actions = actions_resp.json() if actions_resp.status_code == 200 else []
+
+    logs = []
+    for log in data.get("items", []):
+        logs.append({
+            "id": log.get("id"),
+            "user_id": log.get("actor_user_id"),
+            "user_email": log.get("actor_email"),
+            "action": log.get("action"),
+            "entity_type": log.get("entity_type"),
+            "entity_id": log.get("entity_id"),
+            "details": log.get("details"),
+            "created_at": log.get("created_at"),
+        })
+
+    pagination = {
+        "total": data.get("total", 0),
+        "page": data.get("page", 1),
+        "per_page": data.get("page_size", 25),
+    }
 
     return render_template(
-        "audit_logs.html",
-        logs=data["items"],
-        total=data["total"],
-        page=data["page"],
-        action=action,
-        entity_type=entity_type,
+        "audit.html",
+        logs=logs,
+        actions=actions,
+        pagination=pagination,
+        request=request,
     )
+
+
+@app.route("/admin/audit-logs")
+def audit_logs():
+    return audit_log()
 
 @app.route("/auth/google", methods=["POST"])
 def auth_google():
@@ -2202,4 +2541,5 @@ def collaboration_messages(collaboration_id):
     return _message_thread("collaboration", collaboration_id)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(host="0.0.0.0", debug=debug_mode, port=5000)

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Institutional Partnerships{% endblock %}
+{% block content %}
+
+<div class="container wide">
+  <h1>Institutional Partnerships</h1>
+
+  {% if my_institutions %}
+  <h2>Propose a Partnership</h2>
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>From (your institution)</label>
+    <select name="my_institution_id" required>
+      {% for inst in my_institutions %}
+        <option value="{{ inst.id }}">{{ inst.name }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Partner institution</label>
+    <select name="partner_institution_id" required>
+      {% for inst in all_institutions %}
+        <option value="{{ inst.id }}">{{ inst.name }}</option>
+      {% endfor %}
+    </select>
+
+    <label>Title</label>
+    <input type="text" name="title" required placeholder="e.g. Joint AI Research Initiative">
+
+    <label>Description</label>
+    <textarea name="description" placeholder="What does this partnership cover?"></textarea>
+
+    <div class="field-row">
+      <div>
+        <label>Start Date</label>
+        <input type="date" name="start_date">
+      </div>
+      <div>
+        <label>End Date</label>
+        <input type="date" name="end_date">
+      </div>
+    </div>
+
+    <button type="submit" class="btn-inline btn-purple" style="margin-top:12px;">Propose Partnership</button>
+  </form>
+  <hr>
+  {% endif %}
+
+  <h2>All Partnerships</h2>
+  <p><strong>Total:</strong> {{ collaborations|length }}</p>
+
+  {% if collaborations %}
+    <table style="width:100%; border-collapse:collapse;">
+      <tr>
+        <th>Title</th>
+        <th>Institutions</th>
+        <th>Status</th>
+        <th>Dates</th>
+        <th>Actions</th>
+      </tr>
+      {% for c in collaborations %}
+      <tr>
+        <td>{{ c.title }}</td>
+        <td>{{ c.institution1.name }} &harr; {{ c.institution2.name }}</td>
+        <td>{{ c.status }}</td>
+        <td>
+          {{ c.start_date or 'TBD' }}{% if c.end_date %} &ndash; {{ c.end_date }}{% endif %}
+        </td>
+        <td>
+          {% set can_manage = (c.institution1.id in my_institutions|map(attribute='id')|list) or (c.institution2.id in my_institutions|map(attribute='id')|list) %}
+          {% if can_manage and c.status == 'pending' %}
+            <form method="POST" action="{{ url_for('update_institution_collaboration_status', collaboration_id=c.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="active">
+              <button type="submit" class="btn-inline btn-teal">Accept</button>
+            </form>
+          {% endif %}
+          {% if can_manage and c.status == 'active' %}
+            <form method="POST" action="{{ url_for('update_institution_collaboration_status', collaboration_id=c.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="ended">
+              <button type="submit" class="btn-inline">End</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No institutional partnerships yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -36,6 +36,18 @@ def create_reviewer_assignment(
 ) -> ReviewerAssignment:
     _require_reviewer_user(db, payload.reviewer_user_id)
 
+    if current_user.role not in (UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a System Admin or Institution Admin can assign reviewers",
+        )
+
+    if payload.publication_id is None and payload.institution_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Specify either a publication_id or an institution_id to scope this assignment",
+        )
+
     if payload.publication_id is not None:
         # Per-publication assignment is a System Admin power only.
         if current_user.role != UserRole.SYSTEM_ADMIN:

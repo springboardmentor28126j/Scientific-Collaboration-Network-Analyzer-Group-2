@@ -54,7 +54,14 @@ def _require_lead(project: Project, researcher: Researcher) -> None:
 
 
 def _require_member_of(project: Project, researcher: Researcher) -> None:
-    if researcher.id != project.lead_researcher_id and researcher.id not in project.member_ids:
+    """Allow the lead, accepted members, AND pending invitees to view the
+    project — a pending invitee needs to see the page to accept/decline it.
+    Actions like editing or removing members still separately check
+    _require_lead / accepted-only membership where that matters."""
+    if researcher.id == project.lead_researcher_id:
+        return
+    has_any_membership_row = any(m.researcher_id == researcher.id for m in project.members)
+    if not has_any_membership_row:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not a member of this project",

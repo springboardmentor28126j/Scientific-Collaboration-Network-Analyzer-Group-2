@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.routes.notifications import create_notification
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_current_user_optional
 from app.core.audit import log_audit
 from app.core.config import settings
 from app.core.email import render_email, send_email
@@ -118,6 +118,21 @@ def _is_eligible_reviewer(db: Session, user: User, publication: Publication) -> 
     )
     return institution_match is not None
 
+
+def _check_doi_duplicate(db: Session, doi_link: str | None, exclude_publication_id: int | None = None) -> None:
+    if not doi_link:
+        return
+    query = db.query(Publication).filter(Publication.doi_link == doi_link)
+    if exclude_publication_id is not None:
+        query = query.filter(Publication.id != exclude_publication_id)
+    duplicate = query.first()
+    if duplicate:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"This DOI is already registered against publication '{duplicate.title}' (id {duplicate.id})",
+        )
+
+
 @router.post("", response_model=PublicationOut, status_code=status.HTTP_201_CREATED)
 def create_publication(
     payload: PublicationCreate,
@@ -126,6 +141,7 @@ def create_publication(
 ) -> Publication:
     researcher = _get_current_researcher(db, current_user)
     _validate_coauthor_ids(db, payload.coauthor_ids)
+    _check_doi_duplicate(db, payload.doi_link)
 
     data = payload.model_dump(exclude={"coauthor_ids"})
     publication = Publication(**data)
@@ -159,7 +175,7 @@ def list_publications(
         query = query.join(PublicationAuthor).filter(
             PublicationAuthor.researcher_id == author_id
         )
-    return query.order_by(Publication.year.desc().nullslast(), Publication.id.desc()).all()
+    return query.order_by(Publication.id.desc()).all()
 
 @router.get("/pending-review", response_model=list[PublicationOut])
 def list_pending_review(
@@ -215,9 +231,35 @@ def list_reviewed_by_me(
 
 
 @router.get("/{publication_id}", response_model=PublicationOut)
-def get_publication(publication_id: int, db: Session = Depends(get_db)) -> Publication:
-    return _get_publication_or_404(db, publication_id)
+def get_publication(
+    publication_id: int,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+) -> Publication:
+    publication = _get_publication_or_404(db, publication_id)
 
+    if publication.status == PublicationStatus.PUBLISHED:
+        return publication
+
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Login required to view this publication",
+        )
+    if current_user.role == UserRole.SYSTEM_ADMIN:
+        return publication
+    if current_user.role == UserRole.REVIEWER and _is_eligible_reviewer(db, current_user, publication):
+        return publication
+
+    researcher = db.query(Researcher).filter(Researcher.user_id == current_user.id).first()
+    author_ids = {a.researcher_id for a in publication.authors}
+    if researcher and researcher.id in author_ids:
+        return publication
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You don't have permission to view this unpublished publication",
+    )
 
 @router.put("/{publication_id}", response_model=PublicationOut)
 def update_publication(
@@ -230,6 +272,7 @@ def update_publication(
     publication = _get_publication_or_404(db, publication_id)
     _require_author(publication, researcher)
     _validate_coauthor_ids(db, payload.coauthor_ids)
+    _check_doi_duplicate(db, payload.doi_link, exclude_publication_id=publication_id)
 
     if (
         payload.status == PublicationStatus.PUBLISHED
@@ -368,5 +411,5 @@ def review_publication(
                         cta_link=f"{settings.FRONTEND_URL}/publications",
                     ),
                 )
-            
+
     return _get_publication_or_404(db, publication_id)

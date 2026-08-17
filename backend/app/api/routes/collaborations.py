@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_
@@ -215,6 +215,21 @@ def send_collaboration_request(
     db: Session = Depends(get_db),
 ) -> CollaborationRequestOut:
     me = _get_current_researcher(db, current_user)
+
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    recent_request_count = (
+        db.query(CollaborationRequest)
+        .filter(
+            CollaborationRequest.requester_id == me.id,
+            CollaborationRequest.created_at >= one_hour_ago,
+        )
+        .count()
+    )
+    if recent_request_count >= 10:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="You've sent too many collaboration requests recently. Please try again later.",
+        )
 
     if payload.addressee_researcher_id == me.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't connect with yourself")
@@ -527,6 +542,7 @@ def suggested_collaborators(
     results = []
     for candidate in candidates:
         mutual = mutual_counts.get(candidate.id, 0)
+
         if mutual > 0:
             reason = f"{mutual} mutual collaborator{'s' if mutual != 1 else ''}"
         elif me.institution_id is not None and candidate.institution_id == me.institution_id:
@@ -535,8 +551,16 @@ def suggested_collaborators(
             reason = "Same department as you"
         else:
             reason = "You might know them"
-        results.append(SuggestedCollaboratorOut(researcher=_brief(candidate), reason=reason, mutual_collaborator_count=mutual))
 
+        results.append(
+            SuggestedCollaboratorOut(
+                researcher=_brief(candidate),
+                reason=reason,
+                mutual_collaborator_count=mutual,
+            )
+        )
+
+    # Rank by mutual-collaborator count (rule-based, no ML/AI involved)
     results.sort(key=lambda s: s.mutual_collaborator_count, reverse=True)
     return results[:limit]
 

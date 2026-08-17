@@ -1,17 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.api.routes.notifications import create_notification
 from app.core.audit import log_audit
 from app.core.config import settings
 from app.core.email import send_email, render_email
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
 from app.db.session import get_db
+from app.models.audit_log import AuditLog
 from app.models.auth_token import AuthToken, AuthTokenType
 from app.models.institution import Institution
 from app.models.researcher import Researcher
@@ -47,6 +49,21 @@ def _send_verification_email(db: Session, user: User) -> None:
             cta_link=link,
         ),
     )
+
+
+def _send_mfa_otp_email(db: Session, user: User) -> AuthToken:
+    otp = AuthToken.generate_otp(user.id)
+    db.add(otp)
+    db.commit()
+    send_email(
+        to_email=user.email,
+        subject="Your SCNA login code",
+        html_body=render_email(
+            title="Your login code",
+            body_html=f"<p>Your one-time login code is:</p><h2 style='letter-spacing:4px;'>{otp.token}</h2><p>This code expires in 10 minutes. If you didn't try to log in, you can ignore this email.</p>",
+        ),
+    )
+    return otp
 
 
 def _notify_system_admins(db: Session, message: str, link: str) -> None:
@@ -176,6 +193,22 @@ def resend_verification(payload: ResendVerificationRequest, db: Session = Depend
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)) -> dict:
+    fifteen_min_ago = datetime.utcnow() - timedelta(minutes=15)
+    recent_failures = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.action == "login_failed",
+            AuditLog.details == form_data.username,
+            AuditLog.created_at >= fifteen_min_ago,
+        )
+        .count()
+    )
+    if recent_failures >= 5:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts. Please try again in 15 minutes.",
+        )
+
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not user.password_hash or not verify_password(form_data.password, user.password_hash):
         log_audit(db, actor_user_id=user.id if user else None, action="login_failed", entity_type="user", details=form_data.username)
@@ -191,11 +224,76 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user.is_verified:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please verify your email before logging in.")
 
+    if user.mfa_enabled:
+        _send_mfa_otp_email(db, user)
+        pre_auth_token = create_access_token(subject=user.email, expires_minutes=10)
+        return {"access_token": "", "token_type": "bearer", "mfa_required": True, "pre_auth_token": pre_auth_token}
+
     access_token = create_access_token(subject=user.email)
     log_audit(db, actor_user_id=user.id, action="user_login", entity_type="user", entity_id=user.id)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
 
 
+@router.post("/mfa/verify-login", response_model=Token)
+def verify_mfa_login(pre_auth_token: str = Body(...), code: str = Body(...), db: Session = Depends(get_db)) -> dict:
+    email = decode_access_token(pre_auth_token)
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, please log in again")
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not user.mfa_enabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled for this account")
+
+    otp_record = (
+        db.query(AuthToken)
+        .filter(AuthToken.user_id == user.id, AuthToken.token_type == AuthTokenType.MFA_OTP, AuthToken.token == code)
+        .order_by(AuthToken.created_at.desc())
+        .first()
+    )
+    if not otp_record or not otp_record.is_valid:
+        log_audit(db, actor_user_id=user.id, action="mfa_failed", entity_type="user", entity_id=user.id)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired code")
+
+    otp_record.used_at = datetime.utcnow()
+    access_token = create_access_token(subject=user.email)
+    log_audit(db, actor_user_id=user.id, action="user_login", entity_type="user", entity_id=user.id, details="mfa")
+    db.commit()
+    return {"access_token": access_token, "token_type": "bearer", "mfa_required": False}
+
+
+@router.post("/mfa/resend-otp")
+def resend_mfa_otp(pre_auth_token: str = Body(..., embed=True), db: Session = Depends(get_db)) -> dict:
+    email = decode_access_token(pre_auth_token)
+    if not email:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, please log in again")
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not user.mfa_enabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled for this account")
+
+    _send_mfa_otp_email(db, user)
+    return {"sent": True}
+
+
+@router.post("/mfa/enable")
+def enable_mfa(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+    current_user.mfa_enabled = True
+    db.commit()
+    log_audit(db, actor_user_id=current_user.id, action="mfa_enabled", entity_type="user", entity_id=current_user.id)
+    return {"mfa_enabled": True}
+
+
+@router.post("/mfa/disable")
+def disable_mfa(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+    current_user.mfa_enabled = False
+    db.commit()
+    log_audit(db, actor_user_id=current_user.id, action="mfa_disabled", entity_type="user", entity_id=current_user.id)
+    return {"mfa_enabled": False}
+
+
+@router.get("/me", response_model=UserOut)
+def get_me(current_user: User = Depends(get_current_user)) -> User:
+    return current_user
+
+    
 @router.post("/google", response_model=GoogleSignInResult)
 def google_sign_in(payload: GoogleSignInRequest, db: Session = Depends(get_db)) -> GoogleSignInResult:
     try:

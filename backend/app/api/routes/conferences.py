@@ -6,6 +6,9 @@ from sqlalchemy import extract
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_role
+from app.api.routes.notifications import create_notification
+from app.core.config import settings
+from app.core.email import render_email, send_email
 from app.db.session import get_db
 from app.models.conference import Conference
 from app.models.institution import Institution
@@ -112,6 +115,9 @@ def _check_duplicate_session(
             )
 
 
+
+
+
 @router.post("", response_model=ConferenceOut, status_code=status.HTTP_201_CREATED)
 def create_conference(
     payload: ConferenceCreate,
@@ -139,6 +145,9 @@ def create_conference(
     db.add(conference)
     db.commit()
     db.refresh(conference)
+
+    _broadcast_conference_flyer(db, conference)
+
     return conference
 
 
@@ -165,6 +174,54 @@ def get_conference(
 ) -> Conference:
     return _get_conference_or_404(db, conference_id)
 
+
+def _broadcast_conference_flyer(db: Session, conference: Conference) -> None:
+    recipients = (
+        db.query(User)
+        .filter(User.role == UserRole.RESEARCHER, User.is_active == True, User.is_verified == True)
+        .all()
+    )
+    if not recipients:
+        return
+
+    date_range = conference.start_date.strftime("%B %d, %Y") if conference.start_date else "Date TBA"
+    if conference.end_date and conference.end_date != conference.start_date:
+        date_range += f" – {conference.end_date.strftime('%B %d, %Y')}"
+
+    flyer_html = f"""
+    <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; font-family:sans-serif;">
+      <div style="background:linear-gradient(135deg, #534AB7, #0F6E6E); padding:28px 24px; color:#fff;">
+        <p style="margin:0; font-size:12px; letter-spacing:2px; text-transform:uppercase; opacity:0.85;">New Conference</p>
+        <h1 style="margin:8px 0 0; font-size:26px; line-height:1.3;">{conference.name}</h1>
+      </div>
+      <div style="padding:22px 24px;">
+        <p style="margin:0 0 6px; font-size:15px;"><strong>📅 {date_range}</strong></p>
+        {f'<p style="margin:0 0 14px; font-size:15px;">📍 {conference.location}</p>' if conference.location else ''}
+        <p style="margin:0 0 20px; color:#444; line-height:1.5;">{conference.description or 'Details and registration available on the platform.'}</p>
+      </div>
+    </div>
+    """
+
+    flyer_link = conference.website_link or f"{settings.FRONTEND_URL}/conferences/{conference.id}"
+
+    for user in recipients:
+        create_notification(
+            db,
+            recipient_user_id=user.id,
+            type="new_conference",
+            message=f"New conference posted: {conference.name} ({date_range})",
+            link=f"/conferences/{conference.id}",
+        )
+        send_email(
+            to_email=user.email,
+            subject=f"📢 New Conference: {conference.name}",
+            html_body=render_email(
+                title="",
+                body_html=flyer_html,
+                cta_text="View & Register",
+                cta_link=flyer_link,
+            ),
+        )
 
 @router.put("/{conference_id}", response_model=ConferenceOut)
 def update_conference(

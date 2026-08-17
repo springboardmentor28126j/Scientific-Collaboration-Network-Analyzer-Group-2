@@ -1,22 +1,28 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session, aliased
+from datetime import date, datetime, timedelta
+import os
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session, aliased, selectinload
 from sqlalchemy import func
 from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 
-from app.exports.excel_export import create_dashboard_excel
-from app.exports.pdf_export import create_dashboard_pdf
+from app.exports.excel_export import create_compliance_excel, create_dashboard_excel
+from app.exports.pdf_export import create_compliance_pdf, create_dashboard_pdf
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_role
 from app.db.session import get_db
 from collections import Counter
 
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.researcher import Researcher
 from app.models.institution import Institution
 from app.models.publication import Publication, PublicationAuthor
+from app.models.citation import Citation
 from app.models.conference import Conference
 from app.models.session import ConferenceSession
 from app.models.participation import ConferenceParticipation
+from app.models.audit_log import AuditLog
 from app.models.collaboration import Collaboration, CollaborationRequest
 
 from app.schemas.report import (
@@ -35,8 +41,12 @@ from app.schemas.report import (
     DepartmentReport,
     ResearchInterestReport,
     SkillReport,
-    CollaborationRequestStatusReport, 
+   CollaborationRequestStatusReport, 
     TopCollaborationReport,
+    TopCitedPublicationReport,
+    InfluentialPublicationReport,
+    TopCitedResearcherReport,
+    TopCitedInstitutionReport,
 )
 
 router = APIRouter()
@@ -66,39 +76,53 @@ def get_dashboard_summary(
 
 # Dashboard Excel Export API
 @router.get("/dashboard/excel")
-def export_dashboard_excel(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Export dashboard summary as an Excel file."""
+def export_dashboard_excel(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     summary = _build_dashboard_summary(db)
-    collaboration_status = get_collaboration_request_status_report(db=db, current_user=current_user)
-    top_collaborations = get_top_collaborations_report(db=db, current_user=current_user)
-    filename = create_dashboard_excel(summary, collaboration_status, top_collaborations)
-
+    filename = create_dashboard_excel(
+        summary,
+        collaboration_status=get_collaboration_request_status_report(db=db, current_user=current_user),
+        top_collaborations=get_top_collaborations_report(db=db, current_user=current_user),
+        institution_report=get_institution_report(db=db, current_user=current_user),
+        publication_year=get_publications_by_year(db=db, current_user=current_user),
+        publication_type=get_publications_by_type(db=db, current_user=current_user),
+        publication_status=get_publications_by_status(db=db, current_user=current_user),
+        conference_type=get_conference_type_report(db=db, current_user=current_user),
+        user_roles=get_user_role_report(db=db, current_user=current_user),
+        departments=get_department_report(db=db, current_user=current_user),
+        interests=get_research_interest_report(db=db, current_user=current_user),
+        skills=get_skill_report(db=db, current_user=current_user),
+    )
     return FileResponse(
         path=filename,
-        filename=filename,
+        filename="dashboard_report.xlsx",
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        background=BackgroundTask(os.remove, filename),
     )
 
 
 # Dashboard PDF Export API
 @router.get("/dashboard/pdf")
-def export_dashboard_pdf(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Export dashboard summary as a PDF file."""
+def export_dashboard_pdf(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     summary = _build_dashboard_summary(db)
-    collaboration_status = get_collaboration_request_status_report(db=db, current_user=current_user)
-    top_collaborations = get_top_collaborations_report(db=db, current_user=current_user)
-    filename = create_dashboard_pdf(summary, collaboration_status, top_collaborations)
-
+    filename = create_dashboard_pdf(
+        summary,
+        collaboration_status=get_collaboration_request_status_report(db=db, current_user=current_user),
+        top_collaborations=get_top_collaborations_report(db=db, current_user=current_user),
+        institution_report=get_institution_report(db=db, current_user=current_user),
+        publication_year=get_publications_by_year(db=db, current_user=current_user),
+        publication_type=get_publications_by_type(db=db, current_user=current_user),
+        publication_status=get_publications_by_status(db=db, current_user=current_user),
+        conference_type=get_conference_type_report(db=db, current_user=current_user),
+        user_roles=get_user_role_report(db=db, current_user=current_user),
+        departments=get_department_report(db=db, current_user=current_user),
+        interests=get_research_interest_report(db=db, current_user=current_user),
+        skills=get_skill_report(db=db, current_user=current_user),
+    )
     return FileResponse(
         path=filename,
-        filename=filename,
+        filename="dashboard_report.pdf",
         media_type="application/pdf",
+        background=BackgroundTask(os.remove, filename),
     )
 
 
@@ -424,3 +448,264 @@ def get_top_collaborations_report(
         .all()
     )
     return [TopCollaborationReport(**row._mapping) for row in report]   
+
+
+# ==========================================================
+# Citation Analytics
+# ==========================================================
+# Adapted from the reference project's analytics_repository.py, remapped
+# onto this project's own Citation/Publication/PublicationAuthor models.
+# Every citation row here has citing_publication_id set (always internal)
+# and cited_publication_id set ONLY when the cited work is also in our
+# database -- citations of external/outside works (cited_title instead)
+# don't count toward anyone's "times cited" score, since we have no
+# publication_id to attribute them to.
+
+def _cited_counts_subquery(db: Session):
+    """publication_id -> how many times it has been cited by another
+    publication in this system. Reused by all four queries below."""
+    return (
+        db.query(
+            Citation.cited_publication_id.label("publication_id"),
+            func.count(Citation.id).label("cnt"),
+        )
+        .filter(Citation.cited_publication_id.isnot(None))
+        .group_by(Citation.cited_publication_id)
+        .subquery()
+    )
+
+
+@router.get("/citations/top-papers", response_model=list[TopCitedPublicationReport])
+def get_top_cited_publications_report(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """'Frequently referenced' -- raw incoming citation count, most cited first."""
+    counts = _cited_counts_subquery(db)
+    rows = (
+        db.query(Publication.id, Publication.title, counts.c.cnt)
+        .join(counts, counts.c.publication_id == Publication.id)
+        .order_by(counts.c.cnt.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        TopCitedPublicationReport(publication_id=pid, title=title, citation_count=cnt)
+        for pid, title, cnt in rows
+    ]
+
+
+@router.get("/citations/influential-papers", response_model=list[InfluentialPublicationReport])
+def get_influential_publications_report(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """'Most influential' -- a citation from a paper that is itself
+    highly-cited counts more than one from an uncited paper. One-hop
+    weighted score: score(P) = sum over each citation P receives of
+    (1 + citation_count of the paper doing the citing)."""
+    counts = _cited_counts_subquery(db)
+    citing_pub = aliased(Publication)
+    rows = (
+        db.query(
+            Publication.id,
+            Publication.title,
+            func.sum(1 + func.coalesce(counts.c.cnt, 0)).label("influence_score"),
+        )
+        .join(Citation, Citation.cited_publication_id == Publication.id)
+        .join(citing_pub, citing_pub.id == Citation.citing_publication_id)
+        .outerjoin(counts, counts.c.publication_id == citing_pub.id)
+        .group_by(Publication.id, Publication.title)
+        .order_by(func.sum(1 + func.coalesce(counts.c.cnt, 0)).desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        InfluentialPublicationReport(publication_id=pid, title=title, influence_score=int(score))
+        for pid, title, score in rows
+    ]
+
+
+@router.get("/citations/top-researchers", response_model=list[TopCitedResearcherReport])
+def get_top_cited_researchers_report(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Most cited researcher -- citations summed across every publication
+    where they're a listed author."""
+    counts = _cited_counts_subquery(db)
+    rows = (
+        db.query(
+            PublicationAuthor.researcher_id,
+            func.coalesce(func.sum(counts.c.cnt), 0).label("total_citations"),
+            func.count(func.distinct(PublicationAuthor.publication_id)).label("publication_count"),
+        )
+        .outerjoin(counts, counts.c.publication_id == PublicationAuthor.publication_id)
+        .group_by(PublicationAuthor.researcher_id)
+        .order_by(func.coalesce(func.sum(counts.c.cnt), 0).desc())
+        .limit(limit)
+        .all()
+    )
+
+    researcher_ids = [r.researcher_id for r in rows]
+    if not researcher_ids:
+        return []
+    researchers = {
+        r.id: r for r in db.query(Researcher).options(selectinload(Researcher.user)).filter(Researcher.id.in_(researcher_ids)).all()
+    }
+    results = []
+    for row in rows:
+        researcher = researchers.get(row.researcher_id)
+        if researcher is None:
+            continue
+        name = researcher.user.email if researcher.user else f"Researcher #{researcher.id}"
+        results.append(
+            TopCitedResearcherReport(
+                researcher_id=researcher.id,
+                name=name,
+                total_citations=int(row.total_citations),
+                publication_count=int(row.publication_count),
+            )
+        )
+    return results
+
+
+@router.get("/citations/top-institutions", response_model=list[TopCitedInstitutionReport])
+def get_top_cited_institutions_report(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Institution with the highest research impact -- total citations
+    across all its researchers' publications, plus citations-per-publication
+    so a small institution with a few highly-cited papers isn't buried
+    under one that simply publishes more volume."""
+    counts = _cited_counts_subquery(db)
+    rows = (
+        db.query(
+            Researcher.institution_id,
+            func.coalesce(func.sum(counts.c.cnt), 0).label("total_citations"),
+            func.count(func.distinct(Publication.id)).label("publication_count"),
+        )
+        .join(PublicationAuthor, PublicationAuthor.researcher_id == Researcher.id)
+        .join(Publication, Publication.id == PublicationAuthor.publication_id)
+        .outerjoin(counts, counts.c.publication_id == Publication.id)
+        .filter(Researcher.institution_id.isnot(None))
+        .group_by(Researcher.institution_id)
+        .order_by(func.coalesce(func.sum(counts.c.cnt), 0).desc())
+        .limit(limit)
+        .all()
+    )
+
+    institution_ids = [r.institution_id for r in rows]
+    if not institution_ids:
+        return []
+    institutions = {i.id: i for i in db.query(Institution).filter(Institution.id.in_(institution_ids)).all()}
+    results = []
+    for row in rows:
+        institution = institutions.get(row.institution_id)
+        if institution is None:
+            continue
+        total = int(row.total_citations)
+        pub_count = int(row.publication_count)
+        results.append(
+            TopCitedInstitutionReport(
+                institution_id=institution.id,
+                name=institution.name,
+                total_citations=total,
+                publication_count=pub_count,
+                avg_citations_per_publication=round(total / pub_count, 2) if pub_count else 0.0,
+            )
+        )
+    return results
+
+
+@router.get("/compliance")
+def get_compliance_report(
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """A period-bounded snapshot: publication decisions, login failures, and
+    account-level admin actions. Defaults to the last 30 days."""
+    if end_date is None:
+        end_date = datetime.utcnow().date()
+    if start_date is None:
+        start_date = end_date - timedelta(days=30)
+
+    start_dt = datetime.combine(start_date, datetime.min.time())
+    end_dt = datetime.combine(end_date, datetime.max.time())
+
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.created_at >= start_dt, AuditLog.created_at <= end_dt)
+        .order_by(AuditLog.created_at.desc())
+        .all()
+    )
+
+    publication_decisions = [l for l in logs if l.action in ("publication_approved", "publication_rejected")]
+    login_failures = [l for l in logs if l.action == "login_failed"]
+    mfa_events = [l for l in logs if l.action in ("mfa_enabled", "mfa_disabled", "mfa_failed")]
+    account_admin_actions = [
+        l for l in logs
+        if l.action in ("user_registered", "institution_admin_applied", "password_reset_completed")
+    ]
+
+    return {
+        "period": {"start": str(start_date), "end": str(end_date)},
+        "totals": {
+            "publication_decisions": len(publication_decisions),
+            "login_failures": len(login_failures),
+            "mfa_events": len(mfa_events),
+            "account_admin_actions": len(account_admin_actions),
+        },
+        "publication_decisions": [
+            {"date": str(l.created_at), "action": l.action, "actor_email": l.actor.email if l.actor else None, "details": l.details}
+            for l in publication_decisions
+        ],
+        "login_failures": [
+            {"date": str(l.created_at), "attempted_email": l.details} for l in login_failures
+        ],
+        "mfa_events": [
+            {"date": str(l.created_at), "action": l.action, "actor_email": l.actor.email if l.actor else None}
+            for l in mfa_events
+        ],
+    }
+
+
+@router.get("/compliance/excel")
+def export_compliance_excel(
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.SYSTEM_ADMIN)),
+):
+    report = get_compliance_report(start_date=start_date, end_date=end_date, db=db, current_user=current_user)
+    filename = create_compliance_excel(report)
+    return FileResponse(
+        path=filename,
+        filename="compliance_report.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        background=BackgroundTask(os.remove, filename),
+    )
+
+
+@router.get("/compliance/pdf")
+def export_compliance_pdf(
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.SYSTEM_ADMIN)),
+):
+    report = get_compliance_report(start_date=start_date, end_date=end_date, db=db, current_user=current_user)
+    filename = create_compliance_pdf(report)
+    return FileResponse(
+        path=filename,
+        filename="compliance_report.pdf",
+        media_type="application/pdf",
+        background=BackgroundTask(os.remove, filename),
+    )   

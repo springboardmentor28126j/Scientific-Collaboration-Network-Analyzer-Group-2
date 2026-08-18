@@ -2450,10 +2450,13 @@ def audit_log():
     }
 
     return render_template(
-        "audit.html",
+        "audit_logs.html",
         logs=logs,
+        total=data.get("total", 0),
+        page=data.get("page", 1),
+        action=action,
+        entity_type=entity_type,
         actions=actions,
-        pagination=pagination,
         request=request,
     )
 

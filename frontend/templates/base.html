@@ -50,6 +50,7 @@
           <a href="{{ url_for('security_settings') }}">Security</a>
 
         {% elif current_role == 'system_admin' %}
+        <a href="{{ url_for('audit_logs') }}">Audit Logs</a>
         <a href="{{ url_for('security_settings') }}">Security</a>
         <a href="{{ url_for('institution_collaborations') }}">Partnerships</a>
         {% endif %}

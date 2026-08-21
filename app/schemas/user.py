@@ -35,7 +35,16 @@ class UserRead(ORMBase):
     created_at: datetime
 
 
+class UserUpdateByInstitution(BaseModel):
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+
+
 class UserMe(UserRead):
     """What /auth/me returns — same shape as UserRead for now, kept
     separate so it can diverge later without touching the admin-facing
     UserRead schema."""
+
+
+class GlobalResearcherRead(UserRead):
+    institution_name: str | None

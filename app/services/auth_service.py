@@ -42,8 +42,10 @@ class AuthService:
         if user is None or not verify_password(password, user.hashed_password):
             raise UnauthorizedError("Incorrect email or password")
 
-        if not user.is_verified or not user.is_active:
-            raise ForbiddenError("Account is not verified or has been deactivated")
+        if not user.is_verified:
+            raise ForbiddenError("Account email has not been verified")
+        if not user.is_active:
+            raise ForbiddenError("Account has been deactivated")
 
         if user.institution is not None and not user.institution.is_active:
             raise ForbiddenError("Institution has been deactivated")

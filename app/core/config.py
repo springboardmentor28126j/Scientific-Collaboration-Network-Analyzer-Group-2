@@ -65,6 +65,23 @@ class Settings(BaseSettings):
     # --- CORS ---
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def normalize_debug_value(cls, v: bool | str) -> bool | str:
+        """Accept common deployment labels as well as regular boolean values.
+
+        Some process managers expose ``DEBUG=release``/``DEBUG=development``
+        instead of a literal boolean.  Pydantic correctly rejects those by
+        default, which previously stopped the application during import.
+        """
+        if isinstance(v, str):
+            normalized = v.strip().lower()
+            if normalized in {"release", "production", "prod"}:
+                return False
+            if normalized in {"development", "dev"}:
+                return True
+        return v
+
     @field_validator("DATABASE_URL")
     @classmethod
     def ensure_async_driver(cls, v: str) -> str:

@@ -1,4 +1,5 @@
 import uuid
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,8 +10,11 @@ from app.models.token import VerificationPurpose
 from app.models.user import User, UserRole
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreateByInstitution
+from app.schemas.user import UserUpdateByInstitution
 from app.services.auth_service import AuthService
 from app.services.email_service import EmailService
+
+logger = logging.getLogger(__name__)
 
 
 class UserService:
@@ -55,11 +59,13 @@ class UserService:
             user.id, VerificationPurpose.INVITE_VERIFY
         )
         invite_link = f"{settings.FRONTEND_URL}/verify-invite?token={raw_token}"
-        await EmailService.send_invite_verification_email(
-            user.email, user.full_name, institution_name, payload.role.value, invite_link
-        )
-
         await self.session.commit()
+        try:
+            await EmailService.send_invite_verification_email(
+                user.email, user.full_name, institution_name, payload.role.value, invite_link
+            )
+        except Exception:
+            logger.exception("User created but invite email could not be sent: %s", invite_link)
         return user
 
     async def list_institution_users(
@@ -88,7 +94,32 @@ class UserService:
             raise ForbiddenError(
                 "Institution admins cannot be activated/deactivated via this endpoint"
             )
+        if is_active and not user.is_verified:
+            raise ForbiddenError(
+                "The user must accept their invite and set a password before they can be activated"
+            )
 
         user = await self.users.set_active(user, is_active)
         await self.session.commit()
         return user
+
+    async def get_institution_user(self, institution_id: uuid.UUID, user_id: uuid.UUID) -> User:
+        user = await self.users.get_by_id(user_id)
+        if user is None or user.institution_id != institution_id or user.role == UserRole.INSTITUTION_ADMIN:
+            raise NotFoundError("User not found in this institution")
+        return user
+
+    async def update_institution_user(
+        self, institution_id: uuid.UUID, user_id: uuid.UUID, payload: UserUpdateByInstitution
+    ) -> User:
+        user = await self.get_institution_user(institution_id, user_id)
+        for field, value in payload.model_dump(exclude_unset=True).items():
+            setattr(user, field, value)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
+
+    async def delete_institution_user(self, institution_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        user = await self.get_institution_user(institution_id, user_id)
+        await self.session.delete(user)
+        await self.session.commit()

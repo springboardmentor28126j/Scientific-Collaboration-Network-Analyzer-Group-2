@@ -10,7 +10,7 @@ help: ## Show this help
 
 ## --- Docker lifecycle ---
 
-up: ## Start all services (app, db, mailcatcher)
+up: ## Start backend, frontend, database, and mailcatcher
 	docker compose up --build
 
 up-d: ## Start all services in the background

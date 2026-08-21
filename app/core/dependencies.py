@@ -45,10 +45,15 @@ async def get_current_user(
     if user is None:
         raise credentials_error
 
-    if not user.is_active or not user.is_verified:
+    if not user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is not verified or has been deactivated",
+            detail="Account email has not been verified",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account has been deactivated",
         )
 
     # Institution-level kill switch — checked on every request, not just

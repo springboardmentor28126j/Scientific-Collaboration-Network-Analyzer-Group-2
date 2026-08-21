@@ -2,8 +2,7 @@ import uuid
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Boolean, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -41,7 +40,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
     institution_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=True
+        Uuid(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=True
     )
 
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

@@ -4,12 +4,59 @@ Production-grade FastAPI backend. This phase covers **auth + institution/user
 management only** — see `docs/architecture.md` for the full plan and design
 decisions.
 
+## Project structure
+
+```text
+app/                         FastAPI backend
+  api/v1/                    Versioned REST endpoints
+  models/                    SQLAlchemy domain models
+  schemas/                   Pydantic request/response contracts
+  services/                  Authentication and institution workflows
+alembic/                     Database migrations
+tests/                       Backend test suite
+01_frontend/app/             React + Vite frontend
+  src/api/                   Backend client
+  src/pages/                 Auth, dashboard, and research screens
+  src/components/            Shared UI and navigation
+```
+
+## Research APIs
+
+Authenticated endpoints under `/api/v1/research` manage researcher profiles,
+publications/co-authors, projects, conferences, participations, citations,
+institutional collaborations, and dashboard metrics.
+
 ## Stack
 
 FastAPI · PostgreSQL (asyncpg) · SQLAlchemy 2.0 (async) · Alembic · Pydantic v2
 · `uv` · Docker · Cloudinary · fastapi-mail · MailCatcher (dev) · pytest
 
 ## Local development
+
+Start the complete application (FastAPI backend, React frontend, PostgreSQL,
+and MailCatcher) with one command:
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- Frontend: http://localhost:3000
+- Backend API docs: http://localhost:8000/docs
+- Development email inbox: http://localhost:1080
+
+### Without Docker (Windows)
+
+After installing the Python and frontend dependencies once, start both local
+development servers with:
+
+```powershell
+.\scripts\run_dev.ps1
+```
+
+This opens two PowerShell windows: FastAPI at `http://localhost:8000` and the
+React frontend at `http://localhost:3000`.
 
 **Prerequisites:** Docker, Docker Compose. `uv` only needed if you want to run
 things outside Docker.
@@ -55,6 +102,21 @@ uvicorn app.main:app --reload
 
 You'll need a local Postgres and either a local MailCatcher (`gem install
 mailcatcher` or the Docker image run standalone) or real SMTP creds in `.env`.
+
+### Self-contained local run (SQLite)
+
+For a quick local API run without Docker or Postgres, set
+`DATABASE_URL=sqlite+aiosqlite:///./research_mgmt.db` in `.env` (this is the
+included local default), then run:
+
+```powershell
+python -m pip install -e ".[dev]"
+python -m uvicorn app.main:app --reload
+```
+
+The SQLite schema and platform superuser are created on first startup. Open
+http://127.0.0.1:8000/docs after the server starts. Docker Compose continues
+to use PostgreSQL because it overrides `DATABASE_URL` for the `app` service.
 
 ## Creating a new migration
 

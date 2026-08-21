@@ -15,8 +15,9 @@ from pydantic import ValidationError
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.exceptions import AppError
+from app.db.base import Base
 from app.db.init_db import bootstrap_superuser
-from app.db.session import AsyncSessionLocal
+from app.db.session import AsyncSessionLocal, engine
 from app.middleware.logging_middleware import LoggingMiddleware
 
 logging.basicConfig(
@@ -27,9 +28,15 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    # Docker and production use Alembic/PostgreSQL.  For a self-contained
+    # local run, SQLite can initialize the same SQLAlchemy metadata directly.
+    if engine.url.get_backend_name() == "sqlite":
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as session:
         await bootstrap_superuser(session)
     yield
+    await engine.dispose()
 
 
 def create_app() -> FastAPI:
@@ -45,7 +52,10 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_origins=list(
+            dict.fromkeys([*settings.BACKEND_CORS_ORIGINS, "http://127.0.0.1:3000"])
+        ),
+        allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

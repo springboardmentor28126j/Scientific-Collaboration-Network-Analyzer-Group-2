@@ -1,0 +1,38 @@
+"""add research management modules
+
+Revision ID: 9c2c4a1e7f10
+Revises: 06a963a3c0fb
+Create Date: 2026-07-29
+"""
+
+from collections.abc import Sequence
+
+import sqlalchemy as sa
+from alembic import op
+
+revision: str = "9c2c4a1e7f10"
+down_revision: str | None = "06a963a3c0fb"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
+
+
+def upgrade() -> None:
+    op.create_table("researcher_profiles", sa.Column("user_id", sa.UUID(), nullable=False), sa.Column("department", sa.String(255)), sa.Column("skills", sa.JSON(), nullable=False), sa.Column("research_interests", sa.JSON(), nullable=False), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"), sa.UniqueConstraint("user_id"))
+    op.create_table("publications", sa.Column("institution_id", sa.UUID(), nullable=False), sa.Column("title", sa.String(500), nullable=False), sa.Column("abstract", sa.Text()), sa.Column("publication_type", sa.String(40), nullable=False), sa.Column("status", sa.String(30), nullable=False), sa.Column("doi", sa.String(255)), sa.Column("published_on", sa.Date()), sa.Column("file_url", sa.String(1000)), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["institution_id"], ["institutions.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"), sa.UniqueConstraint("doi"))
+    op.create_index("ix_publications_institution_id", "publications", ["institution_id"])
+    op.create_table("publication_authors", sa.Column("publication_id", sa.UUID(), nullable=False), sa.Column("user_id", sa.UUID(), nullable=False), sa.Column("author_order", sa.Integer(), nullable=False), sa.Column("id", sa.UUID(), nullable=False), sa.ForeignKeyConstraint(["publication_id"], ["publications.id"], ondelete="CASCADE"), sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"), sa.UniqueConstraint("publication_id", "user_id", name="uq_publication_author"))
+    op.create_table("projects", sa.Column("institution_id", sa.UUID(), nullable=False), sa.Column("name", sa.String(255), nullable=False), sa.Column("description", sa.Text()), sa.Column("funding_source", sa.String(255)), sa.Column("status", sa.String(30), nullable=False), sa.Column("start_date", sa.Date()), sa.Column("end_date", sa.Date()), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["institution_id"], ["institutions.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"))
+    op.create_index("ix_projects_institution_id", "projects", ["institution_id"])
+    op.create_table("project_members", sa.Column("project_id", sa.UUID(), nullable=False), sa.Column("user_id", sa.UUID(), nullable=False), sa.Column("role", sa.String(100), nullable=False), sa.Column("id", sa.UUID(), nullable=False), sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"), sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"), sa.UniqueConstraint("project_id", "user_id", name="uq_project_member"))
+    op.create_table("conferences", sa.Column("institution_id", sa.UUID(), nullable=False), sa.Column("name", sa.String(255), nullable=False), sa.Column("location", sa.String(255)), sa.Column("starts_on", sa.Date(), nullable=False), sa.Column("ends_on", sa.Date()), sa.Column("website_url", sa.String(1000)), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["institution_id"], ["institutions.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"))
+    op.create_index("ix_conferences_institution_id", "conferences", ["institution_id"])
+    op.create_table("conference_participations", sa.Column("conference_id", sa.UUID(), nullable=False), sa.Column("user_id", sa.UUID(), nullable=False), sa.Column("presentation_title", sa.String(500)), sa.Column("participation_type", sa.String(40), nullable=False), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["conference_id"], ["conferences.id"], ondelete="CASCADE"), sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"), sa.UniqueConstraint("conference_id", "user_id", name="uq_conference_participant"))
+    op.create_table("institutional_collaborations", sa.Column("institution_id", sa.UUID(), nullable=False), sa.Column("partner_name", sa.String(255), nullable=False), sa.Column("description", sa.Text()), sa.Column("status", sa.String(30), nullable=False), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["institution_id"], ["institutions.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"))
+    op.create_index("ix_institutional_collaborations_institution_id", "institutional_collaborations", ["institution_id"])
+    op.create_table("citations", sa.Column("source_publication_id", sa.UUID(), nullable=False), sa.Column("cited_publication_id", sa.UUID(), nullable=False), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["source_publication_id"], ["publications.id"], ondelete="CASCADE"), sa.ForeignKeyConstraint(["cited_publication_id"], ["publications.id"], ondelete="CASCADE"), sa.PrimaryKeyConstraint("id"))
+    op.create_table("audit_logs", sa.Column("user_id", sa.UUID()), sa.Column("action", sa.String(255), nullable=False), sa.Column("entity_type", sa.String(100), nullable=False), sa.Column("entity_id", sa.String(100), nullable=False), sa.Column("id", sa.UUID(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False), sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="SET NULL"), sa.PrimaryKeyConstraint("id"))
+
+
+def downgrade() -> None:
+    for table in ("audit_logs", "citations", "institutional_collaborations", "conference_participations", "conferences", "project_members", "projects", "publication_authors", "publications", "researcher_profiles"):
+        op.drop_table(table)

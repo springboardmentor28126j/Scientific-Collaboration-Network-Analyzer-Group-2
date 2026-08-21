@@ -106,6 +106,7 @@
       <div class="value">{{ conference_count }}</div>
       <a href="{{ url_for('conferences') }}" class="view-link">View all &rarr;</a>
     </div>
+    {% if role != 'institution_admin' %}
     <div class="metric-card">
       <div class="label">COLLABORATORS</div>
       <div class="value">{{ collaborator_count }}</div>
@@ -116,6 +117,17 @@
       <div class="value">{{ pending_request_count }}</div>
       <a href="{{ url_for('collaborations') }}" class="view-link">View all &rarr;</a>
     </div>
+    {% else %}
+    <div class="metric-card">
+      <div class="label">RESEARCHERS &amp; REVIEWERS</div>
+      <div class="value">{{ researcher_count }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">PROJECTS</div>
+      <div class="value">{{ project_count }}</div>
+      <a href="{{ url_for('projects') }}" class="view-link">View all &rarr;</a>
+    </div>
+    {% endif %}
   </div>
 
   {% if recent_publication %}
@@ -131,8 +143,12 @@
   <div class="toolbar">
     <a href="{{ url_for('publications') }}" class="btn-inline btn-purple">Publications</a>
     <a href="{{ url_for('conferences') }}" class="btn-inline btn-teal">Conferences</a>
+    {% if role != 'institution_admin' %}
     <a href="{{ url_for('collaborations') }}" class="btn-inline" style="background:var(--accent);">Collaborations</a>
+    {% endif %}
+    {% if role != 'institution_admin' %}
     <a href="{{ url_for('citations') }}" style="background:var(--accent);" class="btn-inline">Citations</a>
+    {% endif %}
   </div>
   {% endif %}
 

@@ -28,7 +28,9 @@
         </select>
         <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0;">Apply</button>
       </form>
+      {% if current_role != 'institution_admin' %}
       <a href="{{ url_for('add_publication') }}" class="btn-inline btn-purple">+ Add publication</a>
+      {% endif %}
     </div>
   </div>
 
@@ -44,6 +46,12 @@
         </div>
         <p class="item-title">{{ pub.title }}</p>
         <div class="item-sub">{{ pub.authors|length }} author{{ '' if pub.authors|length == 1 else 's' }}</div>
+        {% if current_role == 'institution_admin' %}
+        {% set author_emails = pub.authors | map(attribute='email') | select('string') | list %}
+        {% if author_emails %}
+        <div class="item-sub">{{ author_emails | join(', ') }}</div>
+        {% endif %}
+        {% endif %}
         {% if pub.doi_link %}<a href="{{ pub.doi_link }}" class="item-link" target="_blank" rel="noopener">View DOI &rarr;</a>{% endif %}
       </div>
       <div class="item-actions">

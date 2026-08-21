@@ -10,6 +10,7 @@ class PublicationAuthorOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     researcher_id: int
+    email: str | None = None
 
 
 class PublicationBase(BaseModel):

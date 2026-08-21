@@ -8,6 +8,7 @@ from app.core.audit import log_audit
 from app.core.email import send_email
 from app.core.notifications import create_notification
 from app.db.session import get_db
+from app.models.institution import Institution
 from app.models.project import Project, ProjectMember, ProjectMemberStatus, ProjectRole
 from app.models.researcher import Researcher
 from app.models.user import User, UserRole
@@ -30,6 +31,16 @@ def _get_current_researcher(db: Session, current_user: User) -> Researcher:
             detail="Create a researcher profile before creating or joining projects",
         )
     return researcher
+
+
+def _institution_id_for_admin(db: Session, current_user: User) -> int | None:
+    """The single institution an Institution Admin manages, or None if
+    they don't manage one yet. Duplicated locally per this codebase's
+    existing convention rather than cross-importing between route files."""
+    institution = (
+        db.query(Institution).filter(Institution.admin_user_id == current_user.id).first()
+    )
+    return institution.id if institution else None
 
 
 def _get_project_or_404(db: Session, project_id: int) -> Project:
@@ -132,6 +143,25 @@ def list_projects(
             query = query.join(ProjectMember).filter(
                 ProjectMember.researcher_id == researcher_id
             )
+    elif current_user.role == UserRole.INSTITUTION_ADMIN:
+        # Institution Admin sees every project that has at least one
+        # ACCEPTED member (or lead, who is always ACCEPTED) belonging to
+        # their own institution -- any client-supplied institution_id /
+        # researcher_id is ignored so they can't browse other
+        # institutions' project lists.
+        admin_institution_id = _institution_id_for_admin(db, current_user)
+        if admin_institution_id is None:
+            return []
+        institution_project_ids = (
+            db.query(ProjectMember.project_id)
+            .join(Researcher, Researcher.id == ProjectMember.researcher_id)
+            .filter(
+                ProjectMember.status == ProjectMemberStatus.ACCEPTED,
+                Researcher.institution_id == admin_institution_id,
+            )
+            .subquery()
+        )
+        query = query.filter(Project.id.in_(institution_project_ids))
     else:
         # Every other role only ever sees projects they're an ACCEPTED
         # member (or lead, who is always ACCEPTED) of -- any client-

@@ -7,7 +7,7 @@
       <h1>Citation Insights</h1>
       <div class="section-sub">Who and what is most cited, and how the citation network connects</div>
     </div>
-    {% if current_role != 'system_admin' %}
+    {% if current_role not in ['system_admin', 'institution_admin'] %}
     <a href="{{ url_for('citations') }}" class="btn-inline btn-purple">Manage Citations</a>
     {% endif %}
   </div>

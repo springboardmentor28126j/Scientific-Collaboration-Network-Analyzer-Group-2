@@ -55,7 +55,11 @@ def _get_current_researcher(db: Session, current_user: User) -> Researcher:
 def _get_publication_or_404(db: Session, publication_id: int) -> Publication:
     publication = (
         db.query(Publication)
-        .options(selectinload(Publication.authors))
+        .options(
+            selectinload(Publication.authors)
+            .selectinload(PublicationAuthor.researcher)
+            .selectinload(Researcher.user)
+        )
         .filter(Publication.id == publication_id)
         .first()
     )
@@ -174,7 +178,11 @@ def list_publications(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[Publication]:
-    query = db.query(Publication).options(selectinload(Publication.authors))
+    query = db.query(Publication).options(
+        selectinload(Publication.authors)
+        .selectinload(PublicationAuthor.researcher)
+        .selectinload(Researcher.user)
+    )
 
     if current_user.role == UserRole.INSTITUTION_ADMIN:
         # Institution Admin only ever sees their own institution's

@@ -1,0 +1,227 @@
+/* ===========================
+   Page Background
+=========================== */
+.researchers-page {
+    padding: 30px;
+    background: #f5f7fb;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ===========================
+   Header
+=========================== */
+.researchers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.researchers-header h1 {
+    color: #1e3a8a;
+    font-size: 34px;
+    font-weight: bold;
+}
+
+/* ===========================
+   Search + Add Button
+=========================== */
+.header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-buttons input {
+    width: 280px;
+    padding: 12px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-size: 15px;
+}
+
+.header-buttons input:focus {
+    border-color: #2563eb;
+}
+
+.add-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.add-btn:hover {
+    background: #1d4ed8;
+}
+
+/* ===========================
+   Form
+=========================== */
+.form-box {
+    background: white;
+    padding: 25px;
+    margin-bottom: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 12px rgba(0,0,0,.1);
+}
+
+.form-box h2 {
+    color: #1e3a8a;
+    margin-bottom: 20px;
+}
+
+.form-box input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.save-btn {
+    background: #16a34a;
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.save-btn:hover {
+    background: #15803d;
+}
+
+.cancel-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.cancel-btn:hover {
+    background: #dc2626;
+}
+
+/* ===========================
+   Table
+=========================== */
+.researchers-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,.1);
+}
+
+.researchers-table th {
+    background: #2563eb;
+    color: white;
+    padding: 16px;
+    text-align: center;
+}
+
+.researchers-table td {
+    padding: 16px;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.researchers-table tr:hover {
+    background: #f8fafc;
+}
+
+/* Wider Action column */
+.researchers-table th:last-child,
+.researchers-table td:last-child {
+    width: 230px;
+}
+
+/* ===========================
+   Action Buttons
+=========================== */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.view-btn {
+    display: inline-block;
+    background: #16a34a;
+    color: white;
+    text-decoration: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: bold;
+    min-width: 80px;
+    text-align: center;
+}
+
+.view-btn:hover {
+    background: #15803d;
+}
+
+.delete-btn {
+    display: inline-block;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: 80px;
+}
+
+.delete-btn:hover {
+    background: #b91c1c;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+@media (max-width:768px){
+
+    .researchers-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .header-buttons{
+        width:100%;
+        flex-direction:column;
+    }
+
+    .header-buttons input,
+    .add-btn{
+        width:100%;
+    }
+
+    /* Keep buttons side by side */
+    .action-buttons{
+        justify-content:center;
+        flex-wrap:wrap;
+    }
+
+}

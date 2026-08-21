@@ -1,0 +1,315 @@
+/* ===========================
+   Global
+=========================== */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+  background:#eef3f9;
+}
+
+/* ===========================
+ Dashboard Container
+=========================== */
+
+.dashboard-container{
+  min-height:100vh;
+  background:#eef3f9;
+}
+
+/* ===========================
+ Top Navigation
+=========================== */
+
+.topbar{
+  height:80px;
+  background:#ffffff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 45px;
+  box-shadow:0 4px 15px rgba(0,0,0,.08);
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+
+.logo{
+  font-size:38px;
+  font-weight:bold;
+  color:#1565c0;
+}
+
+.top-links{
+  display:flex;
+  align-items:center;
+  gap:35px;
+}
+
+.top-links a{
+  text-decoration:none;
+  color:#444;
+  font-size:19px;
+  font-weight:600;
+  transition:.3s;
+}
+
+.top-links a:hover{
+  color:#1565c0;
+}
+
+.logout-btn{
+  background:#1565c0;
+  color:white;
+  border:none;
+  padding:12px 30px;
+  border-radius:10px;
+  font-size:16px;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.logout-btn:hover{
+  background:#0d47a1;
+  transform:scale(1.05);
+}
+
+/* ===========================
+ Dashboard Body
+=========================== */
+
+.dashboard-body{
+  display:flex;
+}
+
+/* ===========================
+ Sidebar
+=========================== */
+
+.sidebar{
+  width:260px;
+  background:white;
+  min-height:calc(100vh - 80px);
+  padding:30px 20px;
+  box-shadow:2px 0 15px rgba(0,0,0,.08);
+}
+
+.sidebar h3{
+  color:#1565c0;
+  text-align:center;
+  font-size:34px;
+  margin-bottom:35px;
+}
+
+.sidebar ul{
+  list-style:none;
+}
+
+.sidebar ul li{
+  margin-bottom:12px;
+}
+
+.sidebar ul li a{
+  display:block;
+  text-decoration:none;
+  color:#444;
+  padding:15px 18px;
+  border-radius:10px;
+  font-size:19px;
+  font-weight:600;
+  transition:.3s;
+}
+
+.sidebar ul li a:hover{
+  background:#e3f2fd;
+  color:#1565c0;
+  transform:translateX(6px);
+}
+
+/* ===========================
+ Main Content
+=========================== */
+
+.content{
+  flex:1;
+  padding:40px;
+}
+
+.content h1{
+  font-size:70px;
+  color:#1e3a8a;
+  text-align:center;
+}
+
+.content p{
+  text-align:center;
+  font-size:18px;
+  color:#666;
+  margin-top:15px;
+  margin-bottom:35px;
+}
+
+/* ===========================
+ Cards
+=========================== */
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:25px;
+}
+
+.card{
+  background:white;
+  border-radius:15px;
+  padding:30px;
+  text-align:center;
+  box-shadow:0 8px 20px rgba(0,0,0,.08);
+  transition:.3s;
+}
+
+.card:hover{
+  transform:translateY(-8px);
+}
+
+.card h2{
+  color:#1976d2;
+  font-size:56px;
+  margin-bottom:10px;
+}
+
+.card p{
+  font-size:20px;
+  color:#444;
+  font-weight:bold;
+}
+
+/* ===========================
+ Table
+=========================== */
+
+.table-box{
+  margin-top:40px;
+  background:white;
+  border-radius:15px;
+  padding:30px;
+  box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.table-box h2{
+  text-align:center;
+  color:#1e3a8a;
+  margin-bottom:20px;
+  font-size:40px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+table th{
+  background:#1976d2;
+  color:white;
+  padding:18px;
+  font-size:20px;
+}
+
+table td{
+  padding:18px;
+  text-align:center;
+  border-bottom:1px solid #ddd;
+  font-size:17px;
+}
+
+table tr:hover{
+  background:#f5f9ff;
+}
+
+/* ===========================
+ Activity
+=========================== */
+
+.activity{
+  margin-top:40px;
+  background:white;
+  border-radius:15px;
+  padding:30px;
+  box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.activity h2{
+  color:#1e3a8a;
+  margin-bottom:20px;
+  text-align:center;
+  font-size:38px;
+}
+
+.activity ul{
+  list-style:none;
+}
+
+.activity li{
+  padding:15px;
+  border-bottom:1px solid #eee;
+  font-size:18px;
+  transition:.3s;
+}
+
+.activity li:hover{
+  background:#f4f9ff;
+}
+
+/* ===========================
+ Responsive
+=========================== */
+
+@media(max-width:1000px){
+
+  .dashboard-body{
+      flex-direction:column;
+  }
+
+  .sidebar{
+      width:100%;
+      min-height:auto;
+  }
+
+  .cards{
+      grid-template-columns:repeat(2,1fr);
+  }
+
+  .content h1{
+      font-size:50px;
+  }
+
+}
+
+@media(max-width:700px){
+
+  .topbar{
+      flex-direction:column;
+      height:auto;
+      padding:20px;
+      gap:20px;
+  }
+
+  .top-links{
+      flex-wrap:wrap;
+      justify-content:center;
+  }
+
+  .cards{
+      grid-template-columns:1fr;
+  }
+
+  .content h1{
+      font-size:40px;
+  }
+
+}

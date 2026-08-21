@@ -1,0 +1,155 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Body */
+body {
+    background: #f4f6fb;
+}
+
+/* Home Container */
+.home {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a, #2563eb, #38bdf8);
+    color: white;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 60px;
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(10px);
+}
+
+.navbar h2 {
+    color: white;
+    font-size: 28px;
+}
+
+/* Navigation */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.nav-links a:hover {
+    color: #ffd700;
+}
+
+/* Login Button */
+.login {
+    background: white;
+    color: #0f172a !important;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login:hover {
+    background: #e5e5e5;
+}
+
+/* Register Button */
+.register {
+    background: #f59e0b;
+    color: white !important;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register:hover {
+    background: #d97706;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 120px 30px;
+}
+
+.hero h1 {
+    font-size: 58px;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    font-size: 22px;
+    max-width: 850px;
+    margin: auto;
+    line-height: 1.8;
+}
+
+/* Buttons Container */
+.buttons {
+    margin-top: 45px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Get Started Button */
+.hero-btn {
+    background: #22c55e;
+    color: white;
+    padding: 15px 35px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.hero-btn:hover {
+    background: #16a34a;
+    transform: translateY(-3px);
+}
+
+/* Join Now Button */
+.hero-btn2 {
+    background: #f59e0b;
+    color: white;
+    padding: 15px 35px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.hero-btn2:hover {
+    background: #d97706;
+    transform: translateY(-3px);
+}
+
+/* Dashboard Button */
+.hero-btn3 {
+    background: #2563eb;
+    color: white;
+    padding: 15px 35px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.hero-btn3:hover {
+    background: #1d4ed8;
+    transform: translateY(-3px);
+}

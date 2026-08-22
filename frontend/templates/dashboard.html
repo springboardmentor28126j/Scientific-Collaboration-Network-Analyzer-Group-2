@@ -2,158 +2,26 @@
 {% block title %}Dashboard — SCNA{% endblock %}
 {% block content %}
 <div class="container wide">
+  <h1>Welcome, {{ user.email }}</h1>
+  <p style="color: var(--muted)">Role: {{ user.role }}</p>
 
-  <div class="dashboard-header">
-    <div class="profile-avatar">{{ user.email[0]|upper }}</div>
-    <div>
-      <h1>Welcome, {{ user.email }}</h1>
-      <span class="pill {{ role_pill_class }}">{{ role_label }}</span>
-    </div>
+  <div class="profile-field">
+    <span class="k">Publications</span>
+    <span class="v">Coming in Milestone 2</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Projects</span>
+    <span class="v">Coming in Milestone 3</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Conferences</span>
+    <span class="v">Coming in Milestone 2</span>
+  </div>
+  <div class="profile-field">
+    <span class="k">Collaborators</span>
+    <span class="v">Coming in Milestone 3</span>
   </div>
 
-  {% if role == "reviewer" %}
-  {# ---------------- Reviewer dashboard ---------------- #}
-  <div class="hero-metric">
-    <div>
-      <div class="label">PENDING REVIEWS</div>
-      <div class="value">{{ pending_review_count }}</div>
-      <div class="muted-text">Submissions waiting on your decision</div>
-    </div>
-    <a href="{{ url_for('review_queue') }}" class="btn-inline btn-teal" style="margin:0;">Go to Review Queue &rarr;</a>
-  </div>
-
-  {% if pending_review_preview %}
-  <h2 style="font-size:15px;">Waiting the longest</h2>
-  <div class="card-list" style="margin-bottom:24px;">
-    {% for pub in pending_review_preview %}
-    <div class="item-card pub">
-      <div>
-        <p class="item-title">{{ pub.title }}</p>
-        <div class="item-sub">
-          {{ pub.venue or '' }}{% if pub.venue and pub.year %} &middot; {% endif %}{{ pub.year or '' }}
-        </div>
-      </div>
-      <div class="item-actions">
-        <a href="{{ url_for('review_queue') }}" class="link-edit">Review &rarr;</a>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  {% elif role == "system_admin" %}
-  {# ---------------- System Admin dashboard ---------------- #}
-  <div class="metric-grid">
-    <div class="metric-card">
-      <div class="label">TOTAL USERS</div>
-      <div class="value">{{ admin_stats.total_users if admin_stats else "—" }}</div>
-      <a href="{{ url_for('admin_users') }}" class="view-link">Manage users &rarr;</a>
-    </div>
-    <div class="metric-card">
-      <div class="label">ACTIVE USERS</div>
-      <div class="value">{{ admin_stats.active_users if admin_stats else "—" }}</div>
-      <div class="muted-text">{{ admin_stats.inactive_users if admin_stats else 0 }} inactive</div>
-    </div>
-    <div class="metric-card muted">
-      <div class="label">INSTITUTIONS</div>
-      <div class="value">{{ admin_stats.total_institutions if admin_stats and admin_stats.total_institutions is not none else "—" }}</div>
-      <a href="{{ url_for('institution') }}" class="view-link">View institutions &rarr;</a>
-    </div>
-    <div class="metric-card muted">
-      <div class="label">CONFERENCES</div>
-      <div class="value">{{ admin_stats.total_conferences if admin_stats and admin_stats.total_conferences is not none else "—" }}</div>
-      <a href="{{ url_for('conferences') }}" class="view-link">View conferences &rarr;</a>
-    </div>
-    <div class="metric-card muted">
-      <div class="label">PUBLICATIONS</div>
-      <div class="value">{{ admin_stats.total_publications if admin_stats and admin_stats.total_publications is not none else "—" }}</div>
-      <a href="{{ url_for('publications') }}" class="view-link">View publications &rarr;</a>
-    </div>
-  </div>
-
-  {% if admin_stats %}
-  <h2 style="font-size:15px;">Users by role</h2>
-  <div class="empty-state" style="text-align:left; padding:16px 20px; margin-bottom:20px;">
-    {% set role_colors = {"researcher": "#534AB7", "institution_admin": "#0F6E56", "reviewer": "#2f6fed", "system_admin": "#b4842e"} %}
-    {% set role_names = {"researcher": "Researcher", "institution_admin": "Institution Admin", "reviewer": "Reviewer", "system_admin": "System Admin"} %}
-    {% for key, name in role_names.items() %}
-    {% set count = admin_stats.role_counts.get(key, 0) %}
-    {% set pct = (count / admin_stats.total_users * 100) if admin_stats.total_users else 0 %}
-    <div class="role-bar-row">
-      <div class="role-bar-label">{{ name }}</div>
-      <div class="role-bar-track"><div class="role-bar-fill" style="width:{{ pct }}%; background:{{ role_colors[key] }};"></div></div>
-      <div class="role-bar-count">{{ count }}</div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <div class="toolbar">
-    <a href="{{ url_for('admin_users') }}" class="btn-inline btn-purple">Manage Users</a>
-    <a href="{{ url_for('institution') }}" class="btn-inline btn-teal">Manage Institutions</a>
-  </div>
-
-  {% else %}
-  {# ---------------- Researcher / Institution Admin dashboard ---------------- #}
-  <div class="metric-grid">
-    <div class="metric-card">
-      <div class="label">PUBLICATIONS</div>
-      <div class="value">{{ publication_count }}</div>
-      <a href="{{ url_for('publications') }}" class="view-link">View all &rarr;</a>
-    </div>
-    <div class="metric-card">
-      <div class="label">CONFERENCES</div>
-      <div class="value">{{ conference_count }}</div>
-      <a href="{{ url_for('conferences') }}" class="view-link">View all &rarr;</a>
-    </div>
-    {% if role != 'institution_admin' %}
-    <div class="metric-card">
-      <div class="label">COLLABORATORS</div>
-      <div class="value">{{ collaborator_count }}</div>
-      <a href="{{ url_for('collaborations') }}" class="view-link">View all &rarr;</a>
-    </div>
-    <div class="metric-card">
-      <div class="label">PENDING REQUESTS</div>
-      <div class="value">{{ pending_request_count }}</div>
-      <a href="{{ url_for('collaborations') }}" class="view-link">View all &rarr;</a>
-    </div>
-    {% else %}
-    <div class="metric-card">
-      <div class="label">RESEARCHERS &amp; REVIEWERS</div>
-      <div class="value">{{ researcher_count }}</div>
-    </div>
-    <div class="metric-card">
-      <div class="label">PROJECTS</div>
-      <div class="value">{{ project_count }}</div>
-      <a href="{{ url_for('projects') }}" class="view-link">View all &rarr;</a>
-    </div>
-    {% endif %}
-  </div>
-
-  {% if recent_publication %}
-  <div class="container wide" style="margin:0 0 20px; padding:18px 20px;">
-    <div style="font-size:14px; font-weight:700; margin-bottom:10px;">Recent publication</div>
-    <div style="font-size:13px; font-weight:600;">{{ recent_publication.title }}</div>
-    <div style="font-size:12px; color:var(--muted); margin-top:3px;">
-      {{ recent_publication.venue or '' }}{% if recent_publication.venue and recent_publication.year %} &middot; {% endif %}{{ recent_publication.year or '' }}
-    </div>
-  </div>
-  {% endif %}
-
-  <div class="toolbar">
-    <a href="{{ url_for('publications') }}" class="btn-inline btn-purple">Publications</a>
-    <a href="{{ url_for('conferences') }}" class="btn-inline btn-teal">Conferences</a>
-    {% if role != 'institution_admin' %}
-    <a href="{{ url_for('collaborations') }}" class="btn-inline" style="background:var(--accent);">Collaborations</a>
-    {% endif %}
-    {% if role != 'institution_admin' %}
-    <a href="{{ url_for('citations') }}" style="background:var(--accent);" class="btn-inline">Citations</a>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% if role != "reviewer" %}
   <a class="muted-link" href="{{ url_for('profile') }}">Go to your researcher profile &rarr;</a>
-  {% endif %}
 </div>
 {% endblock %}

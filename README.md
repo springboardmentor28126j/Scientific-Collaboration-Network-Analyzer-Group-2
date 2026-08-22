@@ -1,1 +1,2 @@
-# Scientific-Collaboration-Network-Analyzer-Group-2
+# internship
+Ganusala Indhu Vadana ,Yellala Premkumar , Harikumar B , Eswar K , Vishal Kumar

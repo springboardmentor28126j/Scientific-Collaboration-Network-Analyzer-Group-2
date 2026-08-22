@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Citation Insights — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Citation Insights</h1>
+      <div class="section-sub">Who and what is most cited, and how the citation network connects</div>
+    </div>
+    {% if current_role not in ['system_admin', 'institution_admin'] %}
+    <a href="{{ url_for('citations') }}" class="btn-inline btn-purple">Manage Citations</a>
+    {% endif %}
+  </div>
+
+  <h2 style="font-size:15px;">Top cited papers</h2>
+  {% if top_papers %}
+  <div class="card-list" style="margin-bottom:24px;">
+    {% for p in top_papers %}
+    <div class="item-card pub">
+      <div>
+        <p class="item-title">{{ p.title }}{% if p.year %} <span style="font-weight:400; color:var(--muted);">({{ p.year }})</span>{% endif %}</p>
+      </div>
+      <div class="item-actions"><span class="pill pill-purple">{{ p.citation_count }} citation{{ '' if p.citation_count == 1 else 's' }}</span></div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state" style="margin-bottom:24px;">No citations recorded yet.</div>
+  {% endif %}
+
+  <div class="field-row" style="align-items:start;">
+    <div>
+      <h2 style="font-size:15px;">Top cited authors</h2>
+      {% if top_authors %}
+      <table class="admin-table">
+        <thead><tr><th>Researcher</th><th>Citations</th></tr></thead>
+        <tbody>
+          {% for a in top_authors %}
+          <tr><td>{{ a.email }}</td><td>{{ a.citation_count }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">No data yet.</div>
+      {% endif %}
+    </div>
+    <div>
+      <h2 style="font-size:15px;">Top cited institutions</h2>
+      {% if top_institutions %}
+      <table class="admin-table">
+        <thead><tr><th>Institution</th><th>Citations</th></tr></thead>
+        <tbody>
+          {% for i in top_institutions %}
+          <tr><td>{{ i.name }}</td><td>{{ i.citation_count }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">No data yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 style="font-size:15px; margin-top:28px;">Citation network</h2>
+  {% if network.nodes %}
+  <p style="font-size:13px; color:var(--muted); margin-top:-6px;">Click a node to see it highlighted with its citations. Drag to explore, scroll to zoom.</p>
+  <div id="citation-network" style="height:520px; border:1px solid var(--border); border-radius:10px; background:#fff;"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/10.1.0/standalone/umd/vis-network.min.js"></script>
+  <script>
+    const graphData = {{ network | tojson }};
+    const nodes = new vis.DataSet(graphData.nodes.map(function (n) {
+      return {
+        id: n.id,
+        label: n.label.length > 40 ? n.label.slice(0, 40) + "…" : n.label,
+        title: n.label + (n.year ? " (" + n.year + ")" : ""),
+        color: n.id < 0 ? { background: "#DCDAD3", border: "#b4b2a9" } : { background: "#CECBF6", border: "#534AB7" },
+        shape: "dot",
+        size: n.id < 0 ? 10 : 16
+      };
+    }));
+    const edges = new vis.DataSet(graphData.edges.map(function (e, i) {
+      return { id: i, from: e.source, to: e.target, arrows: "to", color: { color: "#b7b2e6" } };
+    }));
+    const container = document.getElementById("citation-network");
+    const network = new vis.Network(container, { nodes: nodes, edges: edges }, {
+      physics: { stabilization: true, barnesHut: { gravitationalConstant: -4000, springLength: 140 } },
+      interaction: { hover: true },
+      edges: { smooth: { type: "continuous" } }
+    });
+  </script>
+  {% else %}
+  <div class="empty-state">No citations recorded yet, so there's nothing to visualize.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Projects — SCNA{% endblock %}
+{% block content %}
+<div class="container wide">
+  <div class="section-header">
+    <div>
+      <h1>Research Projects</h1>
+      <div class="section-sub">{{ total_count }} project{{ '' if total_count == 1 else 's' }}</div>
+    </div>
+    <div class="toolbar">
+      <form method="GET" action="{{ url_for('projects') }}" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input type="text" name="q" placeholder="Search title" value="{{ request.args.get('q', '') }}">
+        <select name="status_filter">
+          <option value="">All statuses</option>
+          <option value="planned" {% if request.args.get('status_filter') == 'planned' %}selected{% endif %}>Planned</option>
+          <option value="ongoing" {% if request.args.get('status_filter') == 'ongoing' %}selected{% endif %}>Ongoing</option>
+          <option value="completed" {% if request.args.get('status_filter') == 'completed' %}selected{% endif %}>Completed</option>
+          <option value="cancelled" {% if request.args.get('status_filter') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+        <select name="sort_by">
+          <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Sort: Newest</option>
+          <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort: Title</option>
+          <option value="status" {% if sort_by == 'status' %}selected{% endif %}>Sort: Status</option>
+        </select>
+        <select name="per_page">
+          {% for n in range(1, 11) %}
+          <option value="{{ n }}" {% if pagination.per_page == n %}selected{% endif %}>{{ n }} / page</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0;">Apply</button>
+      </form>
+      {% if current_role != 'institution_admin' %}
+      <a href="{{ url_for('add_project') }}" class="btn-inline btn-teal">+ New project</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if projects %}
+  <div class="card-list">
+    {% for p in projects %}
+    <div class="item-card conf">
+      <div>
+        <div>
+          <span class="pill {{ status_pill_class.get(p.status, 'pill-gray') }}">{{ p.status.replace('_', ' ') | capitalize }}</span>
+          {% if p.institution_id %}<span class="pill pill-blue">Institution #{{ p.institution_id }}</span>{% endif %}
+        </div>
+        <p class="item-title">{{ p.title }}</p>
+        <div class="item-sub">{{ p.members | length }} member{{ '' if p.members | length == 1 else 's' }}{% if p.start_date %} &middot; starts {{ p.start_date }}{% endif %}</div>
+        <a href="{{ url_for('project_detail', project_id=p.id) }}" class="item-link">View details &amp; team &rarr;</a>
+      </div>
+      <div class="item-actions">
+        <a href="{{ url_for('project_detail', project_id=p.id) }}" class="link-edit">View</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% include "_pagination.html" %}
+  {% else %}
+  <div class="empty-state">{% if current_role == 'institution_admin' %}No projects yet from researchers at your institution.{% else %}No projects yet. Start your first one to get a team assembled.{% endif %}</div>
+  {% endif %}
+</div>
+{% endblock %}

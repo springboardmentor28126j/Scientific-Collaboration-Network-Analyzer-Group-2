@@ -413,6 +413,8 @@ def dashboard():
     recent_publication = None
     collaborator_count = 0
     pending_request_count = 0
+    researcher_count = 0
+    project_count = 0
 
     if researcher_id:
         pubs = _safe_get("/publications", {"author_id": researcher_id}) or []
@@ -432,6 +434,21 @@ def dashboard():
         )
         if incoming:
             pending_request_count = incoming.get("total", 0)
+
+    if role == "institution_admin":
+        # Institution Admin has no researcher_id, so none of the
+        # researcher-scoped calls above ran -- pull the same
+        # institution-scoped numbers the Reports page already shows via
+        # /reports/summary (publications by author's institution,
+        # conferences hosted-or-attended by the institution's
+        # researchers, researchers+reviewers at the institution, and
+        # projects with an accepted member from the institution).
+        summary = _safe_get("/reports/summary")
+        if summary:
+            publication_count = summary.get("publication_count", 0)
+            conference_count = summary.get("conference_count") or 0
+            researcher_count = summary.get("researcher_count") or 0
+            project_count = summary.get("project_count", 0)
 
     admin_stats = None
     if role == "system_admin":
@@ -455,6 +472,8 @@ def dashboard():
         recent_publication=recent_publication,
         collaborator_count=collaborator_count,
         pending_request_count=pending_request_count,
+        researcher_count=researcher_count,
+        project_count=project_count,
         admin_stats=admin_stats,
         pending_review_count=pending_review_count,
         pending_review_preview=pending_review_preview,
@@ -799,6 +818,10 @@ def add_publication():
     if not session.get("token"):
         return redirect(url_for("login"))
 
+    if _current_role() == "institution_admin":
+        flash("Institution Admins cannot add publications.", "error")
+        return redirect(url_for("publications"))
+
     if request.method == "POST":
         payload = {
             "title": request.form.get("title", ""),
@@ -1032,7 +1055,7 @@ def citations():
     if not session.get("token"):
         return redirect(url_for("login"))
 
-    if _current_role() in ("system_admin", "reviewer"):
+    if _current_role() in ("system_admin", "reviewer", "institution_admin"):
         flash("Citations are only available to publication authors.", "error")
         return redirect(url_for("dashboard"))
 
@@ -1160,6 +1183,10 @@ def citation_insights():
 def collaborations():
     if not session.get("token"):
         return redirect(url_for("login"))
+
+    if _current_role() == "institution_admin":
+        flash("Collaborations are only available to researchers.", "error")
+        return redirect(url_for("dashboard"))
 
     def _get(path, params=None):
         """Returns (json_or_None, status_code, detail). Only a real 401 means

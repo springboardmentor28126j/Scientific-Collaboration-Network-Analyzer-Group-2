@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -31,6 +31,7 @@ def _require_reviewer_user(db: Session, reviewer_user_id: int) -> User:
 @router.post("", response_model=ReviewerAssignmentOut, status_code=status.HTTP_201_CREATED)
 def create_reviewer_assignment(
     payload: ReviewerAssignmentCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ReviewerAssignment:
@@ -90,7 +91,8 @@ def create_reviewer_assignment(
         message=f"You were assigned as a reviewer for {scope_desc}",
         link_url=None,
     )
-    send_email(
+    background_tasks.add_task(
+        send_email,
         reviewer.email,
         "New reviewer assignment",
         f"You were assigned as a reviewer for {scope_desc}. Log in to SCNA to see the review queue.",

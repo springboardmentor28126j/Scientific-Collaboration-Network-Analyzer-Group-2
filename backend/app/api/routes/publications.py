@@ -1,7 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
@@ -55,7 +55,11 @@ def _get_current_researcher(db: Session, current_user: User) -> Researcher:
 def _get_publication_or_404(db: Session, publication_id: int) -> Publication:
     publication = (
         db.query(Publication)
-        .options(selectinload(Publication.authors))
+        .options(
+            selectinload(Publication.authors)
+            .selectinload(PublicationAuthor.researcher)
+            .selectinload(Researcher.user)
+        )
         .filter(Publication.id == publication_id)
         .first()
     )
@@ -174,7 +178,11 @@ def list_publications(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[Publication]:
-    query = db.query(Publication).options(selectinload(Publication.authors))
+    query = db.query(Publication).options(
+        selectinload(Publication.authors)
+        .selectinload(PublicationAuthor.researcher)
+        .selectinload(Researcher.user)
+    )
 
     if current_user.role == UserRole.INSTITUTION_ADMIN:
         # Institution Admin only ever sees their own institution's
@@ -442,6 +450,7 @@ async def upload_publication_file(
 def review_publication(
     publication_id: int,
     payload: PublicationReviewDecision,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Publication:
@@ -497,7 +506,8 @@ def review_publication(
             link_url="/publications",
         )
         if author_researcher.user:
-            send_email(
+            background_tasks.add_task(
+                send_email,
                 author_researcher.user.email,
                 "Publication review update",
                 f"Your publication '{publication.title}' was {decision_text}.",

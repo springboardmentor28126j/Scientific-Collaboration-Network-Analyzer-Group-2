@@ -15,13 +15,13 @@
         {% if current_role not in ['reviewer', 'system_admin'] %}
         <a href="{{ url_for('publications') }}">Publications</a>
         {% endif %}
-        {% if current_role not in ['system_admin', 'reviewer'] %}
+        {% if current_role not in ['system_admin', 'reviewer', 'institution_admin'] %}
         <a href="{{ url_for('citations') }}">Citations</a>
         {% endif %}
         {% if current_role != 'reviewer' %}
         <a href="{{ url_for('citation_insights') }}">Citation Insights</a>
         {% endif %}
-        {% if current_role not in ['reviewer', 'system_admin'] %}
+        {% if current_role not in ['reviewer', 'system_admin', 'institution_admin'] %}
         <a href="{{ url_for('collaborations') }}">Collaborations</a>
         {% endif %}
         {% if current_role != 'reviewer' %}

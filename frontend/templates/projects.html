@@ -29,7 +29,9 @@
         </select>
         <button type="submit" class="btn-inline" style="background:#fff; color:var(--muted); border:1px solid var(--border); margin:0;">Apply</button>
       </form>
+      {% if current_role != 'institution_admin' %}
       <a href="{{ url_for('add_project') }}" class="btn-inline btn-teal">+ New project</a>
+      {% endif %}
     </div>
   </div>
 
@@ -54,7 +56,7 @@
   </div>
   {% include "_pagination.html" %}
   {% else %}
-  <div class="empty-state">No projects yet. Start your first one to get a team assembled.</div>
+  <div class="empty-state">{% if current_role == 'institution_admin' %}No projects yet from researchers at your institution.{% else %}No projects yet. Start your first one to get a team assembled.{% endif %}</div>
   {% endif %}
 </div>
 {% endblock %}

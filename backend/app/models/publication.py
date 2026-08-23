@@ -82,3 +82,13 @@ class PublicationAuthor(Base):
 
     publication: Mapped["Publication"] = relationship("Publication", back_populates="authors")
     researcher: Mapped["Researcher"] = relationship("Researcher")
+
+    @property
+    def email(self) -> str | None:
+        """The author's email, via researcher -> user. Relies on the caller
+        having eager-loaded researcher and researcher.user (see
+        api/routes/publications.py); returns None rather than lazy-loading
+        if they aren't, so this never becomes its own N+1 source."""
+        if self.researcher is not None and self.researcher.user is not None:
+            return self.researcher.user.email
+        return None

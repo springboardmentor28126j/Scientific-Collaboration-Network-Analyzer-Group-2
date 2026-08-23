@@ -220,3 +220,6 @@ __marimo__/
 *.db
 .thrilia/
 build_log.txt
+
+# Runtime-uploaded publication files (not source-controlled)
+backend/uploads/

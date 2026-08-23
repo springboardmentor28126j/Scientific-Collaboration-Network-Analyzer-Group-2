@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, selectinload
 
@@ -244,6 +244,7 @@ def _request_with_context(db: Session, request_id: int) -> CollaborationRequest 
 )
 def send_collaboration_request(
     payload: CollaborationRequestCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CollaborationRequestOut:
@@ -282,7 +283,8 @@ def send_collaboration_request(
         link_url="/collaborations",
     )
     if addressee.user:
-        send_email(
+        background_tasks.add_task(
+            send_email,
             addressee.user.email,
             "New collaboration request",
             f"{current_user.email} wants to collaborate with you. "
@@ -333,6 +335,7 @@ def list_collaboration_requests(
 def respond_to_collaboration_request(
     request_id: int,
     payload: CollaborationRequestRespond,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CollaborationRequestOut:
@@ -390,7 +393,8 @@ def respond_to_collaboration_request(
             link_url="/collaborations",
         )
         if req.requester.user:
-            send_email(
+            background_tasks.add_task(
+                send_email,
                 req.requester.user.email,
                 "Collaboration request accepted",
                 "Your collaboration request was accepted. Log in to SCNA to see the details.",
@@ -404,7 +408,8 @@ def respond_to_collaboration_request(
             link_url="/collaborations",
         )
         if req.requester.user:
-            send_email(
+            background_tasks.add_task(
+                send_email,
                 req.requester.user.email,
                 "Collaboration request declined",
                 "Your collaboration request was declined.",

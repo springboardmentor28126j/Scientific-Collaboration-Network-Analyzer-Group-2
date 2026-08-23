@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Form, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -20,7 +20,7 @@ from app.schemas.user import Token, UserCreate, UserOut
 router = APIRouter()
 
 
-def _send_mfa_otp_email(db: Session, user: User) -> AuthToken:
+def _send_mfa_otp_email(db: Session, user: User, background_tasks: BackgroundTasks) -> AuthToken:
     """Generates + persists a 6-digit OTP for user and emails it. Callers
     are responsible for committing (this only adds+commits the token row
     itself, matching the pattern already used by forgot_password() below
@@ -28,7 +28,8 @@ def _send_mfa_otp_email(db: Session, user: User) -> AuthToken:
     otp = AuthToken.generate_otp(user.id)
     db.add(otp)
     db.commit()
-    send_email(
+    background_tasks.add_task(
+        send_email,
         to_email=user.email,
         subject="Your SCNA login code",
         body=(
@@ -79,6 +80,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
 
 @router.post("/login", response_model=Token)
 def login(
+    background_tasks: BackgroundTasks,
     form_data: OAuth2PasswordRequestForm = Depends(),
     g_recaptcha_response: str = Form(default=""),
     db: Session = Depends(get_db),
@@ -106,7 +108,7 @@ def login(
         )
 
     if user.mfa_enabled:
-        _send_mfa_otp_email(db, user)
+        _send_mfa_otp_email(db, user, background_tasks)
         pre_auth_token = create_access_token(subject=user.email, expires_minutes=10)
         return {"access_token": "", "token_type": "bearer", "mfa_required": True, "pre_auth_token": pre_auth_token}
 
@@ -144,7 +146,9 @@ def verify_mfa_login(payload: MfaVerifyRequest, db: Session = Depends(get_db)) -
 
 
 @router.post("/mfa/resend-otp")
-def resend_mfa_otp(payload: MfaResendRequest, db: Session = Depends(get_db)) -> dict:
+def resend_mfa_otp(
+    payload: MfaResendRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+) -> dict:
     email = decode_access_token(payload.pre_auth_token)
     if not email:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired, please log in again")
@@ -152,7 +156,7 @@ def resend_mfa_otp(payload: MfaResendRequest, db: Session = Depends(get_db)) -> 
     if not user or not user.mfa_enabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled for this account")
 
-    _send_mfa_otp_email(db, user)
+    _send_mfa_otp_email(db, user, background_tasks)
     return {"sent": True}
 
 
@@ -178,7 +182,9 @@ def read_current_user(current_user: User = Depends(get_current_user)) -> User:
 
 
 @router.post("/forgot-password")
-def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)) -> dict:
+def forgot_password(
+    payload: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+) -> dict:
     # Always return the same generic message whether or not the account
     # exists, so this endpoint can't be used to enumerate registered
     # emails. The actual token + email only get generated for a real,
@@ -190,7 +196,8 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
         db.commit()
 
         link = f"{settings.FRONTEND_URL}/reset-password?token={token.token}"
-        send_email(
+        background_tasks.add_task(
+            send_email,
             to_email=user.email,
             subject="Reset your SCNA password",
             body=(

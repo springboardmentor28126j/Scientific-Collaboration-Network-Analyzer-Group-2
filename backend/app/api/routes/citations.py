@@ -240,7 +240,12 @@ def top_cited_authors(
         .join(User, User.id == Researcher.user_id)
     )
 
-    if current_user.role != UserRole.SYSTEM_ADMIN:
+    if current_user.role == UserRole.INSTITUTION_ADMIN:
+        institution_id = _institution_id_for_admin(db, current_user)
+        if institution_id is None:
+            return []
+        query = query.filter(Researcher.institution_id == institution_id)
+    elif current_user.role != UserRole.SYSTEM_ADMIN:
         researcher = _get_researcher_or_none(db, current_user)
         if researcher is None:
             return []
@@ -281,7 +286,12 @@ def top_cited_institutions(
         .join(Citation, Citation.cited_publication_id == PublicationAuthor.publication_id)
     )
 
-    if current_user.role != UserRole.SYSTEM_ADMIN:
+    if current_user.role == UserRole.INSTITUTION_ADMIN:
+        institution_id = _institution_id_for_admin(db, current_user)
+        if institution_id is None:
+            return []
+        query = query.filter(Institution.id == institution_id)
+    elif current_user.role != UserRole.SYSTEM_ADMIN:
         researcher = _get_researcher_or_none(db, current_user)
         if researcher is None or researcher.institution_id is None:
             return []
@@ -322,7 +332,24 @@ def citation_network(
         selectinload(Citation.cited_publication).selectinload(Publication.authors),
     )
 
-    if current_user.role != UserRole.SYSTEM_ADMIN:
+    if current_user.role == UserRole.INSTITUTION_ADMIN:
+        institution_id = _institution_id_for_admin(db, current_user)
+        if institution_id is None:
+            return CitationNetworkOut(nodes=[], edges=[])
+        own_publication_ids = {
+            row.publication_id
+            for row in db.query(PublicationAuthor.publication_id)
+            .join(Researcher, Researcher.id == PublicationAuthor.researcher_id)
+            .filter(Researcher.institution_id == institution_id)
+            .all()
+        }
+        if not own_publication_ids:
+            return CitationNetworkOut(nodes=[], edges=[])
+        query = query.filter(
+            Citation.citing_publication_id.in_(own_publication_ids)
+            | Citation.cited_publication_id.in_(own_publication_ids)
+        )
+    elif current_user.role != UserRole.SYSTEM_ADMIN:
         researcher = _get_researcher_or_none(db, current_user)
         if researcher is None:
             return CitationNetworkOut(nodes=[], edges=[])
@@ -346,6 +373,25 @@ def citation_network(
         )
     citations = query.all()
 
+    # Batch-resolve institution_id for every author referenced across all
+    # publications in this result set, in a single round-trip, instead of
+    # querying Researcher once per publication node below (N+1 -- was the
+    # cause of Citation Insights timing out on the platform-wide graph).
+    all_researcher_ids: set[int] = set()
+    for citation in citations:
+        all_researcher_ids.update(a.researcher_id for a in citation.citing_publication.authors)
+        if citation.cited_publication is not None:
+            all_researcher_ids.update(a.researcher_id for a in citation.cited_publication.authors)
+
+    institution_by_researcher_id: dict[int, int | None] = {}
+    if all_researcher_ids:
+        institution_by_researcher_id = {
+            row.id: row.institution_id
+            for row in db.query(Researcher.id, Researcher.institution_id)
+            .filter(Researcher.id.in_(all_researcher_ids))
+            .all()
+        }
+
     nodes: dict[int, CitationNetworkNode] = {}
 
     def _add_publication_node(pub: Publication) -> None:
@@ -354,10 +400,7 @@ def citation_network(
         researcher_ids = [a.researcher_id for a in pub.authors]
         institution_id = None
         if pub.authors:
-            first_researcher = (
-                db.query(Researcher).filter(Researcher.id == pub.authors[0].researcher_id).first()
-            )
-            institution_id = first_researcher.institution_id if first_researcher else None
+            institution_id = institution_by_researcher_id.get(pub.authors[0].researcher_id)
         nodes[pub.id] = CitationNetworkNode(
             id=pub.id,
             label=pub.title,

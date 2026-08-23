@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
@@ -8,6 +8,7 @@ from app.core.audit import log_audit
 from app.core.email import send_email
 from app.core.notifications import create_notification
 from app.db.session import get_db
+from app.models.institution import Institution
 from app.models.project import Project, ProjectMember, ProjectMemberStatus, ProjectRole
 from app.models.researcher import Researcher
 from app.models.user import User, UserRole
@@ -30,6 +31,16 @@ def _get_current_researcher(db: Session, current_user: User) -> Researcher:
             detail="Create a researcher profile before creating or joining projects",
         )
     return researcher
+
+
+def _institution_id_for_admin(db: Session, current_user: User) -> int | None:
+    """The single institution an Institution Admin manages, or None if
+    they don't manage one yet. Duplicated locally per this codebase's
+    existing convention rather than cross-importing between route files."""
+    institution = (
+        db.query(Institution).filter(Institution.admin_user_id == current_user.id).first()
+    )
+    return institution.id if institution else None
 
 
 def _get_project_or_404(db: Session, project_id: int) -> Project:
@@ -132,6 +143,25 @@ def list_projects(
             query = query.join(ProjectMember).filter(
                 ProjectMember.researcher_id == researcher_id
             )
+    elif current_user.role == UserRole.INSTITUTION_ADMIN:
+        # Institution Admin sees every project that has at least one
+        # ACCEPTED member (or lead, who is always ACCEPTED) belonging to
+        # their own institution -- any client-supplied institution_id /
+        # researcher_id is ignored so they can't browse other
+        # institutions' project lists.
+        admin_institution_id = _institution_id_for_admin(db, current_user)
+        if admin_institution_id is None:
+            return []
+        institution_project_ids = (
+            db.query(ProjectMember.project_id)
+            .join(Researcher, Researcher.id == ProjectMember.researcher_id)
+            .filter(
+                ProjectMember.status == ProjectMemberStatus.ACCEPTED,
+                Researcher.institution_id == admin_institution_id,
+            )
+            .subquery()
+        )
+        query = query.filter(Project.id.in_(institution_project_ids))
     else:
         # Every other role only ever sees projects they're an ACCEPTED
         # member (or lead, who is always ACCEPTED) of -- any client-
@@ -154,6 +184,34 @@ def list_projects(
         query = query.filter(Project.title.ilike(f"%{q}%"))
 
     return query.order_by(Project.created_at.desc()).all()
+
+
+@router.get("/invites/pending", response_model=list[ProjectOut])
+def list_my_pending_invites(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[Project]:
+    """Projects where the current researcher has a PENDING ProjectMember
+    invite awaiting their accept/decline. Used by the dashboard's
+    'Pending Requests' count in addition to incoming collaboration
+    requests. Must come before GET /{project_id} in this file for the
+    same routing reason as other named sub-paths in this module."""
+    researcher = _get_current_researcher(db, current_user)
+    my_pending_project_ids = (
+        db.query(ProjectMember.project_id)
+        .filter(
+            ProjectMember.researcher_id == researcher.id,
+            ProjectMember.status == ProjectMemberStatus.PENDING,
+        )
+        .subquery()
+    )
+    return (
+        db.query(Project)
+        .options(selectinload(Project.members))
+        .filter(Project.id.in_(my_pending_project_ids))
+        .order_by(Project.created_at.desc())
+        .all()
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectOut)
@@ -234,6 +292,7 @@ def delete_project(
 def invite_project_member(
     project_id: int,
     payload: ProjectMemberAdd,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Project:
@@ -290,7 +349,8 @@ def invite_project_member(
             message=f"{current_user.email} invited you to join the project '{project.title}'",
             link_url=f"/projects/{project_id}",
         )
-        send_email(
+        background_tasks.add_task(
+            send_email,
             target.user.email,
             f"You've been invited to '{project.title}'",
             f"{current_user.email} invited you to join the project '{project.title}'. "
@@ -304,6 +364,7 @@ def invite_project_member(
 def respond_to_project_invite(
     project_id: int,
     payload: ProjectMemberRespond,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Project:
@@ -355,7 +416,8 @@ def respond_to_project_invite(
             message=f"{current_user.email} {decision_text} your invite to '{project.title}'",
             link_url=f"/projects/{project_id}",
         )
-        send_email(
+        background_tasks.add_task(
+            send_email,
             lead.user.email,
             f"Project invite {decision_text}",
             f"{current_user.email} {decision_text} your invite to '{project.title}'.",

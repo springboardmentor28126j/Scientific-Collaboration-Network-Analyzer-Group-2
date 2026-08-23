@@ -17,7 +17,8 @@ from app.db.session import get_db
 from app.models.collaboration import Collaboration, CollaborationRequest, CollaborationRequestStatus
 from app.models.conference import Conference
 from app.models.institution import Institution
-from app.models.project import Project, ProjectMember, ProjectStatus
+from app.models.participation import ConferenceParticipation
+from app.models.project import Project, ProjectMember, ProjectMemberStatus, ProjectStatus
 from app.models.publication import Publication, PublicationAuthor, PublicationStatus
 from app.models.researcher import Researcher
 from app.models.user import User, UserRole
@@ -77,7 +78,22 @@ def summary_report(
             pub_query = pub_query.join(PublicationAuthor).join(
                 Researcher, Researcher.id == PublicationAuthor.researcher_id
             ).filter(Researcher.institution_id == institution_id)
-            project_query = project_query.filter(Project.institution_id == institution_id)
+            # Projects "belonging to" the institution means any project
+            # with an ACCEPTED member (or lead, always ACCEPTED) from this
+            # institution -- not Project.institution_id, which is just
+            # whichever institution happens to be recorded as the
+            # project's own institution and says nothing about who's
+            # actually on the team (same distinction as conferences:
+            # hosting vs. participating).
+            institution_project_ids = (
+                db.query(ProjectMember.project_id)
+                .join(Researcher, Researcher.id == ProjectMember.researcher_id)
+                .filter(
+                    ProjectMember.status == ProjectMemberStatus.ACCEPTED,
+                    Researcher.institution_id == institution_id,
+                )
+            )
+            project_query = project_query.filter(Project.id.in_(institution_project_ids))
     elif scope == "researcher":
         if researcher_id is None:
             pub_query = pub_query.filter(False)
@@ -114,10 +130,28 @@ def summary_report(
         out.collaboration_count = db.query(Collaboration).count()
     elif scope == "institution" and institution_id is not None:
         out.researcher_count = (
-            db.query(Researcher).filter(Researcher.institution_id == institution_id).count()
+            db.query(Researcher)
+            .join(User, User.id == Researcher.user_id)
+            .filter(
+                Researcher.institution_id == institution_id,
+                User.role.in_([UserRole.RESEARCHER, UserRole.REVIEWER]),
+            )
+            .count()
         )
         out.conference_count = (
-            db.query(Conference).filter(Conference.institution_id == institution_id).count()
+            db.query(Conference)
+            .filter(
+                (Conference.institution_id == institution_id)
+                | (
+                    Conference.id.in_(
+                        db.query(ConferenceParticipation.conference_id)
+                        .join(Researcher, Researcher.id == ConferenceParticipation.researcher_id)
+                        .filter(Researcher.institution_id == institution_id)
+                    )
+                )
+            )
+            .distinct()
+            .count()
         )
     elif scope == "researcher" and researcher_id is not None:
         out.collaboration_count = (
@@ -194,7 +228,23 @@ def projects_report(
 
     base = db.query(Project)
     if scope == "institution":
-        base = base.filter(Project.institution_id == institution_id) if institution_id else base.filter(False)
+        if institution_id is None:
+            base = base.filter(False)
+        else:
+            # Same fix as summary_report(): "belonging to" the
+            # institution means an ACCEPTED member (or lead) from it,
+            # not Project.institution_id (which is just the project's
+            # own recorded institution and says nothing about who's on
+            # the team).
+            institution_project_ids = (
+                db.query(ProjectMember.project_id)
+                .join(Researcher, Researcher.id == ProjectMember.researcher_id)
+                .filter(
+                    ProjectMember.status == ProjectMemberStatus.ACCEPTED,
+                    Researcher.institution_id == institution_id,
+                )
+            )
+            base = base.filter(Project.id.in_(institution_project_ids))
     elif scope == "researcher":
         if researcher_id is None:
             base = base.filter(False)
@@ -285,7 +335,13 @@ def institutions_report(
     rows = []
     for institution in query.all():
         researcher_count = (
-            db.query(Researcher).filter(Researcher.institution_id == institution.id).count()
+            db.query(Researcher)
+            .join(User, User.id == Researcher.user_id)
+            .filter(
+                Researcher.institution_id == institution.id,
+                User.role.in_([UserRole.RESEARCHER, UserRole.REVIEWER]),
+            )
+            .count()
         )
         publication_count = (
             db.query(Publication.id)
@@ -295,8 +351,16 @@ def institutions_report(
             .distinct()
             .count()
         )
+        institution_project_ids = (
+            db.query(ProjectMember.project_id)
+            .join(Researcher, Researcher.id == ProjectMember.researcher_id)
+            .filter(
+                ProjectMember.status == ProjectMemberStatus.ACCEPTED,
+                Researcher.institution_id == institution.id,
+            )
+        )
         project_count = (
-            db.query(Project).filter(Project.institution_id == institution.id).count()
+            db.query(Project).filter(Project.id.in_(institution_project_ids)).count()
         )
         rows.append(
             InstitutionReportRow(

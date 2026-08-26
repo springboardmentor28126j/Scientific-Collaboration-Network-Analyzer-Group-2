@@ -2,7 +2,7 @@
 
 SCNA is a research-management web application for universities, research institutes, publishers, and funding organisations. It centralises researchers, institutions, publications, conferences, projects, citations, collaborations, reports, and role-based workflows in one platform.
 
-The system does **not** use AI analysis. Its analytics are generated from stored research data using database queries, charts, reports, and collaboration-network visualisation.
+The core analytics are generated from stored research data using database queries, charts, reports, and collaboration-network visualisation. It also includes three optional, explainable AI-assisted discovery tools that run on the platform's own data: paper recommendation, collaborator recommendation, and keyword suggestions. They do not make research predictions or send research data to a third-party AI service.
 
 ## Table of contents
 
@@ -38,6 +38,8 @@ The objective is to build a Scientific Collaboration Network Analyzer that enabl
 ## Key features
 
 - JWT login with bcrypt-hashed passwords, confirmation, and strong-password validation.
+- Short-lived, backend-validated CAPTCHA on password login.
+- Optional Google and Microsoft OAuth sign-in for approved accounts.
 - Registration request and administrator approval workflow.
 - Researcher, Institution Admin, Publisher, Reviewer, and System Admin roles.
 - Account-to-researcher/institution workspace assignment.
@@ -53,6 +55,8 @@ The objective is to build a Scientific Collaboration Network Analyzer that enabl
 - Audit log for important system activity.
 - Data-quality checks for incomplete publications/researchers.
 - Search, sorting, filtering, and pagination tools for data tables.
+- AI-assisted paper match scores, collaborator suggestions, and publication keyword extraction, with visible matching terms.
+- A free local Ollama chatbot in the bottom-right corner, grounded in role-permitted live SCNA records.
 - Docker configuration and Swagger/OpenAPI API documentation.
 
 ## Roles and access
@@ -202,6 +206,18 @@ DATABASE_URL=postgresql://username:password@host:5432/database_name
 SECRET_KEY=replace-with-a-long-random-secret
 ACCESS_TOKEN_EXPIRE_MINUTES=120
 APP_URL=http://localhost:5173
+BACKEND_URL=http://127.0.0.1:8000
+
+# Optional social login. Create OAuth applications with callback URLs such as
+# http://127.0.0.1:8000/users/oauth/google/callback
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+MICROSOFT_CLIENT_ID=
+MICROSOFT_CLIENT_SECRET=
+
+# Free local LLM chatbot (requires Ollama and the selected model on the host).
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5:0.5b
 
 # Optional email delivery through Resend.
 RESEND_API_KEY=re_your_resend_api_key
@@ -210,12 +226,26 @@ RESEND_FROM_EMAIL=SCNA Notifications <notifications@your-verified-domain.com>
 
 Never paste passwords, database URLs, Resend keys, or JWT secrets into GitHub, screenshots, reports, or chat messages. If a secret is exposed, rotate it immediately.
 
+For Google sign-in, register the callback `http://127.0.0.1:8000/users/oauth/google/callback` in Google Cloud. For Microsoft, register `http://127.0.0.1:8000/users/oauth/microsoft/callback` in Microsoft Entra ID. Social sign-in deliberately permits only existing, active SCNA accounts; it does not bypass role approval.
+
 ## Running with Docker
 
-Docker runs the FastAPI application on port 8000.
+Docker runs the FastAPI application on port 8000 and the local Ollama assistant on port 11434.
+
+Make sure Docker Desktop is open and its Linux engine shows **Running** before starting the stack.
 
 ```powershell
-docker compose up --build
+docker compose up --build --detach --force-recreate
+docker compose ps
+```
+
+Open the running application at `http://127.0.0.1:8000/frontend/index.html` and the API documentation at `http://127.0.0.1:8000/docs`.
+
+The first start downloads the configured Ollama model. Check its status with:
+
+```powershell
+docker compose logs --tail 100 ollama
+docker compose logs --tail 100 scna
 ```
 
 Stop it with:
@@ -224,7 +254,22 @@ Stop it with:
 docker compose down
 ```
 
-`docker-compose.yml` reads variables from `.env`, so configure that file before starting Docker.
+`docker-compose.yml` reads variables from `.env`, so configure that file before starting Docker. For Supabase, use the Supabase **Connection Pooler** URI when direct database access over IPv6 is unavailable. Do not put `.env` in Git.
+The Ollama model download is roughly 400 MB and is kept in the `ollama_models` Docker volume for later runs.
+
+### Final role verification
+
+Before a demonstration, verify these separate workspaces:
+
+| Role | Verify |
+| --- | --- |
+| System Admin | approvals, announcements, audit logs, data quality, global reports |
+| Institution Admin | only assigned institution researchers, publications, projects, reviews, and reports |
+| Researcher | own profile, publications, projects, conferences, citations, and collaborations |
+| Reviewer | assigned review queue, comments, and review decisions only |
+| Publisher | publication repository, author/status workflow, citations, and reviewer assignment |
+
+The backend enforces these permissions; hiding a sidebar item is only a usability improvement, not the security boundary.
 
 ## Modules and workflows
 
@@ -237,6 +282,30 @@ docker compose down
 4. The System Admin approves or rejects the request. Rejections require a reason.
 5. For Researcher and Institution Admin, the System Admin assigns the relevant researcher profile or institution workspace.
 6. The user receives an in-app notification and optionally an email.
+
+Password login additionally requires a short math CAPTCHA. The challenge expires after five minutes, can be tried up to three times, and is checked by the backend before credentials are processed. Google and Microsoft buttons start OAuth only when the corresponding credentials are configured in `.env`.
+
+### AI-assisted discovery
+
+AI assistance is placed directly inside the relevant workflow pages, using the data the current user is allowed to access:
+
+- **Publication Management:** ranks publications for a search requirement and shows a percentage match plus matched terms. Short research terms such as `AI`, `ML`, and partial words such as `heal` are supported.
+- **Collaboration Management:** suggests researchers who are not already connected, using shared skills, research interests, and institution context. A suggestion can be used directly to begin a collaboration request.
+- **Publication form:** extracts useful keywords from a title and abstract to help the user tag the record consistently.
+
+These features are local heuristic recommendations, not generative-AI claims. Results improve as publication abstracts and researcher profiles become more complete.
+
+### SCNA Assistant chatbot
+
+The bottom-right **SCNA Assistant** is a real local LLM chatbot powered by Ollama. The backend retrieves only records permitted for the signed-in role and sends that compact context to the local model. The model is instructed to answer only from those live records and to say when data is unavailable. No research data is sent to a paid or third-party AI API.
+
+Install Ollama, then download the configured model once:
+
+```powershell
+ollama pull qwen2.5:0.5b
+```
+
+Example questions: `Summarize my research activity`, `What publications do I have?`, `Which collaborations are pending?`, and `How do reports work?`.
 
 System Admin account tools:
 
@@ -466,6 +535,8 @@ This is a classroom project with a professional workflow foundation. Future prod
 
 - Passwords are stored as bcrypt hashes.
 - Protected endpoints use JWT authentication.
+- Password sign-in requires an expiring, server-validated CAPTCHA.
+- OAuth states are signed and expire after ten minutes; social providers can sign in only an existing active account.
 - Role checks are enforced in backend routes.
 - Workspace scope limits researcher/institution data visibility.
 - `.env` is ignored by Git; only `.env.example` should be committed.

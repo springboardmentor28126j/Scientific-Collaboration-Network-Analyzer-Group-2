@@ -93,7 +93,11 @@ def delete_institution(institution_id: int, _admin = Depends(require_system_admi
     }
 
 @router.get("/{institution_id}/report")
-def institution_report(institution_id: int, db: Session = Depends(get_db)):
+def institution_report(institution_id: int, user = Depends(current_user), db: Session = Depends(get_db)):
+    if not is_system_admin(user) and user.role.lower() == "institution admin" and user.institution_id != institution_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This institution is outside your workspace")
+    if not is_system_admin(user) and user.role.lower() not in {"institution admin", "publisher", "reviewer"}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Institution report access is restricted")
     report = crud.get_institution_report(db, institution_id)
     if not report:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Institution not found")

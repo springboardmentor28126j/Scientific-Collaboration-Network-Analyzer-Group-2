@@ -42,6 +42,8 @@ def _publication_detail(publication: models.Publication) -> dict:
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_publication(publication: schemas.PublicationCreate, editor: models.User = Depends(require_roles("admin", "system admin", "institution admin", "publisher")), db: Session = Depends(get_db)):
+    if editor.role.lower() == "institution admin" and editor.institution_id != publication.institution_id:
+        raise HTTPException(status_code=403, detail="You can only create publications for your institution")
     if publication.doi and db.query(models.Publication).filter(models.Publication.doi == publication.doi).first():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A publication with this DOI already exists")
     requested_ids = set(publication.researcher_ids)
@@ -73,6 +75,8 @@ def get_publications_by_institution(institution_id: int, user: models.User = Dep
 @router.post("/assign-authors")
 def assign_authors(data: schemas.PublicationAuthorAssign, editor: models.User = Depends(require_roles("admin", "system admin", "institution admin", "publisher")), db: Session = Depends(get_db)):
     publication = _get_publication_or_404(db, data.publication_id)
+    if editor.role.lower() == "institution admin" and publication.institution_id != editor.institution_id:
+        raise HTTPException(status_code=403, detail="This publication is outside your institution")
     authors = db.query(models.Researcher).filter(models.Researcher.id.in_(set(data.researcher_ids))).all()
     if len(authors) != len(set(data.researcher_ids)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One or more researchers were not found")
@@ -87,6 +91,8 @@ def assign_authors(data: schemas.PublicationAuthorAssign, editor: models.User = 
 @router.delete("/remove-authors")
 def remove_authors(data: schemas.PublicationAuthorAssign, editor: models.User = Depends(require_roles("admin", "system admin", "institution admin", "publisher")), db: Session = Depends(get_db)):
     publication = _get_publication_or_404(db, data.publication_id)
+    if editor.role.lower() == "institution admin" and publication.institution_id != editor.institution_id:
+        raise HTTPException(status_code=403, detail="This publication is outside your institution")
     requested_ids = set(data.researcher_ids)
     removed_ids = [author.id for author in publication.authors if author.id in requested_ids]
     publication.authors[:] = [author for author in publication.authors if author.id not in requested_ids]
@@ -98,6 +104,8 @@ def remove_authors(data: schemas.PublicationAuthorAssign, editor: models.User = 
 @router.post("/upload/")
 def upload_pdf(publication_id: int = Form(...), file: UploadFile = File(...), editor: models.User = Depends(require_roles("admin", "system admin", "institution admin", "publisher")), db: Session = Depends(get_db)):
     publication = _get_publication_or_404(db, publication_id)
+    if editor.role.lower() == "institution admin" and publication.institution_id != editor.institution_id:
+        raise HTTPException(status_code=403, detail="This publication is outside your institution")
     if not file.filename or Path(file.filename).suffix.lower() != ".pdf":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF files are allowed")
     filename = f"{uuid.uuid4()}.pdf"
@@ -121,6 +129,10 @@ def get_publication(publication_id: int, user: models.User = Depends(current_use
 @router.put("/{publication_id}")
 def update_publication(publication_id: int, updated_publication: schemas.PublicationCreate, editor: models.User = Depends(require_roles("admin", "system admin", "institution admin", "publisher")), db: Session = Depends(get_db)):
     publication = _get_publication_or_404(db, publication_id)
+    if editor.role.lower() == "institution admin" and publication.institution_id != editor.institution_id:
+        raise HTTPException(status_code=403, detail="This publication is outside your institution")
+    if editor.role.lower() == "institution admin" and updated_publication.institution_id != editor.institution_id:
+        raise HTTPException(status_code=403, detail="You can only assign publications to your institution")
     if updated_publication.doi:
         duplicate = db.query(models.Publication).filter(models.Publication.doi == updated_publication.doi, models.Publication.id != publication_id).first()
         if duplicate:

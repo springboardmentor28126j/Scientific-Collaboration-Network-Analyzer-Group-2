@@ -10,6 +10,33 @@ document.getElementById("loginForm");
 
 const roleDashboard = role => ({"institution admin":"pages/institution-dashboard.html",publisher:"pages/publisher-dashboard.html",reviewer:"pages/reviewer-dashboard.html",researcher:"pages/researcher-dashboard.html"}[(role || "").toLowerCase()] || "dashboard.html");
 
+async function loadCaptcha(){
+const question=document.getElementById("captchaQuestion"), token=document.getElementById("captchaToken"), answer=document.getElementById("captchaAnswer");
+if(!question || !token) return;
+question.textContent="Loading…";
+try { const response=await fetch("http://127.0.0.1:8000/users/captcha"); const data=await response.json(); question.textContent=data.question; token.value=data.captcha_token; if(answer) answer.value=""; }
+catch { question.textContent="Security check unavailable"; token.value=""; }
+}
+
+document.getElementById("refreshCaptcha")?.addEventListener("click", loadCaptcha);
+if(loginForm) loadCaptcha();
+
+document.getElementById("passwordToggle")?.addEventListener("click", () => {
+const input=document.getElementById("password"), icon=document.querySelector("#passwordToggle i");
+const visible=input.type === "text"; input.type=visible ? "password" : "text";
+icon.className=visible ? "bi bi-eye" : "bi bi-eye-slash";
+document.getElementById("passwordToggle").setAttribute("aria-label",visible ? "Show password" : "Hide password");
+});
+
+(() => {
+const hash=window.location.hash || "";
+if(hash.startsWith("#scna-oauth=")){
+try { const data=JSON.parse(decodeURIComponent(hash.slice(12))); localStorage.setItem("token",data.token); localStorage.setItem("username",data.name); localStorage.setItem("role",data.role); localStorage.setItem("loggedIn","true"); window.history.replaceState({},document.title,window.location.pathname); window.location.replace(roleDashboard(data.role)); } catch { window.history.replaceState({},document.title,window.location.pathname); }
+} else if(hash.startsWith("#scna-oauth-error=")) {
+window.addEventListener("DOMContentLoaded",()=>{ const box=document.getElementById("messageBox"); if(box){ box.className="alert alert-danger"; box.textContent=decodeURIComponent(hash.slice(18)); } window.history.replaceState({},document.title,window.location.pathname); });
+}
+})();
+
 
 
 if(loginForm){
@@ -81,6 +108,10 @@ email:email,
 
 password:password
 
+,captcha_token:document.getElementById("captchaToken").value
+
+,captcha_answer:document.getElementById("captchaAnswer").value
+
 })
 
 
@@ -90,6 +121,8 @@ password:password
 
 const data =
 await response.json();
+
+if (!response.ok) loadCaptcha();
 
 
 

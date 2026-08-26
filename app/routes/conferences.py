@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app import crud, schemas, auth
+from app import crud, schemas, auth, models
 from app.database import get_db
 from app.notification_service import notify_all_users
 from app.permissions import require_roles

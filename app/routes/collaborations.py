@@ -26,6 +26,7 @@ router = APIRouter(
 @router.get("/researcher/{researcher_id}")
 def get_collaborators(
     researcher_id: int,
+    user: models.User = Depends(current_user),
     db: Session = Depends(get_db)
 ):
 
@@ -62,7 +63,7 @@ def get_collaborators(
 # =====================================
 
 @router.get("/network/all")
-def get_network(db: Session = Depends(get_db)):
+def get_network(user: models.User = Depends(current_user), db: Session = Depends(get_db)):
 
     researchers = db.query(Researcher).options(
         selectinload(Researcher.publications).selectinload(Publication.authors)
@@ -104,7 +105,7 @@ def get_network(db: Session = Depends(get_db)):
 # =====================================
 
 @router.get("/network/advanced")
-def get_advanced_network(db: Session = Depends(get_db)):
+def get_advanced_network(user: models.User = Depends(current_user), db: Session = Depends(get_db)):
 
     researchers = db.query(Researcher).options(
         selectinload(Researcher.publications).selectinload(Publication.authors)
@@ -276,7 +277,7 @@ def get_detailed_collaborations(user: models.User = Depends(current_user), db: S
 def update_collaboration(
     collaboration_id: int,
     collaboration: schemas.CollaborationCreate,
-    db: Session = Depends(get_db)
+    user: models.User = Depends(current_user), db: Session = Depends(get_db)
 ):
     if collaboration.researcher1_id == collaboration.researcher2_id:
         raise HTTPException(status_code=400, detail="Choose two different researchers")
@@ -304,6 +305,7 @@ def delete_collaboration(collaboration_id: int, db: Session = Depends(get_db)):
 )
 def create_collaboration(
     collaboration: schemas.CollaborationCreate,
+    user: models.User = Depends(current_user),
     db: Session = Depends(get_db)
 ):
 
@@ -365,6 +367,7 @@ def decide_collaboration(collaboration_id: int, decision: str, user: models.User
 def add_collaboration(
     researcher1_id: int,
     researcher2_id: int,
+    user: models.User = Depends(current_user),
     db: Session = Depends(get_db)
 ):
 

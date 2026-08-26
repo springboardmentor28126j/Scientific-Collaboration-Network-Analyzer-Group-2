@@ -26,6 +26,19 @@ def create_access_token(subject: str) -> str:
     return jwt.encode({"sub": subject, "exp": expires_at}, SECRET_KEY, algorithm=ALGORITHM)
 
 
+def create_oauth_state(provider: str) -> str:
+    """Signed, short-lived OAuth state to protect provider callbacks from CSRF."""
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+    return jwt.encode({"provider": provider, "exp": expires_at}, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def read_oauth_state(value: str) -> str:
+    try:
+        return str(jwt.decode(value, SECRET_KEY, algorithms=[ALGORITHM]).get("provider"))
+    except (JWTError, TypeError, ValueError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired sign-in request")
+
+
 def read_token_subject(token: str) -> int:
     try:
         subject = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("sub")

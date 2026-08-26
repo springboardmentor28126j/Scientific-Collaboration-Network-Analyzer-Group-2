@@ -10,6 +10,7 @@ async function loadOptions(){
   document.getElementById("researcher1Id").innerHTML = researcherOptions;
   document.getElementById("researcher2Id").innerHTML = researcherOptions;
   document.getElementById("publicationId").innerHTML = `<option value="">No related publication</option>${publications.map(p=>`<option value="${p.id}">${esc(p.title)}</option>`).join("")}`;
+  document.getElementById("recommendationResearcher").innerHTML = researcherOptions;
 }
 async function loadCollaborations(){
   const rows=document.getElementById("collaborationRows");
@@ -21,3 +22,17 @@ async function deleteCollaboration(id){if(!confirm("Delete this collaboration re
 async function decideCollaboration(id,decision){if(!confirm(`Mark this request as ${decision}?`))return;const r=await fetch(`${API}/collaborations/${id}/decision?decision=${decision}`,{method:"POST"});if(!r.ok){alert((await r.json()).detail||"Decision failed");return;}loadCollaborations();}
 form.addEventListener("submit",async event=>{event.preventDefault();const id=document.getElementById("collaborationId").value,payload={researcher1_id:Number(document.getElementById("researcher1Id").value),researcher2_id:Number(document.getElementById("researcher2Id").value),project:document.getElementById("project").value.trim()||null,publication_id:document.getElementById("publicationId").value?Number(document.getElementById("publicationId").value):null};if(payload.researcher1_id===payload.researcher2_id){alert("Choose two different researchers.");return;}const r=await fetch(`${API}/collaborations/${id||""}`,{method:id?"PUT":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok){alert((await r.json()).detail||"Save failed");return;}collaborationModal.hide();loadCollaborations();});
 loadOptions().then(loadCollaborations).catch(()=>{document.getElementById("collaborationRows").innerHTML='<tr><td colspan="5" class="text-center text-danger">Unable to load collaboration data.</td></tr>';});
+
+document.getElementById("findCollaboratorSuggestions")?.addEventListener("click", async () => {
+  const sourceId=document.getElementById("recommendationResearcher").value, host=document.getElementById("collaboratorSuggestions");
+  if(!sourceId){host.innerHTML='<div class="col-12 text-muted small">Choose a researcher first.</div>';return;}
+  host.innerHTML='<div class="col-12 text-muted small">Finding compatible collaborators...</div>';
+  try { const response=await fetch(`${API}/ai/collaborator-recommendations?researcher_id=${sourceId}`); const data=await response.json(); if(!response.ok)throw new Error(data.detail||'Unable to find suggestions'); host.innerHTML=data.results.length?data.results.map(item=>`<div class="col-md-6 col-xl-4"><article class="border rounded-3 p-3 h-100"><div class="d-flex justify-content-between gap-2"><strong>${esc(item.full_name)}</strong><span class="badge text-bg-warning">${item.match_score}% match</span></div><div class="small text-muted">${esc(item.designation)} · ${esc(item.institution)}</div><div class="mt-2">${item.shared_topics.map(topic=>`<span class="badge text-bg-light border text-dark me-1">${esc(topic)}</span>`).join('')}</div><button class="btn btn-sm btn-outline-primary mt-3" onclick="useSuggestedCollaborator(${item.id})"><i class="bi bi-person-plus me-1"></i>Use in request</button></article></div>`).join(''):'<div class="col-12"><div class="alert alert-light border mb-0">No new strong matches found. Add skills and research interests to improve suggestions.</div></div>'; } catch(error){host.innerHTML=`<div class="col-12"><div class="alert alert-danger mb-0">${esc(error.message)}</div></div>`;}
+});
+
+function useSuggestedCollaborator(candidateId){
+  const source=document.getElementById("recommendationResearcher").value;
+  const candidate=researchers.find(item=>item.id===candidateId);
+  if(!Array.from(document.getElementById("researcher2Id").options).some(option=>Number(option.value)===candidateId)) document.getElementById("researcher2Id").insertAdjacentHTML('beforeend',`<option value="${candidateId}">${esc(candidate?.full_name||'Suggested researcher')}</option>`);
+  document.getElementById("researcher1Id").value=source; document.getElementById("researcher2Id").value=candidateId; collaborationModal.show();
+}

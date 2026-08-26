@@ -31,6 +31,8 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+    captcha_token: str
+    captcha_answer: str
 
 
 class UserApproval(BaseModel):

@@ -34,7 +34,7 @@ Scientific Collaboration Network Analyzer | Login
 <div class="row justify-content-center align-items-center min-vh-100">
 
 
-<div class="col-lg-5 col-md-7">
+<div class="col-lg-5 col-md-7 login-column">
 
 
 <div class="login-card">
@@ -43,8 +43,7 @@ Scientific Collaboration Network Analyzer | Login
 <div class="text-center mb-4">
 
 
-<i class="bi bi-diagram-3-fill display-4 text-primary"></i>
-
+<div class="login-brand-mark"><i class="bi bi-diagram-3-fill"></i></div>
 
 <h2 class="fw-bold mt-3">
 
@@ -117,19 +116,23 @@ Password
 </label>
 
 
-<input
-
-type="password"
-
-id="password"
-
-class="form-control"
-
-placeholder="Enter password"
-
-required>
+<div class="input-group password-input-group"><input type="password" id="password" class="form-control" placeholder="Enter password" required><button id="passwordToggle" class="btn btn-outline-secondary" type="button" aria-label="Show password"><i class="bi bi-eye"></i></button></div>
 
 
+</div>
+
+<div class="mb-4">
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+<label class="form-label mb-0">Security check</label>
+<button type="button" id="refreshCaptcha" class="btn btn-sm btn-link p-0"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+</div>
+<div class="input-group">
+<span id="captchaQuestion" class="input-group-text">Loading…</span>
+<input type="number" id="captchaAnswer" class="form-control" placeholder="Answer" inputmode="numeric" required>
+</div>
+<input type="hidden" id="captchaToken">
+<div class="form-text">Complete this short check before signing in.</div>
 </div>
 
 
@@ -154,6 +157,10 @@ Login
 
 
 </form>
+
+<div class="auth-divider"><span>or continue with</span></div>
+<a class="btn btn-google w-100" href="http://127.0.0.1:8000/users/oauth/google"><i class="bi bi-google me-2"></i>Continue with Google</a>
+<p class="auth-security-note mb-0"><i class="bi bi-shield-check"></i> Your account access stays protected.</p>
 
 
 

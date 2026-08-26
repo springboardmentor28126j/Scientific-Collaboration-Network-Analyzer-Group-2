@@ -6,7 +6,7 @@ from app.database import engine, Base
 from app.migrations import apply_compatibility_migrations
 import app.models
 from app.routes import users, researchers, institutions, publications, conferences
-from app.routes import collaborations, dashboard, reports, citations, projects, notifications, audit_logs, reviews, administration
+from app.routes import collaborations, dashboard, reports, citations, projects, notifications, audit_logs, reviews, administration, ai, assistant
 
 
 app = FastAPI(title="Scientific Collaboration Network Analyzer")
@@ -47,6 +47,8 @@ app.include_router(notifications.router)
 app.include_router(audit_logs.router)
 app.include_router(reviews.router)
 app.include_router(administration.router)
+app.include_router(ai.router)
+app.include_router(assistant.router)
 
 @app.get("/")
 def root():

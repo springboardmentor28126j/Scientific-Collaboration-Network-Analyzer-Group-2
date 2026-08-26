@@ -1,4 +1,11 @@
+import html
+import json
+import os
+from urllib.parse import quote, urlencode
+from urllib.request import Request as UrlRequest, urlopen
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -7,10 +14,50 @@ from app.permissions import require_roles, require_system_admin
 from app.database import get_db
 from app.notification_service import notify_users
 from app.audit import record as record_audit
+from app.captcha import create_challenge, verify_challenge
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 ALLOWED_REQUESTED_ROLES = {"researcher": "Researcher", "institution admin": "Institution Admin", "publisher": "Publisher", "reviewer": "Reviewer"}
+OAUTH_PROVIDERS = {
+    "google": {"client_id": "GOOGLE_CLIENT_ID", "client_secret": "GOOGLE_CLIENT_SECRET", "authorize": "https://accounts.google.com/o/oauth2/v2/auth", "token": "https://oauth2.googleapis.com/token", "userinfo": "https://openidconnect.googleapis.com/v1/userinfo", "scope": "openid email profile"},
+    "microsoft": {"client_id": "MICROSOFT_CLIENT_ID", "client_secret": "MICROSOFT_CLIENT_SECRET", "authorize": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize", "token": "https://login.microsoftonline.com/common/oauth2/v2.0/token", "userinfo": "https://graph.microsoft.com/v1.0/me", "scope": "openid profile email User.Read"},
+}
+
+
+def _callback_url(provider: str) -> str:
+    return f"{os.getenv('BACKEND_URL', 'http://127.0.0.1:8000').rstrip('/')}/users/oauth/{provider}/callback"
+
+
+def _provider_config(provider: str) -> dict:
+    config = OAUTH_PROVIDERS.get(provider)
+    if not config:
+        raise HTTPException(status_code=404, detail="Unknown sign-in provider")
+    if not os.getenv(config["client_id"]) or not os.getenv(config["client_secret"]):
+        raise HTTPException(status_code=503, detail=f"{provider.title()} sign-in is not configured yet. Add its OAuth credentials to .env.")
+    return config
+
+
+def _oauth_error(message: str) -> HTMLResponse:
+    app_url = os.getenv("APP_URL", "http://127.0.0.1:5173").rstrip("/")
+    return HTMLResponse(f"<script>window.location.replace({json.dumps(app_url + '/index.html#scna-oauth-error=' + quote(message))});</script>", status_code=400)
+
+
+def _json_post(url: str, data: dict) -> dict:
+    request = UrlRequest(url, data=urlencode(data).encode(), headers={"Content-Type": "application/x-www-form-urlencoded"})
+    with urlopen(request, timeout=10) as response:
+        return json.loads(response.read().decode())
+
+
+def _json_get(url: str, token: str) -> dict:
+    request = UrlRequest(url, headers={"Authorization": f"Bearer {token}"})
+    with urlopen(request, timeout=10) as response:
+        return json.loads(response.read().decode())
+
+
+@router.get("/captcha")
+def get_login_captcha():
+    return create_challenge()
 
 
 @router.get("/me")
@@ -75,6 +122,10 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(user: schemas.UserLogin, request: Request, db: Session = Depends(get_db)):
 
+    if not verify_challenge(user.captcha_token, user.captcha_answer):
+        record_audit(db, action="failed_captcha", entity_type="security", details=f"Invalid CAPTCHA for {user.email}", request=request)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CAPTCHA is incorrect, expired, or has already been used")
+
     db_user = crud.get_user_by_email(db, user.email)
 
     if not db_user or not auth.verify_password(user.password, db_user.password):
@@ -97,6 +148,47 @@ def login(user: schemas.UserLogin, request: Request, db: Session = Depends(get_d
         "access_token": auth.create_access_token(str(db_user.id)),
         "token_type": "bearer"
     }
+
+
+@router.get("/oauth/{provider}")
+def oauth_start(provider: str):
+    config = _provider_config(provider)
+    parameters = {
+        "client_id": os.getenv(config["client_id"]),
+        "redirect_uri": _callback_url(provider),
+        "response_type": "code",
+        "scope": config["scope"],
+        "state": auth.create_oauth_state(provider),
+    }
+    if provider == "google":
+        parameters.update({"access_type": "online", "prompt": "select_account"})
+    return RedirectResponse(f"{config['authorize']}?{urlencode(parameters)}")
+
+
+@router.get("/oauth/{provider}/callback")
+def oauth_callback(provider: str, code: str | None = None, state: str | None = None, error: str | None = None, request: Request = None, db: Session = Depends(get_db)):
+    if error:
+        return _oauth_error("The provider cancelled or denied the sign-in request.")
+    if not code or not state or auth.read_oauth_state(state) != provider:
+        return _oauth_error("The sign-in request is invalid or has expired.")
+    try:
+        config = _provider_config(provider)
+        token_data = _json_post(config["token"], {"client_id": os.getenv(config["client_id"]), "client_secret": os.getenv(config["client_secret"]), "code": code, "redirect_uri": _callback_url(provider), "grant_type": "authorization_code"})
+        profile = _json_get(config["userinfo"], token_data["access_token"])
+        email = (profile.get("email") or profile.get("mail") or profile.get("userPrincipalName") or "").lower().strip()
+        if not email:
+            return _oauth_error("The provider did not return an email address for this account.")
+        db_user = crud.get_user_by_email(db, email)
+        if not db_user:
+            return _oauth_error("No SCNA account exists for this email. Please register first and wait for approval.")
+        if db_user.account_status != "active":
+            return _oauth_error("This account is pending approval or is not active.")
+        record_audit(db, action="oauth_login", entity_type="security", entity_id=db_user.id, user_id=db_user.id, actor_role=db_user.role, details=f"Successful {provider.title()} sign-in", request=request)
+        app_url = os.getenv("APP_URL", "http://127.0.0.1:5173").rstrip("/")
+        payload = quote(json.dumps({"token": auth.create_access_token(str(db_user.id)), "name": db_user.name, "role": db_user.role}))
+        return HTMLResponse(f"<script>window.location.replace({json.dumps(app_url + '/index.html#scna-oauth=' + payload)});</script>")
+    except Exception:
+        return _oauth_error("Social sign-in could not be completed. Check the OAuth configuration and try again.")
 
 
 @router.post("/logout")

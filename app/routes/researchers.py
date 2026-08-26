@@ -18,6 +18,8 @@ def create_researcher(
     manager: models.User = Depends(require_roles("admin", "system admin", "institution admin")),
     db: Session = Depends(get_db)
 ):
+    if manager.role.lower() == "institution admin" and manager.institution_id and researcher.institution_id != manager.institution_id:
+        raise HTTPException(status_code=403, detail="You can only create researchers for your institution")
     created = crud.create_researcher(db=db, researcher=researcher)
     record_audit(db, action="created", entity_type="researcher", entity_id=created.id, user_id=manager.id, actor_role=manager.role, details=created.full_name)
     # When an administrator creates a profile using an account email, link it
@@ -44,6 +46,11 @@ def update_researcher(
     manager: models.User = Depends(require_roles("admin", "system admin", "institution admin")),
     db: Session = Depends(get_db)
 ):
+    existing = scoped_researchers_query(db, manager).filter(models.Researcher.id == id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Researcher is outside your workspace")
+    if manager.role.lower() == "institution admin" and updated.institution_id != manager.institution_id:
+        raise HTTPException(status_code=403, detail="You can only assign researchers to your institution")
     researcher = crud.update_researcher(db=db, id=id, updated=updated)
     if researcher:
         record_audit(db, action="updated", entity_type="researcher", entity_id=id, user_id=manager.id, actor_role=manager.role, details=researcher.full_name)

@@ -313,3 +313,31 @@ document.getElementById("publicationModal")
 // ======================================
 
 loadPublications();
+
+// Contextual AI assistance: recommendations live with the publication work,
+// instead of on a separate page.
+const publicationEsc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const recommendationForm = document.getElementById("paperRecommendationForm");
+recommendationForm?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const query = document.getElementById("paperRecommendationQuery").value.trim();
+    const host = document.getElementById("paperRecommendationResults");
+    host.innerHTML = '<div class="small text-muted">Finding relevant publications...</div>';
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/ai/paper-recommendations?query=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to find recommendations");
+        host.innerHTML = data.results.length ? `<div class="row g-2">${data.results.map(item => `<div class="col-md-6"><div class="border rounded-3 p-3 h-100"><div class="d-flex justify-content-between gap-2"><strong>${publicationEsc(item.title)}</strong><span class="badge text-bg-primary text-nowrap">${item.relevance_score}% match</span></div><div class="small text-muted mt-1">${publicationEsc(item.publication_type)} · ${publicationEsc(item.status)}</div><div class="mt-2">${item.matched_terms.map(term => `<span class="badge text-bg-light border text-dark me-1">${publicationEsc(term)}</span>`).join("")}</div></div></div>`).join("")}</div>` : '<div class="alert alert-light border mb-0">No matching publications were found. Try another keyword or add more publication abstracts.</div>';
+    } catch (error) { host.innerHTML = `<div class="alert alert-danger mb-0">${publicationEsc(error.message)}</div>`; }
+});
+
+document.getElementById("suggestKeywordsButton")?.addEventListener("click", async () => {
+    const host = document.getElementById("keywordSuggestionResults");
+    host.innerHTML = '<span class="text-muted">Generating keyword suggestions...</span>';
+    try {
+        const response = await fetch("http://127.0.0.1:8000/ai/keyword-suggestions", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({title:document.getElementById("title").value, abstract:document.getElementById("abstract").value})});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to suggest keywords");
+        host.innerHTML = data.keywords.length ? `<span class="text-muted me-2">Suggested:</span>${data.keywords.map(item => `<span class="badge text-bg-primary me-1">${publicationEsc(item)}</span>`).join("")}` : '<span class="text-muted">Add a title or abstract to receive suggestions.</span>';
+    } catch (error) { host.innerHTML = `<span class="text-danger">${publicationEsc(error.message)}</span>`; }
+});

@@ -21,7 +21,7 @@
     window.location.replace(inPagesFolder ? roleDashboard : `pages/${roleDashboard}`);
     return;
   }
-  const allowedLabels = isSystemAdmin ? null : (currentRole === "institution admin" ? ["Dashboard","Researchers","Institutions","Publications","Reviews","Conferences","Reports"] : currentRole === "publisher" ? ["Dashboard","Publications","Reviews","Citations","Reports"] : currentRole === "reviewer" ? ["Dashboard","Reviews","Publications","Citations","Reports"] : ["Dashboard","Publications","Conferences","Reports"]);
+  const allowedLabels = isSystemAdmin ? null : (currentRole === "institution admin" ? ["Dashboard","Researchers","Institutions","Publications","Projects","Conferences","Citations","Reviews","Reports","Collaborations"] : currentRole === "publisher" ? ["Dashboard","Publications","Reviews","Citations","Reports"] : currentRole === "reviewer" ? ["Dashboard","Reviews","Publications","Citations","Reports"] : ["Dashboard","Publications","Projects","Conferences","Citations","Collaborations","Reports"]);
   const links = allowedLabels ? allLinks.filter(([, , label]) => allowedLabels.includes(label)) : [...allLinks, ["pages/audit-logs.html","bi-shield-check","Audit log"], ["pages/data-quality.html","bi-clipboard2-check","Data quality"]];
   const hrefFor = href => inPagesFolder ? (href === "dashboard.html" ? "../dashboard.html" : href.replace(/^pages\//, "")) : href;
   const filenameFor = href => href.replace(/^pages\//, "");
@@ -109,4 +109,30 @@
       notificationList.innerHTML = '<div class="notification-empty"><i class="bi bi-wifi-off"></i> Notifications are unavailable.</div>';
     });
   document.getElementById("markAllNotifications").addEventListener("click", () => fetch("http://127.0.0.1:8000/notifications/read-all", { method: "POST", headers: notificationHeaders }).then(() => window.location.reload()));
+
+  const chatbot = document.createElement("section");
+  chatbot.id = "scnaChatbot";
+  chatbot.innerHTML = `<button id="scnaChatToggle" class="scna-chat-toggle" type="button" aria-label="Open SCNA Assistant"><i class="bi bi-chat-dots-fill"></i><span>Assistant</span></button><div id="scnaChatPanel" class="scna-chat-panel d-none" role="dialog" aria-label="SCNA Assistant"><header><div><strong><i class="bi bi-stars me-2"></i>SCNA Assistant</strong><small>Answers from your live workspace data</small></div><button id="scnaChatClose" class="btn-close btn-close-white" type="button" aria-label="Close assistant"></button></header><div id="scnaChatMessages" class="scna-chat-messages"><div class="scna-chat-message bot">Hello ${userName}. Ask about your publications, projects, collaborations, reviews, reports, or profile.</div></div><div class="scna-chat-quick"><button type="button">My publications</button><button type="button">Pending collaborations</button><button type="button">My projects</button><button type="button">How do reports work?</button></div><form id="scnaChatForm"><input id="scnaChatInput" maxlength="500" placeholder="Ask about your SCNA data..." required><button class="btn btn-primary" aria-label="Send message"><i class="bi bi-send-fill"></i></button></form></div>`;
+  document.body.append(chatbot);
+  const chatPanel = document.getElementById("scnaChatPanel");
+  const chatMessages = document.getElementById("scnaChatMessages");
+  const escapeChat = value => String(value || "").replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]));
+  const toggleChat = show => chatPanel.classList.toggle("d-none", !show);
+  document.getElementById("scnaChatToggle").addEventListener("click", () => toggleChat(chatPanel.classList.contains("d-none")));
+  document.getElementById("scnaChatClose").addEventListener("click", () => toggleChat(false));
+  const sendChat = async text => {
+    const cleanText = text.trim(); if (!cleanText) return;
+    chatMessages.insertAdjacentHTML("beforeend", `<div class="scna-chat-message user">${escapeChat(cleanText)}</div>`);
+    chatMessages.insertAdjacentHTML("beforeend", '<div id="scnaChatLoading" class="scna-chat-message bot text-muted">Checking your workspace...</div>');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    try {
+      const response = await fetch("http://127.0.0.1:8000/assistant/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({message:cleanText})});
+      const data = await response.json(); if (!response.ok) throw new Error(data.detail || "Assistant is unavailable");
+      document.getElementById("scnaChatLoading")?.remove();
+      chatMessages.insertAdjacentHTML("beforeend", `<div class="scna-chat-message bot">${escapeChat(data.answer)}${data.link ? `<a class="d-block mt-2" href="${inPagesFolder ? "../" + data.link : data.link}">Open related page <i class="bi bi-arrow-right"></i></a>` : ""}<small class="d-block mt-2">${escapeChat(data.source)}</small></div>`);
+    } catch (error) { document.getElementById("scnaChatLoading")?.remove(); chatMessages.insertAdjacentHTML("beforeend", `<div class="scna-chat-message bot text-danger">${escapeChat(error.message)}</div>`); }
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  };
+  document.getElementById("scnaChatForm").addEventListener("submit", event => { event.preventDefault(); const input=document.getElementById("scnaChatInput"); sendChat(input.value); input.value=""; });
+  chatbot.querySelectorAll(".scna-chat-quick button").forEach(button => button.addEventListener("click", () => sendChat(button.textContent)));
 })();

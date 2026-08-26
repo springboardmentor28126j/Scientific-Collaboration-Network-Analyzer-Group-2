@@ -21,6 +21,9 @@
         #06b6d4
     );
 
+    position:relative;
+    overflow:hidden;
+
 }
 
 
@@ -29,13 +32,18 @@
 
     background:white;
 
-    padding:40px;
+    padding:26px 32px;
 
     border-radius:20px;
 
     box-shadow:
 
     0 20px 50px rgba(0,0,0,.15);
+
+    border:1px solid rgba(255,255,255,.75);
+    position:relative;
+    overflow:hidden;
+    animation:cardEnter .45s ease-out;
 
 }
 
@@ -59,10 +67,13 @@
 
 @media(max-width:576px){
 
-    .login-card{
+.login-card{
 
-        padding:25px;
+        padding:20px;
 
     }
 
 }
+
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0 10px;color:#6c757d;font-size:.8rem}.auth-divider::before,.auth-divider::after{content:"";height:1px;flex:1;background:#dee2e6}.auth-divider span{white-space:nowrap}
+.login-body::before,.login-body::after{content:"";position:fixed;border-radius:50%;background:rgba(255,255,255,.12);pointer-events:none}.login-body::before{width:330px;height:330px;top:-130px;left:-100px}.login-body::after{width:280px;height:280px;right:-80px;bottom:-110px}.login-column{position:relative;z-index:1}.login-brand-mark{width:48px;height:48px;display:grid;place-items:center;margin:0 auto;border-radius:14px;background:linear-gradient(135deg,#1e40af,#06b6d4);box-shadow:0 8px 18px rgba(30,64,175,.22);color:#fff;font-size:1.35rem}.login-card .text-center.mb-4{margin-bottom:18px!important}.login-card h2{font-size:1.45rem;margin-top:10px!important;margin-bottom:2px}.login-card h5{font-size:.95rem;margin-bottom:0}.login-card .text-muted.mt-3{margin-top:8px!important;margin-bottom:0;font-size:.84rem}.login-card .mb-3{margin-bottom:12px!important}.login-card .mb-4{margin-bottom:14px!important}.login-card .form-control,.password-input-group .btn{min-height:40px;border-color:#dbe5f0}.login-card .form-text{font-size:.74rem}.login-card .btn-lg{min-height:42px;padding:.4rem 1rem;font-size:1rem}.login-card .form-control:focus{border-color:#06b6d4;box-shadow:0 0 0 .22rem rgba(6,182,212,.14)}.password-input-group .btn{border-left:0;color:#53728d}.password-input-group .btn:hover{transform:none;background:#f8fbff}.btn-google{min-height:40px;border:1px solid #dee2e6;background:#fff;color:#334e68;font-weight:600}.btn-google:hover{background:#f8fbff;border-color:#b8c7d8;color:#1e40af}.auth-security-note{margin-top:10px;text-align:center;color:#6c757d;font-size:.75rem}.auth-security-note i{color:#198754;margin-right:4px}@keyframes cardEnter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}

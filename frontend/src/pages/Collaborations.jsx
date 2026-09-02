@@ -21,7 +21,7 @@ function Collaborations() {
   const fetchCollaborations = useCallback(async () => {
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8001/collaborations/"
+        "http://127.0.0.1:8000/collaborations/"
       );
 
       setCollaborations(response.data);
@@ -34,7 +34,7 @@ function Collaborations() {
   const fetchResearchers = useCallback(async () => {
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8001/researchers/"
+        "http://127.0.0.1:8000/researchers/"
       );
 
       setResearchers(response.data);
@@ -82,7 +82,7 @@ useEffect(() => {
 
     try {
       await axios.post(
-        "http://127.0.0.1:8001/collaborations/",
+        "http://127.0.0.1:8000/collaborations/",
         {
           researcher1_id: Number(formData.researcher1_id),
           researcher2_id: Number(formData.researcher2_id),
@@ -134,7 +134,7 @@ useEffect(() => {
 
     try {
       await axios.delete(
-        `http://127.0.0.1:8001/collaborations/${id}`
+        `http://127.0.0.1:8000/collaborations/${id}`
       );
 
       alert("Collaboration deleted successfully!");

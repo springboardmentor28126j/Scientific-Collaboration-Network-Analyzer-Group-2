@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+
 import models
 from database import engine
 from auth import router as auth_router
@@ -9,6 +10,8 @@ from files import router as files_router
 from file_router import router as file_router
 from publication import router as publication_router
 from collaboration import router as collaboration_router
+from analytics import router as analytics_router
+from conference import router as conference_router
 
 app = FastAPI(
     title="Scientific Collaboration Network Analyzer",
@@ -38,7 +41,8 @@ app.include_router(files_router)
 app.include_router(file_router)
 app.include_router(publication_router)
 app.include_router(collaboration_router)
-
+app.include_router(analytics_router)
+app.include_router(conference_router)
 # Home API
 @app.get("/")
 def home():

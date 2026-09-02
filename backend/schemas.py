@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
+from datetime import date
 
 # =====================================================
 # Researcher Schemas
@@ -67,6 +68,8 @@ class PublicationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
 # =====================================================
 # Collaboration Schemas
 # =====================================================
@@ -88,8 +91,30 @@ class CollaborationResponse(BaseModel):
     project: str
     institution: Optional[str] = None
     collaboration_type: Optional[str] = None
-    start_date: Optional[str] = None
+    start_date: Optional[date] = None
     status: str
+
+    class Config:
+        from_attributes = True
+
+
+# =====================================================
+# Conference Schemas
+# =====================================================
+
+class ConferenceCreate(BaseModel):
+    conference_name: str
+    location: str
+    conference_date: str
+    publication_id: int
+
+
+class ConferenceResponse(BaseModel):
+    conference_id: int
+    conference_name: str
+    location: str
+    conference_date: str
+    publication_id: int
 
     class Config:
         from_attributes = True

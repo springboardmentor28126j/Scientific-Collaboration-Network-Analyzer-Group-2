@@ -8,8 +8,10 @@
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
+
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px,
+    rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -17,18 +19,20 @@
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
+
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
+
+/* -------------------- */
+/* DARK MODE */
+/* -------------------- */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -40,9 +44,12 @@
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
     --accent-border: rgba(192, 132, 252, 0.5);
+
     --social-bg: rgba(47, 48, 58, 0.5);
+
     --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px,
+      rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
 
   #social .button-icon {
@@ -50,21 +57,39 @@
   }
 }
 
+/* -------------------- */
+/* BODY */
+/* -------------------- */
+
 body {
   margin: 0;
+  min-width: 320px;
 }
+
+/* -------------------- */
+/* ROOT */
+/* -------------------- */
 
 #root {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
+
   text-align: center;
+
   border-inline: 1px solid var(--border);
+
   min-height: 100svh;
+
   display: flex;
   flex-direction: column;
+
   box-sizing: border-box;
 }
+
+/* -------------------- */
+/* HEADINGS */
+/* -------------------- */
 
 h1,
 h2 {
@@ -77,23 +102,26 @@ h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
 }
+
+/* -------------------- */
+/* PARAGRAPH */
+/* -------------------- */
+
 p {
   margin: 0;
 }
+
+/* -------------------- */
+/* CODE */
+/* -------------------- */
 
 code,
 .counter {
@@ -108,4 +136,174 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* ================================================= */
+/* ANALYTICS PAGE */
+/* ================================================= */
+
+.analytics-page {
+  min-height: 100vh;
+
+  padding: 50px 30px;
+
+  box-sizing: border-box;
+
+  background: var(--bg);
+
+  text-align: center;
+}
+
+/* Analytics heading */
+
+.analytics-page h1 {
+  font-size: 42px;
+
+  margin: 0 0 45px;
+
+  color: var(--text-h);
+}
+
+/* Cards container */
+
+.analytics-cards {
+  display: flex;
+
+  justify-content: center;
+
+  align-items: stretch;
+
+  gap: 25px;
+
+  flex-wrap: wrap;
+
+  width: 100%;
+}
+
+/* Individual card */
+
+.analytics-card {
+  width: 220px;
+
+  min-height: 150px;
+
+  padding: 30px 20px;
+
+  box-sizing: border-box;
+
+  background: var(--bg);
+
+  border: 1px solid var(--border);
+
+  border-radius: 12px;
+
+  box-shadow: var(--shadow);
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Card hover */
+
+.analytics-card:hover {
+  transform: translateY(-5px);
+
+  box-shadow:
+    rgba(0, 0, 0, 0.15) 0 15px 25px -5px,
+    rgba(0, 0, 0, 0.05) 0 8px 10px -6px;
+}
+
+/* Card heading */
+
+.analytics-card h2 {
+  font-size: 20px;
+
+  margin: 0 0 15px;
+
+  color: var(--text-h);
+}
+
+/* Card number */
+
+.analytics-card p {
+  font-size: 42px;
+
+  line-height: 1;
+
+  font-weight: 700;
+
+  color: var(--accent);
+
+  margin: 0;
+}
+
+/* ================================================= */
+/* RESPONSIVE DESIGN */
+/* ================================================= */
+
+@media (max-width: 1024px) {
+  :root {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 36px;
+
+    margin: 20px 0;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .analytics-page {
+    padding: 40px 20px;
+  }
+
+  .analytics-page h1 {
+    font-size: 36px;
+
+    margin-bottom: 35px;
+  }
+
+  .analytics-card {
+    width: 200px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .analytics-page {
+    padding: 30px 15px;
+  }
+
+  .analytics-page h1 {
+    font-size: 30px;
+
+    margin-bottom: 30px;
+  }
+
+  .analytics-cards {
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 20px;
+  }
+
+  .analytics-card {
+    width: 90%;
+
+    max-width: 300px;
+  }
 }

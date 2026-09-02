@@ -8,6 +8,7 @@ import Researchers from "./pages/Researchers";
 import ResearcherProfile from "./pages/ResearcherProfile";
 import Publications from "./pages/Publications";
 import Collaborations from "./pages/Collaborations";
+import Analytics from "./pages/Analytics";
 
 function App() {
   return (
@@ -35,6 +36,8 @@ function App() {
         {/* Publications */}
         <Route path="/publications" element={<Publications />} />
         <Route path="/collaborations" element={<Collaborations />} />
+
+        <Route path="/analytics" element={<Analytics />} />
 
       </Routes>
     </BrowserRouter>

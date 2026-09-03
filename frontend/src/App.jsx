@@ -9,6 +9,7 @@ import ResearcherProfile from "./pages/ResearcherProfile";
 import Publications from "./pages/Publications";
 import Collaborations from "./pages/Collaborations";
 import Analytics from "./pages/Analytics";
+import Conference from "./pages/Conferences";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
         <Route path="/collaborations" element={<Collaborations />} />
 
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/conferences" element={<Conference />} />
 
       </Routes>
     </BrowserRouter>

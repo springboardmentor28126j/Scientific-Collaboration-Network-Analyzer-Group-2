@@ -1,0 +1,146 @@
+.conferences-page {
+  padding: 30px;
+  background-color: #f5f7fb;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.conferences-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.conferences-header h1 {
+  margin: 0;
+  font-size: 30px;
+  color: #1e3a8a;
+}
+
+.add-conference-btn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.add-conference-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.conference-form {
+  background-color: white;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.conference-form h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #1e3a8a;
+}
+
+.conference-form input,
+.conference-form select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  color: #111827;
+  background-color: white;
+}
+
+.conference-form input:focus,
+.conference-form select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.conference-form-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.save-conference-btn,
+.cancel-conference-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.save-conference-btn {
+  background-color: #16a34a;
+  color: white;
+}
+
+.save-conference-btn:hover {
+  background-color: #15803d;
+}
+
+.cancel-conference-btn {
+  background-color: #dc2626;
+  color: white;
+}
+
+.cancel-conference-btn:hover {
+  background-color: #b91c1c;
+}
+
+.conferences-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.conferences-table th {
+  padding: 13px 12px;
+  border: 1px solid #1d4ed8;
+  text-align: left;
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+}
+
+.conferences-table td {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  text-align: left;
+  background-color: white;
+  color: #111827;
+}
+
+.conferences-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.delete-conference-btn {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-conference-btn:hover {
+  background-color: #b91c1c;
+}
+
+.no-conferences {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  background-color: white;
+}

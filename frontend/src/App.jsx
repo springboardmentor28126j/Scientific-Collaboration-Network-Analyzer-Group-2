@@ -10,6 +10,7 @@ import Publications from "./pages/Publications";
 import Collaborations from "./pages/Collaborations";
 import Analytics from "./pages/Analytics";
 import Conference from "./pages/Conferences";
+import Reports from "./pages/Reports";
 
 function App() {
   return (
@@ -36,10 +37,18 @@ function App() {
 
         {/* Publications */}
         <Route path="/publications" element={<Publications />} />
+
+        {/* Collaborations */}
         <Route path="/collaborations" element={<Collaborations />} />
 
+        {/* Analytics */}
         <Route path="/analytics" element={<Analytics />} />
+
+        {/* Conferences */}
         <Route path="/conferences" element={<Conference />} />
+
+        {/* Reports */}
+        <Route path="/reports" element={<Reports />} />
 
       </Routes>
     </BrowserRouter>

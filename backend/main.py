@@ -12,6 +12,7 @@ from publication import router as publication_router
 from collaboration import router as collaboration_router
 from analytics import router as analytics_router
 from conference import router as conference_router
+from report import router as report_router
 
 app = FastAPI(
     title="Scientific Collaboration Network Analyzer",

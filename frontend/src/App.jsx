@@ -11,6 +11,7 @@ import Collaborations from "./pages/Collaborations";
 import Analytics from "./pages/Analytics";
 import Conference from "./pages/Conferences";
 import Reports from "./pages/Reports";
+import Reviews from "./pages/Reviews";
 
 function App() {
   return (
@@ -49,6 +50,9 @@ function App() {
 
         {/* Reports */}
         <Route path="/reports" element={<Reports />} />
+        
+        {/* Reviews */}
+        <Route path="/reviews" element={<Reviews />} />
 
       </Routes>
     </BrowserRouter>

@@ -2,6 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 from datetime import date
 
+
 # =====================================================
 # Researcher Schemas
 # =====================================================
@@ -32,6 +33,10 @@ class ResearcherResponse(BaseModel):
 
 class PublicationCreate(BaseModel):
     title: str
+
+    # NEW: Publication Type
+    publication_type: str = "Journal Paper"
+
     abstract: Optional[str] = None
     keywords: Optional[str] = None
     author: str
@@ -44,6 +49,10 @@ class PublicationCreate(BaseModel):
 
 class PublicationUpdate(BaseModel):
     title: Optional[str] = None
+
+    # NEW: Publication Type
+    publication_type: Optional[str] = None
+
     abstract: Optional[str] = None
     keywords: Optional[str] = None
     author: Optional[str] = None
@@ -57,6 +66,10 @@ class PublicationUpdate(BaseModel):
 class PublicationResponse(BaseModel):
     publication_id: int
     title: str
+
+    # NEW: Publication Type
+    publication_type: str
+
     abstract: Optional[str] = None
     keywords: Optional[str] = None
     author: str
@@ -115,6 +128,28 @@ class ConferenceResponse(BaseModel):
     location: str
     conference_date: str
     publication_id: int
+
+    class Config:
+        from_attributes = True
+    # =====================================================
+# Review Schemas
+# =====================================================
+
+class ReviewCreate(BaseModel):
+    publication_id: int
+    reviewer_id: int
+    review_feedback: Optional[str] = None
+    decision: str = "Pending"
+    status: str = "Pending"
+
+
+class ReviewResponse(BaseModel):
+    review_id: int
+    publication_id: int
+    reviewer_id: int
+    review_feedback: Optional[str] = None
+    decision: str
+    status: str
 
     class Config:
         from_attributes = True

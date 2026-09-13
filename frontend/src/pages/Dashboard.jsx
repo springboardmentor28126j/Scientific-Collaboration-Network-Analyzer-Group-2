@@ -1,47 +1,92 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../css/dashboard.css";
 
 function Dashboard() {
+  const navigate = useNavigate();
+
+  // Get logged-in user details
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
+
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+
+    navigate("/");
+  };
+
   return (
     <div className="dashboard-container">
 
-      {/* ================= Top Navbar ================= */}
+      {/* ================= TOP NAVBAR ================= */}
 
       <header className="topbar">
 
         <div className="logo">
-
           <span className="logo-icon">🔬</span>
-
           <span className="logo-text">SciCollab</span>
-
         </div>
 
         <div className="top-links">
 
-          <Link to="/dashboard">Dashboard</Link>
-
-          <Link to="/researchers">Researchers</Link>
-
-          <Link to="/publications">Publications</Link>
-
-          <Link to="/collaborations">Collaborations</Link>
-
-          <Link to="/profile">Profile</Link>
-
-          <Link to="/" className="logout-btn">
-            Logout
+          <Link to="/dashboard">
+            Dashboard
           </Link>
+
+          {/* Researchers */}
+          {(role === "Researcher" ||
+            role === "Institution Admin" ||
+            role === "System Admin") && (
+            <Link to="/researchers">
+              Researchers
+            </Link>
+          )}
+
+          {/* Publications */}
+          {(role === "Researcher" ||
+            role === "Institution Admin" ||
+            role === "Reviewer" ||
+            role === "System Admin") && (
+            <Link to="/publications">
+              Publications
+            </Link>
+          )}
+
+          {/* Collaborations */}
+          {(role === "Researcher" ||
+            role === "Institution Admin" ||
+            role === "System Admin") && (
+            <Link to="/collaborations">
+              Collaborations
+            </Link>
+          )}
+
+          {/* Profile */}
+          <Link to="/profile">
+            Profile
+          </Link>
+
+          {/* Logout */}
+          <button
+            className="logout-btn"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
 
         </div>
 
       </header>
 
-      {/* ================= Dashboard Body ================= */}
+
+      {/* ================= DASHBOARD BODY ================= */}
 
       <div className="dashboard-body">
 
-        {/* Sidebar */}
+
+        {/* ================= SIDEBAR ================= */}
 
         <aside className="sidebar">
 
@@ -49,45 +94,108 @@ function Dashboard() {
 
           <ul>
 
+            {/* Dashboard */}
             <li>
               <Link to="/dashboard">
                 🏠 Dashboard
               </Link>
             </li>
 
+
+            {/* Researchers */}
+
+            {(role === "Researcher" ||
+              role === "Institution Admin" ||
+              role === "System Admin") && (
+              <li>
+                <Link to="/researchers">
+                  👨‍🔬 Researchers
+                </Link>
+              </li>
+            )}
+
+
+            {/* Publications */}
+
+            {(role === "Researcher" ||
+              role === "Institution Admin" ||
+              role === "Reviewer" ||
+              role === "System Admin") && (
+              <li>
+                <Link to="/publications">
+                  📄 Publications
+                </Link>
+              </li>
+            )}
+
+
+            {/* Collaborations */}
+
+            {(role === "Researcher" ||
+              role === "Institution Admin" ||
+              role === "System Admin") && (
+              <li>
+                <Link to="/collaborations">
+                  🤝 Collaborations
+                </Link>
+              </li>
+            )}
+
+
+            {/* Conferences */}
+
+            {(role === "Researcher" ||
+              role === "Institution Admin" ||
+              role === "Reviewer" ||
+              role === "System Admin") && (
+              <li>
+                <Link to="/conferences">
+                  📅 Conferences
+                </Link>
+              </li>
+            )}
+
+
+            {/* Analytics */}
+
+            {(role === "Institution Admin" ||
+              role === "System Admin") && (
+              <li>
+                <Link to="/analytics">
+                  📊 Analytics
+                </Link>
+              </li>
+            )}
+
+
+            {/* Reports */}
+
+            {(role === "Institution Admin" ||
+              role === "Reviewer" ||
+              role === "System Admin") && (
+              <li>
+                <Link to="/reports">
+                  📋 Reports
+                </Link>
+              </li>
+            )}
+            {/* Reviews */}
+
+            {(role === "Institution Admin" ||
+  role === "Reviewer" ||
+            role === "System Admin") && (
             <li>
-              <Link to="/researchers">
-                👨‍🔬 Researchers
-              </Link>
-            </li>
+            <Link to="/reviews">
+            📝 Reviews
+             </Link>
+              </li>
+            )}
+
+            {/* Profile */}
 
             <li>
-              <Link to="/publications">
-                📄 Publications
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/collaborations">
-                🤝 Collaborations
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/conferences">
-                📅 Conferences
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/analytics">
-                📊 Analytics
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/reports">
-                📋 Reports
+              <Link to="/profile">
+                👤 Profile
               </Link>
             </li>
 
@@ -95,18 +203,151 @@ function Dashboard() {
 
         </aside>
 
-        {/* Main Content */}
+
+        {/* ================= MAIN CONTENT ================= */}
 
         <main className="content">
 
-          <h1>Welcome Back 👋</h1>
+
+          {/* Welcome */}
+
+          <h1>
+            Welcome Back {username ? username : ""} 👋
+          </h1>
 
           <p>
             Monitor your publications, collaborations,
             researchers, and conferences from one place.
           </p>
 
-          {/* Cards */}
+
+          {/* ================= ROLE ================= */}
+
+          <div
+            style={{
+              marginBottom: "25px",
+              padding: "12px 20px",
+              backgroundColor: "#e8f2ff",
+              borderRadius: "8px",
+              fontWeight: "bold",
+              fontSize: "18px",
+              textAlign: "center"
+            }}
+          >
+            Logged in as: {role || "User"}
+          </div>
+
+
+          {/* ================= SYSTEM ADMIN ================= */}
+
+          {role === "System Admin" && (
+            <div
+              style={{
+                marginBottom: "25px",
+                padding: "20px",
+                backgroundColor: "#f1f7ff",
+                border: "1px solid #c8ddf5",
+                borderRadius: "10px",
+                textAlign: "center"
+              }}
+            >
+
+              <h2>
+                ⚙️ System Admin Dashboard
+              </h2>
+
+              <p>
+                You have full access to the Scientific
+                Collaboration Network Analyzer system.
+              </p>
+
+            </div>
+          )}
+
+
+          {/* ================= INSTITUTION ADMIN ================= */}
+
+          {role === "Institution Admin" && (
+            <div
+              style={{
+                marginBottom: "25px",
+                padding: "20px",
+                backgroundColor: "#f1f7ff",
+                border: "1px solid #c8ddf5",
+                borderRadius: "10px",
+                textAlign: "center"
+              }}
+            >
+
+              <h2>
+                🏛️ Institution Admin Dashboard
+              </h2>
+
+              <p>
+                You can manage institution-related research,
+                publications, collaborations, conferences,
+                and analytics.
+              </p>
+
+            </div>
+          )}
+
+
+          {/* ================= RESEARCHER ================= */}
+
+          {role === "Researcher" && (
+            <div
+              style={{
+                marginBottom: "25px",
+                padding: "20px",
+                backgroundColor: "#f1f7ff",
+                border: "1px solid #c8ddf5",
+                borderRadius: "10px",
+                textAlign: "center"
+              }}
+            >
+
+              <h2>
+                👨‍🔬 Researcher Dashboard
+              </h2>
+
+              <p>
+                Manage your researcher profile,
+                publications, collaborations, and conferences.
+              </p>
+
+            </div>
+          )}
+
+
+          {/* ================= REVIEWER ================= */}
+
+          {role === "Reviewer" && (
+            <div
+              style={{
+                marginBottom: "25px",
+                padding: "20px",
+                backgroundColor: "#f1f7ff",
+                border: "1px solid #c8ddf5",
+                borderRadius: "10px",
+                textAlign: "center"
+              }}
+            >
+
+              <h2>
+                📝 Reviewer Dashboard
+              </h2>
+
+              <p>
+                Access publications, conferences,
+                and review-related reports.
+              </p>
+
+            </div>
+          )}
+
+
+          {/* ================= DASHBOARD CARDS ================= */}
 
           <div className="cards">
 
@@ -132,7 +373,8 @@ function Dashboard() {
 
           </div>
 
-          {/* Publications */}
+
+          {/* ================= RECENT PUBLICATIONS ================= */}
 
           <div className="table-box">
 
@@ -180,7 +422,8 @@ function Dashboard() {
 
           </div>
 
-          {/* Activities */}
+
+          {/* ================= RECENT ACTIVITIES ================= */}
 
           <div className="activity">
 
@@ -188,17 +431,26 @@ function Dashboard() {
 
             <ul>
 
-              <li>✅ New publication added</li>
+              <li>
+                ✅ New publication added
+              </li>
 
-              <li>🤝 Collaboration request received</li>
+              <li>
+                🤝 Collaboration request received
+              </li>
 
-              <li>📅 Conference registration completed</li>
+              <li>
+                📅 Conference registration completed
+              </li>
 
-              <li>👨‍🔬 Research profile updated</li>
+              <li>
+                👨‍🔬 Research profile updated
+              </li>
 
             </ul>
 
           </div>
+
 
         </main>
 

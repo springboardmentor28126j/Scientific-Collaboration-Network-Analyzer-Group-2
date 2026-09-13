@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from review import router as review_router
 
 
 import models
@@ -44,6 +45,8 @@ app.include_router(publication_router)
 app.include_router(collaboration_router)
 app.include_router(analytics_router)
 app.include_router(conference_router)
+app.include_router(report_router)
+app.include_router(review_router)
 # Home API
 @app.get("/")
 def home():

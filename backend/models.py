@@ -29,6 +29,13 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
 
+    # User Role
+    role = Column(
+        String(50),
+        nullable=False,
+        default="Researcher"
+    )
+
 
 # =====================================================
 # File Model
@@ -54,6 +61,11 @@ class Publication(Base):
     publication_id = Column(Integer, primary_key=True, index=True)
 
     title = Column(String(200), nullable=False)
+    publication_type = Column(
+        String(50),
+        nullable=False,
+        default="Journal Paper"
+    )
     abstract = Column(String(1000))
     keywords = Column(String(300))
     author = Column(String(150), nullable=False)
@@ -67,7 +79,9 @@ class Publication(Base):
         ForeignKey("researchers.researcher_id"),
         nullable=False
     )
-    # =====================================================
+
+
+# =====================================================
 # Collaboration Model
 # =====================================================
 
@@ -124,14 +138,61 @@ class Conference(Base):
 
     conference_id = Column(Integer, primary_key=True, index=True)
 
-    conference_name = Column(String(200), nullable=False)
+    conference_name = Column(
+        String(200),
+        nullable=False
+    )
 
-    location = Column(String(200), nullable=False)
+    location = Column(
+        String(200),
+        nullable=False
+    )
 
-    conference_date = Column(String(100), nullable=False)
+    conference_date = Column(
+        String(100),
+        nullable=False
+    )
 
     publication_id = Column(
         Integer,
         ForeignKey("publications.publication_id"),
         nullable=False
+    )
+    # =====================================================
+# Review Model
+# =====================================================
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    review_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    publication_id = Column(
+        Integer,
+        ForeignKey("publications.publication_id"),
+        nullable=False
+    )
+
+    reviewer_id = Column(
+        Integer,
+        ForeignKey("researchers.researcher_id"),
+        nullable=False
+    )
+
+    review_feedback = Column(
+        String(2000)
+    )
+
+    decision = Column(
+        String(50),
+        default="Pending"
+    )
+
+    status = Column(
+        String(50),
+        default="Pending"
     )

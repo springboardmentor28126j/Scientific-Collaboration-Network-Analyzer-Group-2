@@ -1,391 +1,223 @@
-html,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100%;
-  overflow-x: hidden;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  background: #eef3f9;
-}
-
-
-/* MAIN PAGE */
+/* ================================
+   Publications Page
+================================ */
 
 .container {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 35px 25px;
-
-  background: #eef3f9;
-
-  overflow: hidden;
+  width: 95%;
+  margin: 0 auto;
+  padding: 35px 20px;
+  box-sizing: border-box;
+  text-align: center;
 }
-
-
-/* HEADING */
 
 .container h2 {
-  margin: 0 0 20px 0;
-
-  text-align: center;
-
-  font-size: 32px;
-  font-weight: 700;
-
-  color: #172554;
+  font-size: 42px;
+  margin-bottom: 25px;
+  color: #173b7a;
 }
 
+/* ================================
+   Buttons
+================================ */
 
-/* ADD PUBLICATION BUTTON */
-
-.container > button {
-  display: block;
-
-  margin: 0 auto 25px auto;
-
-  padding: 12px 24px;
-
-  border: none;
-  border-radius: 8px;
-
-  background: #1976d2;
+.container button {
+  background-color: #1976d2;
   color: white;
-
+  border: none;
+  padding: 12px 24px;
+  margin: 8px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
-
   cursor: pointer;
 }
 
-.container > button:hover {
-  background: #125ca3;
+.container button:hover {
+  background-color: #125ca8;
 }
 
+/* ================================
+   Form
+================================ */
 
-/* FORM */
-
-form {
-  width: 550px;
-  max-width: 90%;
-
-  margin: 20px auto;
+.container form {
+  width: 80%;
+  max-width: 900px;
+  margin: 25px auto;
   padding: 25px;
-
   background: white;
-
-  border-radius: 10px;
-
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+  text-align: left;
 }
 
-form input,
-form select {
+.container form h3 {
+  text-align: center;
+  color: #173b7a;
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.container form input,
+.container form select,
+.container form textarea {
   width: 100%;
-
-  padding: 10px;
-
-  margin-bottom: 12px;
-
-  border: 1px solid #ccc;
-  border-radius: 5px;
-
-  font-size: 14px;
-}
-
-form input:focus,
-form select:focus {
-  outline: none;
-  border-color: #1976d2;
-}
-
-form button {
-  width: 100%;
-
-  padding: 11px;
-
-  border: none;
+  padding: 12px;
+  margin: 8px 0 15px;
+  box-sizing: border-box;
+  border: 1px solid #cfd8e3;
   border-radius: 6px;
-
-  background: #28a745;
-  color: white;
-
   font-size: 15px;
+}
+
+.container form textarea {
+  resize: vertical;
+}
+
+.container form label {
+  display: block;
   font-weight: 600;
-
-  cursor: pointer;
+  margin-top: 10px;
 }
 
-form button:hover {
-  background: #218838;
+.container form p {
+  color: #555;
+  margin: 5px 0 10px;
 }
 
-
-/* TABLE CONTAINER */
+/* ================================
+   Table Wrapper
+================================ */
 
 .table-wrapper {
-  width: 92%;
-
-  margin: 0 auto;
-
-  height: calc(100vh - 170px);
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  background: #eef3f9;
-
-  border-radius: 8px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  margin-top: 30px;
+  background: transparent;
 }
 
-
-/* TABLE */
+/* ================================
+   Table
+================================ */
 
 .table-wrapper table {
   width: 100%;
-
-  table-layout: fixed;
-
+  min-width: 1400px;
   border-collapse: collapse;
+  table-layout: fixed;
+  background: #f8fbff;
+}
 
+/* ================================
+   Table Header
+================================ */
+
+.table-wrapper th {
+  background-color: #1f78d1;
+  color: white;
+  padding: 15px 10px;
+  border: 1px solid #d5deea;
+  font-size: 16px;
+  font-weight: 700;
+
+  /* IMPORTANT: prevents overlap */
+  position: static;
+}
+
+/* ================================
+   Table Cells
+================================ */
+
+.table-wrapper td {
+  padding: 15px 10px;
+  border: 1px solid #d5deea;
+  color: #26364a;
+  font-size: 15px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+
+/* ================================
+   Table Rows
+================================ */
+
+.table-wrapper tbody tr:nth-child(even) {
+  background-color: #f4f8fc;
+}
+
+.table-wrapper tbody tr:hover {
+  background-color: #eaf3ff;
+}
+
+/* ================================
+   Status Select
+================================ */
+
+.table-wrapper td select {
+  width: 100%;
+  min-width: 130px;
+  padding: 8px;
+  border: 1px solid #c5d1df;
+  border-radius: 5px;
+  font-size: 14px;
   background: white;
 }
 
-
-/* TABLE HEADER */
-
-.table-wrapper thead {
-  background: #1976d2;
-  color: white;
-}
-
-.table-wrapper th {
-  padding: 12px 6px;
-
-  text-align: center;
-
-  font-size: 14px;
-  font-weight: 600;
-
-  white-space: normal;
-
-  position: sticky;
-  top: 0;
-
-  z-index: 10;
-
-  border-right: 1px solid #ffffff;
-}
-
-
-/* TABLE DATA */
-
-.table-wrapper td {
-  padding: 11px 6px;
-
-  text-align: center;
-
-  vertical-align: middle;
-
-  border: 1px solid #d9dee5;
-
-  font-size: 14px;
-
-  color: #334155;
-
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-
-/* COLUMN WIDTHS */
-
-
-/* ID */
-
-.table-wrapper th:nth-child(1),
-.table-wrapper td:nth-child(1) {
-  width: 5%;
-}
-
-
-/* TITLE */
-
-.table-wrapper th:nth-child(2),
-.table-wrapper td:nth-child(2) {
-  width: 12%;
-}
-
-
-/* ABSTRACT */
-
-.table-wrapper th:nth-child(3),
-.table-wrapper td:nth-child(3) {
-  width: 15%;
-}
-
-
-/* KEYWORDS */
-
-.table-wrapper th:nth-child(4),
-.table-wrapper td:nth-child(4) {
-  width: 15%;
-}
-
-
-/* AUTHOR */
-
-.table-wrapper th:nth-child(5),
-.table-wrapper td:nth-child(5) {
-  width: 11%;
-}
-
-
-/* JOURNAL */
-
-.table-wrapper th:nth-child(6),
-.table-wrapper td:nth-child(6) {
-  width: 8%;
-}
-
-
-/* YEAR */
-
-.table-wrapper th:nth-child(7),
-.table-wrapper td:nth-child(7) {
-  width: 6%;
-}
-
-
-/* STATUS */
-
-.table-wrapper th:nth-child(8),
-.table-wrapper td:nth-child(8) {
-  width: 8%;
-}
-
-
-/* PDF FILE */
-
-.table-wrapper th:nth-child(9),
-.table-wrapper td:nth-child(9) {
-  width: 11%;
-}
-
-
-/* RESEARCHER ID */
-
-.table-wrapper th:nth-child(10),
-.table-wrapper td:nth-child(10) {
-  width: 6%;
-}
-
-
-/* ACTION */
-
-.table-wrapper th:nth-child(11),
-.table-wrapper td:nth-child(11) {
-  width: 8%;
-}
-
-
-/* LONG TEXT */
-
-.table-wrapper td:nth-child(2),
-.table-wrapper td:nth-child(3),
-.table-wrapper td:nth-child(4),
-.table-wrapper td:nth-child(9) {
-  line-height: 1.4;
-}
-
-
-/* PDF FILE */
-
-.table-wrapper td:nth-child(9) {
-  word-break: break-word;
-}
-
-
-/* ROW HOVER */
-
-.table-wrapper tbody tr:hover td {
-  background: #f5f8fc;
-}
-
-
-/* DELETE BUTTON */
+/* ================================
+   Action Buttons
+================================ */
 
 .table-wrapper td button {
-  padding: 7px 11px;
-
-  border: none;
-  border-radius: 6px;
-
-  background: #dc3545;
-  color: white;
-
+  padding: 8px 12px;
+  margin: 3px;
   font-size: 13px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  white-space: nowrap;
 }
 
-.table-wrapper td button:hover {
-  background: #b02a37;
+/* ================================
+   File Input
+================================ */
+
+.container input[type="file"] {
+  background: #f8fbff;
 }
 
+/* ================================
+   Loading / Empty Message
+================================ */
 
-/* TABLE SCROLLBAR */
-
-.table-wrapper::-webkit-scrollbar {
-  width: 8px;
+.container > p {
+  font-size: 18px;
+  color: #5b6b7d;
+  margin-top: 30px;
 }
 
-.table-wrapper::-webkit-scrollbar-track {
-  background: #e2e8f0;
-}
-
-.table-wrapper::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 10px;
-}
-
-.table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-
-/* SMALL SCREEN */
+/* ================================
+   Mobile / Small Screen
+================================ */
 
 @media (max-width: 900px) {
 
   .container {
+    width: 100%;
     padding: 25px 10px;
   }
 
+  .container h2 {
+    font-size: 32px;
+  }
+
+  .container form {
+    width: 95%;
+  }
+
   .table-wrapper {
-    width: 100%;
+    overflow-x: auto;
   }
 
-  .table-wrapper th,
-  .table-wrapper td {
-    font-size: 12px;
-    padding: 8px 4px;
-  }
-
-  .table-wrapper td button {
-    padding: 6px 8px;
-    font-size: 11px;
+  .table-wrapper table {
+    min-width: 1400px;
   }
 }

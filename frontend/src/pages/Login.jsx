@@ -21,12 +21,34 @@ function Login() {
         }
       );
 
+      // Login successful
       alert(response.data.message);
 
+      // Get user details from backend
+      const userId = response.data.user_id;
+      const username = response.data.username;
+      const userEmail = response.data.email;
+      const role = response.data.role;
+      const accessToken = response.data.access_token;
+
+      // Save user information in browser
+      localStorage.setItem("user_id", userId);
+      localStorage.setItem("username", username);
+      localStorage.setItem("email", userEmail);
+      localStorage.setItem("role", role);
+      localStorage.setItem("access_token", accessToken);
+
+      // Go to dashboard
       navigate("/dashboard");
+
     } catch (error) {
+      console.log(error);
+
       if (error.response) {
-        alert(error.response.data.detail);
+        alert(
+          error.response.data.detail ||
+          "Invalid Email or Password"
+        );
       } else {
         alert("Unable to connect to the server.");
       }
@@ -35,15 +57,23 @@ function Login() {
 
   return (
     <div className="login-page">
+
       <div className="login-container">
 
-        {/* Left Side */}
+        {/* =========================
+            LEFT SIDE
+        ========================= */}
+
         <div className="left-side">
-          <h1>🔬 Scientific Collaboration Network Analyzer</h1>
+
+          <h1>
+            🔬 Scientific Collaboration Network Analyzer
+          </h1>
 
           <p>
-            Welcome back! Login to access your researcher profile,
-            publications, collaborations, conferences, and dashboard.
+            Welcome back! Login to access your researcher
+            profile, publications, collaborations,
+            conferences, and dashboard.
           </p>
 
           <ul>
@@ -53,16 +83,24 @@ function Login() {
             <li>✔ Conference Management</li>
             <li>✔ Dashboard Analytics</li>
           </ul>
+
         </div>
 
-        {/* Right Side */}
+
+        {/* =========================
+            RIGHT SIDE
+        ========================= */}
+
         <div className="right-side">
 
           <h2>Login</h2>
 
           <form onSubmit={handleLogin}>
 
+            {/* EMAIL */}
+
             <label>Email</label>
+
             <input
               type="email"
               placeholder="Enter your email"
@@ -71,7 +109,11 @@ function Login() {
               required
             />
 
+
+            {/* PASSWORD */}
+
             <label>Password</label>
+
             <input
               type="password"
               placeholder="Enter your password"
@@ -80,24 +122,40 @@ function Login() {
               required
             />
 
+
+            {/* LOGIN BUTTON */}
+
             <button type="submit">
               Login
             </button>
 
           </form>
 
+
+          {/* REGISTER */}
+
           <p className="register-text">
             Don't have an account?
-            <Link to="/register"> Register</Link>
+
+            <Link to="/register">
+              {" "}Register
+            </Link>
           </p>
 
-          <Link className="back-home" to="/">
+
+          {/* BACK TO HOME */}
+
+          <Link
+            className="back-home"
+            to="/"
+          >
             ← Back to Home
           </Link>
 
         </div>
 
       </div>
+
     </div>
   );
 }

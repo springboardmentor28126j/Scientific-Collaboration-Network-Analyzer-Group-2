@@ -12,6 +12,7 @@ function Register() {
     institution: "",
     department: "",
     country: "",
+    role: "",
     password: "",
   });
 
@@ -31,6 +32,10 @@ function Register() {
         {
           username: formData.username,
           email: formData.email,
+          institution: formData.institution,
+          department: formData.department,
+          country: formData.country,
+          role: formData.role,
           password: formData.password,
         }
       );
@@ -43,6 +48,7 @@ function Register() {
         institution: "",
         department: "",
         country: "",
+        role: "",
         password: "",
       });
 
@@ -153,6 +159,30 @@ function Register() {
                   onChange={handleChange}
                 />
               </div>
+
+              {/* ROLE */}
+              <div className="form-group">
+                <label>Role</label>
+
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select Role</option>
+                  <option value="Researcher">Researcher</option>
+                  <option value="Institution Admin">
+                    Institution Admin
+                  </option>
+                  <option value="Reviewer">Reviewer</option>
+                  <option value="System Admin">System Admin</option>
+                </select>
+              </div>
+
+            </div>
+
+            <div className="form-row">
 
               <div className="form-group">
                 <label>Password</label>

@@ -15,6 +15,8 @@ class Researcher(Base):
     institution = Column(String(150))
     department = Column(String(100))
     country = Column(String(100))
+    user_id = Column(Integer)
+    user_id = Column(Integer)
 
 
 # =====================================================

@@ -20,7 +20,7 @@ function Researchers() {
     const getResearchers = async () => {
       try {
         const response = await axios.get(
-          "http://127.0.0.1:8001/researchers/"
+          "http://127.0.0.1:8000/researchers/"
         );
 
         setResearchers(response.data);
@@ -35,7 +35,7 @@ function Researchers() {
   const fetchResearchers = async () => {
     try {
       const response = await axios.get(
-        "http://127.0.0.1:8001/researchers/"
+        "http://127.0.0.1:8000/researchers/"
       );
 
       setResearchers(response.data);
@@ -54,7 +54,7 @@ function Researchers() {
   const saveResearcher = async () => {
     try {
       await axios.post(
-        "http://127.0.0.1:8001/researchers/",
+        "http://127.0.0.1:8000/researchers/",
         formData
       );
 
@@ -88,7 +88,7 @@ function Researchers() {
 
     try {
       await axios.delete(
-        `http://127.0.0.1:8001/researchers/${id}`
+        `http://127.0.0.1:8000/researchers/${id}`
       );
 
       alert("Researcher deleted successfully!");

@@ -1,155 +1,478 @@
+/* =========================================
+   COLLABORATIONS PAGE
+========================================= */
+
 .collaborations-page {
-    padding: 30px;
-    background-color: #f5f7fb;
-    min-height: 100vh;
-    box-sizing: border-box;
+  min-height: 100vh;
+  width: 100%;
+
+  box-sizing: border-box;
+
+  background: #f5f7fb;
+
+  padding: 35px 35px 60px;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.collaborations-header {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 28px;
+}
+
+.collaborations-header h1 {
+  margin: 0;
+
+  color: #173f73;
+
+  font-size: 34px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   ADD BUTTON
+========================================= */
+
+.add-collaboration-btn {
+  height: 46px;
+
+  padding: 0 22px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #2872ad;
+
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.add-collaboration-btn:hover {
+  background: #205b96;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 12px rgba(40, 114, 173, 0.20);
+}
+
+
+/* =========================================
+   ADD COLLABORATION FORM
+========================================= */
+
+.collaboration-form {
+  width: 100%;
+  max-width: 900px;
+
+  margin: 0 auto 30px;
+
+  padding: 30px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 5px 20px rgba(15, 23, 42, 0.07);
+}
+
+
+/* Form heading */
+
+.collaboration-form h2 {
+  margin: 0 0 25px;
+
+  color: #173f73;
+
+  font-size: 22px;
+
+  padding-bottom: 15px;
+
+  border-bottom: 1px solid #e5eaf1;
+}
+
+
+/* =========================================
+   FORM FIELDS
+========================================= */
+
+.collaboration-form input,
+.collaboration-form select {
+  width: 100%;
+
+  height: 46px;
+
+  box-sizing: border-box;
+
+  padding: 0 14px;
+
+  margin-bottom: 16px;
+
+  border: 1px solid #d3dce8;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #1e293b;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.collaboration-form input:focus,
+.collaboration-form select:focus {
+  border-color: #2872ad;
+
+  box-shadow:
+    0 0 0 3px rgba(40, 114, 173, 0.09);
+}
+
+.collaboration-form input::placeholder {
+  color: #94a3b8;
+}
+
+
+/* =========================================
+   FORM BUTTONS
+========================================= */
+
+.form-buttons {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 8px;
+}
+
+.save-collaboration-btn,
+.cancel-collaboration-btn {
+  height: 44px;
+
+  padding: 0 21px;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+
+/* Save */
+
+.save-collaboration-btn {
+  border: none;
+
+  background: #2872ad;
+
+  color: white;
+}
+
+.save-collaboration-btn:hover {
+  background: #205b96;
+
+  transform: translateY(-1px);
+}
+
+
+/* Cancel */
+
+.cancel-collaboration-btn {
+  border: 1px solid #cbd5e1;
+
+  background: #ffffff;
+
+  color: #475569;
+}
+
+.cancel-collaboration-btn:hover {
+  background: #f1f5f9;
+}
+
+
+/* =========================================
+   TABLE CARD
+========================================= */
+
+.collaborations-page > .collaborations-table {
+  width: 100%;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 5px 20px rgba(15, 23, 42, 0.06);
+
+  border-collapse: separate;
+
+  border-spacing: 0;
+
+  overflow: hidden;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   TABLE HEADER
+========================================= */
+
+.collaborations-table thead th {
+  padding: 16px 15px;
+
+  background: #1f5f9f;
+
+  color: #ffffff;
+
+  text-align: left;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  border-bottom: 1px solid #174b80;
+}
+
+
+/* Rounded corners */
+
+.collaborations-table thead th:first-child {
+  border-top-left-radius: 13px;
+}
+
+.collaborations-table thead th:last-child {
+  border-top-right-radius: 13px;
+}
+
+
+/* =========================================
+   TABLE BODY
+========================================= */
+
+.collaborations-table tbody td {
+  padding: 16px 15px;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  border-bottom: 1px solid #e8edf3;
+
+  vertical-align: middle;
+
+  line-height: 1.4;
+}
+
+
+/* Alternate rows */
+
+.collaborations-table tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+
+/* Hover */
+
+.collaborations-table tbody tr:hover td {
+  background: #f0f6fc;
+}
+
+
+/* Last row */
+
+.collaborations-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================================
+   COLUMN WIDTHS
+========================================= */
+
+.collaborations-table th:nth-child(1),
+.collaborations-table td:nth-child(1) {
+  width: 55px;
+
+  text-align: center;
+}
+
+.collaborations-table th:nth-child(2),
+.collaborations-table td:nth-child(2),
+.collaborations-table th:nth-child(3),
+.collaborations-table td:nth-child(3) {
+  min-width: 150px;
+}
+
+.collaborations-table th:nth-child(4),
+.collaborations-table td:nth-child(4) {
+  min-width: 200px;
+}
+
+.collaborations-table th:nth-child(5),
+.collaborations-table td:nth-child(5) {
+  min-width: 150px;
+}
+
+.collaborations-table th:nth-child(6),
+.collaborations-table td:nth-child(6) {
+  min-width: 150px;
+}
+
+.collaborations-table th:nth-child(7),
+.collaborations-table td:nth-child(7) {
+  min-width: 120px;
+}
+
+.collaborations-table th:nth-child(8),
+.collaborations-table td:nth-child(8) {
+  min-width: 100px;
+}
+
+.collaborations-table th:nth-child(9),
+.collaborations-table td:nth-child(9) {
+  min-width: 100px;
+}
+
+
+/* =========================================
+   STATUS
+========================================= */
+
+.collaborations-table td:nth-child(8) {
+  font-weight: 600;
+
+  color: #2872ad;
+}
+
+
+/* =========================================
+   DELETE BUTTON
+========================================= */
+
+.delete-collaboration-btn {
+  padding: 8px 15px;
+
+  border: 1px solid #efb8b8;
+
+  border-radius: 7px;
+
+  background: #fff1f1;
+
+  color: #c0392b;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.delete-collaboration-btn:hover {
+  background: #ffe1e1;
+
+  border-color: #e99b9b;
+}
+
+
+/* =========================================
+   EMPTY MESSAGE
+========================================= */
+
+.no-collaborations {
+  padding: 35px !important;
+
+  text-align: center;
+
+  color: #64748b !important;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   RESPONSIVE / HORIZONTAL SCROLL
+========================================= */
+
+@media (max-width: 1000px) {
+
+  .collaborations-page {
+    padding: 25px 15px 45px;
+
+    overflow-x: auto;
   }
-  
-  /* Main heading */
+
+  .collaborations-table {
+    min-width: 1100px;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  .collaborations-page {
+    padding: 20px 10px 35px;
+  }
+
   .collaborations-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 15px;
   }
-  
+
   .collaborations-header h1 {
-    margin: 0;
-    font-size: 30px;
-    color: #1e3a8a;
+    font-size: 29px;
   }
-  
-  /* Add Collaboration button */
+
   .add-collaboration-btn {
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 15px;
-  }
-  
-  .add-collaboration-btn:hover {
-    background-color: #1d4ed8;
-  }
-  
-  /* Form */
-  .collaboration-form {
-    background-color: white;
-    padding: 25px;
-    border-radius: 10px;
-    margin-bottom: 25px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-  
-  .collaboration-form h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: #1e3a8a;
-  }
-  
-  .collaboration-form input,
-  .collaboration-form select {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-    color: #111827;
-    background-color: white;
   }
-  
-  .collaboration-form input:focus,
-  .collaboration-form select:focus {
-    outline: none;
-    border-color: #2563eb;
+
+  .collaboration-form {
+    padding: 20px;
   }
-  
-  /* Form buttons */
+
   .form-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    flex-direction: column;
   }
-  
+
   .save-collaboration-btn,
   .cancel-collaboration-btn {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  
-  .save-collaboration-btn {
-    background-color: #16a34a;
-    color: white;
-  }
-  
-  .save-collaboration-btn:hover {
-    background-color: #15803d;
-  }
-  
-  .cancel-collaboration-btn {
-    background-color: #dc2626;
-    color: white;
-  }
-  
-  .cancel-collaboration-btn:hover {
-    background-color: #b91c1c;
-  }
-  
-  /* Table */
-  .collaborations-table {
     width: 100%;
-    border-collapse: collapse;
-    background-color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
-  
-  /* Table headings */
-  .collaborations-table th {
-    padding: 13px 12px;
-    border: 1px solid #1d4ed8;
-    text-align: left;
-    background-color: #2563eb;
-    color: white;
-    font-weight: bold;
-  }
-  
-  /* Table content */
-  .collaborations-table td {
-    padding: 12px;
-    border: 1px solid #d1d5db;
-    text-align: left;
-    background-color: white;
-    color: #111827;
-  }
-  
-  .collaborations-table tr:hover td {
-    background-color: #f8fafc;
-  }
-  
-  /* Delete button */
-  .delete-collaboration-btn {
-    background-color: #dc2626;
-    color: white;
-    border: none;
-    padding: 7px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .delete-collaboration-btn:hover {
-    background-color: #b91c1c;
-  }
-  
-  /* Empty table message */
-  .no-collaborations {
-    text-align: center;
-    padding: 20px;
-    color: #666;
-    background-color: white;
-  }
+}

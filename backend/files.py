@@ -1,11 +1,23 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 from pathlib import Path
-import shutil
+import cloudinary
+import cloudinary.uploader
+import os
 
 import models
 from database import get_db
 
+load_dotenv()
+
+# Cloudinary configuration
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 router = APIRouter(
     prefix="/files",
@@ -13,42 +25,56 @@ router = APIRouter(
 )
 
 
-# Create uploads folder automatically
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
-
-
 @router.post("/upload")
 def upload_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-
-    # Allow PDF files only
+    # Only PDF files are allowed
     if file.content_type != "application/pdf":
         raise HTTPException(
             status_code=400,
             detail="Only PDF files are allowed."
         )
 
-    # Save the uploaded PDF
-    file_path = UPLOAD_DIR / file.filename
+    try:
+        # Upload PDF to Cloudinary
+        result = cloudinary.uploader.upload(
+            file.file,
+            resource_type="raw",
+            folder="scientific_collaboration/publications",
+            use_filename=True,
+            unique_filename=True
+        )
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        cloudinary_url = result.get("secure_url")
 
-    # Save file information in database
-    new_file = models.File(
-        file_name=file.filename,
-        file_path=str(file_path)
-    )
+        if not cloudinary_url:
+            raise HTTPException(
+                status_code=500,
+                detail="Cloudinary upload failed."
+            )
 
-    db.add(new_file)
-    db.commit()
-    db.refresh(new_file)
+        # Save Cloudinary URL in database
+        new_file = models.File(
+            file_name=file.filename,
+            file_path=cloudinary_url
+        )
 
-    return {
-        "message": "File uploaded successfully",
-        "filename": file.filename,
-        "file_path": str(file_path)
-    }
+        db.add(new_file)
+        db.commit()
+        db.refresh(new_file)
+
+        return {
+            "message": "File uploaded successfully to Cloudinary",
+            "filename": file.filename,
+            "file_path": cloudinary_url
+        }
+
+    except Exception as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cloudinary upload failed: {str(e)}"
+        )

@@ -1,223 +1,647 @@
-/* ================================
-   Publications Page
-================================ */
+/* =========================================
+   PUBLICATIONS PAGE
+========================================= */
 
 .container {
-  width: 95%;
-  margin: 0 auto;
-  padding: 35px 20px;
+  min-height: 100vh;
+  width: 100%;
+
   box-sizing: border-box;
+
+  background: #f5f7fb;
+
+  padding: 35px 35px 60px;
+}
+
+
+/* =========================================
+   PAGE HEADER
+========================================= */
+
+.container > h2 {
+  margin: 0;
+
+  color: #173f73;
+
+  font-size: 36px;
+  font-weight: 700;
+
   text-align: center;
 }
 
-.container h2 {
-  font-size: 42px;
-  margin-bottom: 25px;
-  color: #173b7a;
+.container > h2::after {
+  content: "";
+
+  display: block;
+
+  width: 55px;
+  height: 4px;
+
+  margin: 12px auto 25px;
+
+  background: #2872ad;
+
+  border-radius: 10px;
 }
 
-/* ================================
-   Buttons
-================================ */
 
-.container button {
-  background-color: #1976d2;
-  color: white;
+/* =========================================
+   ADD PUBLICATION BUTTON
+========================================= */
+
+.container > button {
+  display: block;
+
+  margin: 0 auto 30px;
+
+  padding: 13px 25px;
+
   border: none;
-  padding: 12px 24px;
-  margin: 8px;
   border-radius: 8px;
-  font-size: 16px;
+
+  background: #2872ad;
+
+  color: white;
+
+  font-size: 15px;
   font-weight: 600;
+
   cursor: pointer;
+
+  transition: 0.2s;
 }
 
-.container button:hover {
-  background-color: #125ca8;
+.container > button:hover {
+  background: #205b96;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 5px 12px rgba(40, 114, 173, 0.20);
 }
 
-/* ================================
-   Form
-================================ */
+
+/* =========================================
+   PUBLICATION FORM
+========================================= */
 
 .container form {
-  width: 80%;
+  width: 100%;
   max-width: 900px;
-  margin: 25px auto;
-  padding: 25px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-  text-align: left;
+
+  margin: 0 auto 35px;
+
+  padding: 30px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  box-shadow: 0 5px 20px rgba(15, 23, 42, 0.07);
 }
 
+
+/* Form heading */
+
 .container form h3 {
-  text-align: center;
-  color: #173b7a;
-  font-size: 28px;
-  margin-bottom: 20px;
+  margin: 0 0 25px;
+
+  color: #173f73;
+
+  font-size: 22px;
+
+  border-bottom: 1px solid #e5eaf1;
+
+  padding-bottom: 15px;
 }
+
+
+/* =========================================
+   FORM INPUTS
+========================================= */
 
 .container form input,
 .container form select,
 .container form textarea {
   width: 100%;
-  padding: 12px;
-  margin: 8px 0 15px;
+
   box-sizing: border-box;
-  border: 1px solid #cfd8e3;
-  border-radius: 6px;
-  font-size: 15px;
+
+  padding: 12px 14px;
+
+  margin-bottom: 16px;
+
+  border: 1px solid #d3dce8;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #1e293b;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.container form input,
+.container form select {
+  height: 46px;
 }
 
 .container form textarea {
+  min-height: 105px;
+
   resize: vertical;
 }
 
+.container form input:focus,
+.container form select:focus,
+.container form textarea:focus {
+  border-color: #2872ad;
+
+  box-shadow: 0 0 0 3px rgba(40, 114, 173, 0.09);
+}
+
+.container form input::placeholder,
+.container form textarea::placeholder {
+  color: #94a3b8;
+}
+
+
+/* =========================================
+   PDF LABEL
+========================================= */
+
 .container form label {
   display: block;
+
+  margin: 4px 0 8px;
+
+  color: #475569;
+
+  font-size: 13px;
+
   font-weight: 600;
-  margin-top: 10px;
 }
+
+
+/* File input */
+
+.container form input[type="file"] {
+  height: auto;
+
+  padding: 10px;
+
+  background: #f8fafc;
+
+  cursor: pointer;
+}
+
+
+/* Uploaded PDF message */
 
 .container form p {
-  color: #555;
-  margin: 5px 0 10px;
+  margin: -5px 0 18px;
+
+  padding: 10px 12px;
+
+  background: #f0f7ff;
+
+  border-radius: 7px;
+
+  color: #2864ad;
+
+  font-size: 13px;
+
+  word-break: break-word;
 }
 
-/* ================================
-   Table Wrapper
-================================ */
+
+/* =========================================
+   FORM BUTTONS
+========================================= */
+
+.container form button {
+  height: 44px;
+
+  padding: 0 20px;
+
+  margin-right: 10px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #2872ad;
+
+  color: white;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.container form button:hover {
+  background: #205b96;
+
+  transform: translateY(-1px);
+}
+
+
+/* Cancel button */
+
+.container form button[type="button"] {
+  background: #f1f5f9;
+
+  color: #475569;
+
+  border: 1px solid #cbd5e1;
+}
+
+.container form button[type="button"]:hover {
+  background: #e2e8f0;
+
+  color: #1e293b;
+}
+
+
+/* =========================================
+   TABLE CARD
+========================================= */
 
 .table-wrapper {
   width: 100%;
+
   overflow-x: auto;
-  overflow-y: visible;
-  margin-top: 30px;
-  background: transparent;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  box-shadow: 0 5px 20px rgba(15, 23, 42, 0.06);
+
+  scrollbar-width: thin;
 }
 
-/* ================================
-   Table
-================================ */
+
+/* =========================================
+   TABLE
+========================================= */
 
 .table-wrapper table {
   width: 100%;
-  min-width: 1400px;
-  border-collapse: collapse;
-  table-layout: fixed;
-  background: #f8fbff;
+
+  min-width: 1450px;
+
+  border-collapse: separate;
+
+  border-spacing: 0;
+
+  font-size: 14px;
 }
 
-/* ================================
-   Table Header
-================================ */
 
-.table-wrapper th {
-  background-color: #1f78d1;
-  color: white;
-  padding: 15px 10px;
-  border: 1px solid #d5deea;
-  font-size: 16px;
-  font-weight: 700;
+/* =========================================
+   TABLE HEADER
+========================================= */
 
-  /* IMPORTANT: prevents overlap */
-  position: static;
+.table-wrapper thead th {
+  padding: 16px 14px;
+
+  background: #1f5f9f;
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  text-align: left;
+
+  white-space: nowrap;
+
+  border-bottom: 1px solid #174b80;
 }
 
-/* ================================
-   Table Cells
-================================ */
 
-.table-wrapper td {
-  padding: 15px 10px;
-  border: 1px solid #d5deea;
-  color: #26364a;
-  font-size: 15px;
-  line-height: 1.5;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
+/* Rounded top corners */
+
+.table-wrapper thead th:first-child {
+  border-top-left-radius: 13px;
+}
+
+.table-wrapper thead th:last-child {
+  border-top-right-radius: 13px;
+}
+
+
+/* =========================================
+   TABLE BODY
+========================================= */
+
+.table-wrapper tbody td {
+  padding: 15px 14px;
+
+  color: #334155;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #e8edf3;
+
   vertical-align: middle;
+
+  line-height: 1.5;
 }
 
-/* ================================
-   Table Rows
-================================ */
 
-.table-wrapper tbody tr:nth-child(even) {
-  background-color: #f4f8fc;
+/* Alternating rows */
+
+.table-wrapper tbody tr:nth-child(even) td {
+  background: #f8fafc;
 }
 
-.table-wrapper tbody tr:hover {
-  background-color: #eaf3ff;
+
+/* Hover */
+
+.table-wrapper tbody tr:hover td {
+  background: #f0f6fc;
 }
 
-/* ================================
-   Status Select
-================================ */
+
+/* Last row */
+
+.table-wrapper tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================================
+   COLUMN SIZING
+========================================= */
+
+.table-wrapper th:nth-child(1),
+.table-wrapper td:nth-child(1) {
+  width: 55px;
+
+  text-align: center;
+}
+
+.table-wrapper th:nth-child(2),
+.table-wrapper td:nth-child(2) {
+  min-width: 180px;
+}
+
+.table-wrapper th:nth-child(3),
+.table-wrapper td:nth-child(3) {
+  min-width: 135px;
+}
+
+.table-wrapper th:nth-child(4),
+.table-wrapper td:nth-child(4) {
+  min-width: 230px;
+
+  max-width: 280px;
+}
+
+.table-wrapper th:nth-child(5),
+.table-wrapper td:nth-child(5) {
+  min-width: 180px;
+
+  max-width: 230px;
+}
+
+.table-wrapper th:nth-child(6),
+.table-wrapper td:nth-child(6) {
+  min-width: 130px;
+}
+
+.table-wrapper th:nth-child(7),
+.table-wrapper td:nth-child(7) {
+  min-width: 150px;
+}
+
+.table-wrapper th:nth-child(8),
+.table-wrapper td:nth-child(8) {
+  min-width: 75px;
+
+  text-align: center;
+}
+
+.table-wrapper th:nth-child(9),
+.table-wrapper td:nth-child(9) {
+  min-width: 180px;
+}
+
+.table-wrapper th:nth-child(10),
+.table-wrapper td:nth-child(10) {
+  min-width: 180px;
+
+  max-width: 230px;
+}
+
+.table-wrapper th:nth-child(11),
+.table-wrapper td:nth-child(11) {
+  min-width: 110px;
+
+  text-align: center;
+}
+
+.table-wrapper th:nth-child(12),
+.table-wrapper td:nth-child(12) {
+  min-width: 145px;
+}
+
+
+/* =========================================
+   LONG TEXT
+========================================= */
+
+.table-wrapper td:nth-child(2),
+.table-wrapper td:nth-child(4),
+.table-wrapper td:nth-child(5),
+.table-wrapper td:nth-child(10) {
+  word-break: break-word;
+}
+
+
+/* =========================================
+   STATUS SELECT
+========================================= */
 
 .table-wrapper td select {
   width: 100%;
-  min-width: 130px;
-  padding: 8px;
-  border: 1px solid #c5d1df;
-  border-radius: 5px;
-  font-size: 14px;
-  background: white;
+
+  min-width: 155px;
+
+  height: 38px;
+
+  padding: 0 10px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  outline: none;
 }
 
-/* ================================
-   Action Buttons
-================================ */
+.table-wrapper td select:focus {
+  border-color: #2872ad;
+
+  box-shadow: 0 0 0 3px rgba(40, 114, 173, 0.08);
+}
+
+.table-wrapper td select:disabled {
+  background: #f1f5f9;
+
+  color: #64748b;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+========================================= */
 
 .table-wrapper td button {
-  padding: 8px 12px;
+  padding: 8px 13px;
+
   margin: 3px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+
+/* Edit */
+
+.table-wrapper td button:first-child {
+  background: #eef5ff;
+
+  color: #2864ad;
+
+  border: 1px solid #c8dbf2;
+}
+
+.table-wrapper td button:first-child:hover {
+  background: #dcecff;
+}
+
+
+/* Delete */
+
+.table-wrapper td button:nth-child(2) {
+  background: #fff1f1;
+
+  color: #c0392b;
+
+  border: 1px solid #f0c5c5;
+}
+
+.table-wrapper td button:nth-child(2):hover {
+  background: #ffe2e2;
+}
+
+
+/* View only */
+
+.table-wrapper td span {
+  color: #64748b;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================
+   PDF FILE
+========================================= */
+
+.table-wrapper td:nth-child(10) {
+  color: #2864ad;
+
   font-size: 13px;
 }
 
-/* ================================
-   File Input
-================================ */
 
-.container input[type="file"] {
-  background: #f8fbff;
-}
-
-/* ================================
-   Loading / Empty Message
-================================ */
+/* =========================================
+   LOADING / EMPTY MESSAGE
+========================================= */
 
 .container > p {
-  font-size: 18px;
-  color: #5b6b7d;
-  margin-top: 30px;
+  width: fit-content;
+
+  margin: 30px auto;
+
+  color: #64748b;
+
+  font-size: 15px;
 }
 
-/* ================================
-   Mobile / Small Screen
-================================ */
+
+/* =========================================
+   RESPONSIVE
+========================================= */
 
 @media (max-width: 900px) {
 
   .container {
-    width: 100%;
-    padding: 25px 10px;
+    padding: 25px 15px 45px;
   }
 
-  .container h2 {
-    font-size: 32px;
+  .container > h2 {
+    font-size: 30px;
   }
 
   .container form {
-    width: 95%;
+    padding: 22px;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  .container {
+    padding: 20px 10px 35px;
   }
 
-  .table-wrapper {
-    overflow-x: auto;
+  .container > h2 {
+    font-size: 27px;
   }
 
-  .table-wrapper table {
-    min-width: 1400px;
+  .container > button {
+    width: 100%;
+  }
+
+  .container form {
+    padding: 18px;
   }
 }

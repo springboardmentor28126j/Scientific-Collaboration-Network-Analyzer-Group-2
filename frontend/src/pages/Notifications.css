@@ -1,0 +1,272 @@
+/* ================================
+   Notifications Page
+================================ */
+
+.notifications-page {
+  min-height: 100vh;
+  background: #f7f9fc;
+  padding: 35px 45px;
+  color: #1e293b;
+}
+
+.notifications-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Header */
+
+.notifications-header {
+  margin-bottom: 28px;
+}
+
+.notifications-header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #173f6b;
+  letter-spacing: -0.5px;
+}
+
+.notifications-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 15px;
+}
+
+/* Notification Card */
+
+.notification-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+
+  border: 1px solid #e5eaf0;
+  border-left: 4px solid #2563a6;
+
+  box-shadow: 0 3px 12px rgba(15, 50, 90, 0.06);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.notification-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 20px rgba(15, 50, 90, 0.10);
+}
+
+/* Content */
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-message {
+  margin: 0 0 9px;
+
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+
+  color: #1e3a5f;
+}
+
+.notification-type {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 11px;
+
+  border-radius: 6px;
+
+  background: #eef5ff;
+  color: #2563a6;
+
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Buttons */
+
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.read-button,
+.delete-button {
+  border: none;
+  padding: 8px 14px;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+.read-button {
+  background: #2563a6;
+  color: #ffffff;
+}
+
+.read-button:hover {
+  background: #174a7c;
+  transform: translateY(-1px);
+}
+
+.delete-button {
+  background: #fff1f2;
+  color: #dc3545;
+  border: 1px solid #fecdd3;
+}
+
+.delete-button:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* Unread Notification */
+
+.unread {
+  border-left-color: #2563a6;
+  background: #ffffff;
+}
+
+/* Small indicator for unread notifications */
+
+.unread::before {
+  content: "";
+  position: absolute;
+
+  top: 18px;
+  left: -7px;
+
+  width: 9px;
+  height: 9px;
+
+  background: #2563a6;
+  border-radius: 50%;
+
+  border: 2px solid #ffffff;
+}
+
+/* Read Notification */
+
+.read {
+  opacity: 0.72;
+  border-left-color: #cbd5e1;
+  background: #fafbfc;
+}
+
+.read .notification-message {
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* Empty State */
+
+.no-notifications {
+  background: #ffffff;
+
+  padding: 55px 30px;
+
+  text-align: center;
+
+  border-radius: 12px;
+
+  border: 1px solid #e5eaf0;
+
+  color: #64748b;
+
+  box-shadow: 0 3px 12px rgba(15, 50, 90, 0.06);
+}
+
+.no-notifications p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Back Button */
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+
+  margin-top: 24px;
+
+  text-decoration: none;
+
+  background: #173f6b;
+  color: #ffffff;
+
+  padding: 9px 17px;
+
+  border-radius: 6px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+.back-button:hover {
+  background: #2563a6;
+  transform: translateY(-1px);
+}
+
+/* ================================
+   Responsive Design
+================================ */
+
+@media (max-width: 700px) {
+
+  .notifications-page {
+    padding: 25px 18px;
+  }
+
+  .notifications-header h1 {
+    font-size: 27px;
+  }
+
+  .notifications-header p {
+    font-size: 14px;
+  }
+
+  .notification-card {
+    flex-direction: column;
+    align-items: flex-start;
+
+    padding: 18px;
+    gap: 15px;
+  }
+
+  .notification-actions {
+    width: 100%;
+  }
+
+  .read-button,
+  .delete-button {
+    flex: 1;
+  }
+}

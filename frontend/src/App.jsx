@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Citations from "./pages/Citations";
+import Notifications from "./pages/Notifications";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -12,6 +14,7 @@ import Analytics from "./pages/Analytics";
 import Conference from "./pages/Conferences";
 import Reports from "./pages/Reports";
 import Reviews from "./pages/Reviews";
+import About from "./pages/About";
 
 function App() {
   return (
@@ -50,9 +53,15 @@ function App() {
 
         {/* Reports */}
         <Route path="/reports" element={<Reports />} />
-        
+
         {/* Reviews */}
         <Route path="/reviews" element={<Reviews />} />
+        {/* About */}
+        <Route path="/about" element={<About />} />  
+
+        <Route path="/citations" element={<Citations />} />
+
+        <Route path="/notifications" element={<Notifications />} />
 
       </Routes>
     </BrowserRouter>

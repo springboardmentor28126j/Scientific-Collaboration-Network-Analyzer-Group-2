@@ -1,0 +1,453 @@
+/* =========================================
+   REVIEWS PAGE
+========================================= */
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+}
+
+
+/* =========================================
+   PAGE TITLE
+========================================= */
+
+h1 {
+  color: #173f73 !important;
+
+  font-size: 36px !important;
+
+  font-weight: 700;
+
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+}
+
+
+/* Subtitle */
+
+h1 + p {
+  color: #64748b !important;
+
+  font-size: 15px !important;
+
+  margin-bottom: 28px !important;
+}
+
+
+/* =========================================
+   ASSIGN REVIEWER CARD
+========================================= */
+
+h2 {
+  color: #173f73 !important;
+
+  font-size: 24px !important;
+}
+
+
+/* Form card */
+
+form {
+  max-width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================
+   INPUTS
+========================================= */
+
+input[type="number"] {
+  width: 100% !important;
+
+  max-width: 430px !important;
+
+  height: 46px;
+
+  padding: 0 14px !important;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d3dce8 !important;
+
+  border-radius: 8px !important;
+
+  background: #ffffff;
+
+  color: #1e293b;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+input[type="number"]:focus {
+  border-color: #2872ad !important;
+
+  box-shadow:
+    0 0 0 3px rgba(40, 114, 173, 0.09);
+}
+
+input[type="number"]::placeholder {
+  color: #94a3b8;
+}
+
+
+/* =========================================
+   ALL BUTTONS
+========================================= */
+
+button {
+  font-family: inherit;
+}
+
+
+/* =========================================
+   FILTER BUTTONS
+========================================= */
+
+button[style*="background-color: #eee"] {
+  background: #ffffff !important;
+
+  color: #475569 !important;
+
+  border: 1px solid #d3dce8 !important;
+
+  border-radius: 8px !important;
+
+  padding: 10px 22px !important;
+
+  font-size: 14px !important;
+
+  font-weight: 600;
+
+  transition: 0.2s;
+}
+
+button[style*="background-color: #eee"]:hover {
+  background: #f0f6fc !important;
+
+  border-color: #2872ad !important;
+
+  color: #2872ad !important;
+}
+
+
+/* Active filter */
+
+button[style*="background-color: #1976d2"] {
+  background: #2872ad !important;
+
+  border: 1px solid #2872ad !important;
+
+  border-radius: 8px !important;
+
+  padding: 10px 22px !important;
+
+  font-size: 14px !important;
+
+  font-weight: 600;
+
+  color: #ffffff !important;
+}
+
+
+/* =========================================
+   TABLE CONTAINER
+========================================= */
+
+div[style*="overflowX"] {
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px !important;
+
+  box-shadow:
+    0 5px 20px rgba(15, 23, 42, 0.06) !important;
+
+  overflow-x: auto !important;
+
+  background: #ffffff !important;
+}
+
+
+/* =========================================
+   TABLE
+========================================= */
+
+table {
+  border-collapse: separate !important;
+
+  border-spacing: 0 !important;
+
+  min-width: 950px !important;
+
+  width: 100%;
+}
+
+
+/* Table header */
+
+th {
+  background: #1f5f9f !important;
+
+  color: #ffffff !important;
+
+  border: none !important;
+
+  border-bottom: 1px solid #174b80 !important;
+
+  padding: 16px 14px !important;
+
+  font-size: 13px !important;
+
+  font-weight: 600 !important;
+
+  text-align: center !important;
+}
+
+
+/* First header corner */
+
+th:first-child {
+  border-top-left-radius: 13px;
+}
+
+
+/* Last header corner */
+
+th:last-child {
+  border-top-right-radius: 13px;
+}
+
+
+/* =========================================
+   TABLE CELLS
+========================================= */
+
+td {
+  padding: 16px 14px !important;
+
+  border: none !important;
+
+  border-bottom: 1px solid #e8edf3 !important;
+
+  color: #334155 !important;
+
+  font-size: 14px;
+
+  vertical-align: middle !important;
+
+  line-height: 1.5;
+}
+
+
+/* Alternate rows */
+
+tbody tr:nth-child(even) td {
+  background: #f8fafc !important;
+}
+
+
+/* Hover */
+
+tbody tr:hover td {
+  background: #f0f6fc !important;
+}
+
+
+/* Last row */
+
+tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+
+/* =========================================
+   SUBMIT REVIEW BUTTON
+========================================= */
+
+button[style*="backgroundColor: #1976d2"],
+button[style*="background-color: #1976d2"] {
+  background: #2872ad !important;
+
+  border: none !important;
+
+  border-radius: 7px !important;
+
+  color: #ffffff !important;
+
+  font-size: 13px !important;
+
+  font-weight: 600;
+
+  padding: 9px 15px !important;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+button[style*="backgroundColor: #1976d2"]:hover,
+button[style*="background-color: #1976d2"]:hover {
+  background: #205b96 !important;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================
+   REVIEW TEXTAREA
+========================================= */
+
+textarea {
+  width: 100% !important;
+
+  min-height: 130px;
+
+  padding: 13px !important;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d3dce8 !important;
+
+  border-radius: 8px !important;
+
+  background: #ffffff;
+
+  color: #1e293b;
+
+  font-size: 14px !important;
+
+  outline: none;
+
+  resize: vertical;
+
+  transition: 0.2s;
+}
+
+textarea:focus {
+  border-color: #2872ad !important;
+
+  box-shadow:
+    0 0 0 3px rgba(40, 114, 173, 0.09);
+}
+
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+
+/* =========================================
+   DECISION SELECT
+========================================= */
+
+select {
+  height: 44px;
+
+  min-width: 220px !important;
+
+  padding: 0 12px !important;
+
+  border: 1px solid #d3dce8 !important;
+
+  border-radius: 8px !important;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  font-size: 14px;
+
+  outline: none;
+
+  cursor: pointer;
+}
+
+select:focus {
+  border-color: #2872ad !important;
+
+  box-shadow:
+    0 0 0 3px rgba(40, 114, 173, 0.09);
+}
+
+
+/* =========================================
+   CANCEL BUTTON
+========================================= */
+
+button[style*="backgroundColor: #777"],
+button[style*="background-color: #777"] {
+  background: #ffffff !important;
+
+  color: #475569 !important;
+
+  border: 1px solid #cbd5e1 !important;
+
+  border-radius: 8px !important;
+
+  padding: 10px 18px !important;
+
+  font-size: 14px !important;
+
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+button[style*="backgroundColor: #777"]:hover,
+button[style*="background-color: #777"]:hover {
+  background: #f1f5f9 !important;
+}
+
+
+/* =========================================
+   REVIEW INFORMATION
+========================================= */
+
+textarea + label {
+  color: #334155;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 800px) {
+
+  h1 {
+    font-size: 30px !important;
+  }
+
+  div[style*="overflowX"] {
+    overflow-x: auto !important;
+  }
+
+  table {
+    min-width: 900px !important;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  h1 {
+    font-size: 27px !important;
+  }
+
+  h2 {
+    font-size: 21px !important;
+  }
+
+  input[type="number"] {
+    max-width: 100% !important;
+  }
+
+  select {
+    width: 100%;
+  }
+}

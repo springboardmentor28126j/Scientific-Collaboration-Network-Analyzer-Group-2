@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Review, Publication, Researcher
+from models import Review, Publication, Researcher, Notification
 from schemas import ReviewCreate, ReviewResponse
 from auth import get_current_user
 
@@ -105,7 +105,10 @@ def assign_reviewer(
             detail="Only Institution Admin or System Admin can assign reviewers"
         )
 
+    # -------------------------------------------------
     # Check publication
+    # -------------------------------------------------
+
     publication = db.query(Publication).filter(
         Publication.publication_id == review.publication_id
     ).first()
@@ -116,7 +119,10 @@ def assign_reviewer(
             detail="Publication not found"
         )
 
+    # -------------------------------------------------
     # Check reviewer
+    # -------------------------------------------------
+
     reviewer = db.query(Researcher).filter(
         Researcher.researcher_id == review.reviewer_id
     ).first()
@@ -127,14 +133,20 @@ def assign_reviewer(
             detail="Reviewer not found"
         )
 
+    # -------------------------------------------------
     # Author cannot review their own publication
+    # -------------------------------------------------
+
     if publication.researcher_id == review.reviewer_id:
         raise HTTPException(
             status_code=400,
             detail="Author cannot review their own publication"
         )
 
+    # -------------------------------------------------
     # Prevent duplicate assignment
+    # -------------------------------------------------
+
     existing_review = db.query(Review).filter(
         Review.publication_id == review.publication_id,
         Review.reviewer_id == review.reviewer_id
@@ -146,7 +158,20 @@ def assign_reviewer(
             detail="Reviewer is already assigned to this publication"
         )
 
-    # Create review
+    # -------------------------------------------------
+    # Check reviewer has a user account
+    # -------------------------------------------------
+
+    if not reviewer.user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Reviewer is not linked to a user account"
+        )
+
+    # -------------------------------------------------
+    # Create Review
+    # -------------------------------------------------
+
     new_review = Review(
         publication_id=review.publication_id,
         reviewer_id=review.reviewer_id,
@@ -156,7 +181,29 @@ def assign_reviewer(
     )
 
     db.add(new_review)
+
+    # -------------------------------------------------
+    # Create Notification
+    # -------------------------------------------------
+
+    new_notification = Notification(
+        user_id=reviewer.user_id,
+        message=(
+            f"You have been assigned to review publication: "
+            f"{publication.title}"
+        ),
+        notification_type="Review Assignment",
+        is_read=0
+    )
+
+    db.add(new_notification)
+
+    # -------------------------------------------------
+    # Save Review + Notification
+    # -------------------------------------------------
+
     db.commit()
+
     db.refresh(new_review)
 
     return new_review
@@ -175,6 +222,7 @@ def get_assigned_reviews(
     current_user=Depends(get_current_user)
 ):
 
+    # Reviewer sees their assigned reviews
     if current_user.role == "Reviewer":
 
         researcher = get_linked_researcher(
@@ -192,6 +240,7 @@ def get_assigned_reviews(
             Review.reviewer_id == researcher.researcher_id
         ).all()
 
+    # Admins see all reviews
     if current_user.role in [
         "Institution Admin",
         "System Admin"
@@ -217,6 +266,7 @@ def get_pending_reviews(
     current_user=Depends(get_current_user)
 ):
 
+    # Reviewer sees their pending reviews
     if current_user.role == "Reviewer":
 
         researcher = get_linked_researcher(
@@ -235,6 +285,7 @@ def get_pending_reviews(
             Review.status == "Pending"
         ).all()
 
+    # Admins see all pending reviews
     if current_user.role in [
         "Institution Admin",
         "System Admin"
@@ -262,6 +313,7 @@ def get_completed_reviews(
     current_user=Depends(get_current_user)
 ):
 
+    # Reviewer sees their completed reviews
     if current_user.role == "Reviewer":
 
         researcher = get_linked_researcher(
@@ -280,6 +332,7 @@ def get_completed_reviews(
             Review.status == "Completed"
         ).all()
 
+    # Admins see all completed reviews
     if current_user.role in [
         "Institution Admin",
         "System Admin"
@@ -309,6 +362,7 @@ def submit_review(
     current_user=Depends(get_current_user)
 ):
 
+    # Find review
     existing_review = db.query(Review).filter(
         Review.review_id == review_id
     ).first()
@@ -342,7 +396,10 @@ def submit_review(
                 detail="You can submit only your assigned review"
             )
 
-    # Only these roles can submit/update reviews
+    # -------------------------------------------------
+    # Admins can submit/update reviews
+    # -------------------------------------------------
+
     elif current_user.role not in [
         "Institution Admin",
         "System Admin"
@@ -352,19 +409,26 @@ def submit_review(
             detail="You do not have permission to submit this review"
         )
 
-    # Prevent changing an already completed review
+    # -------------------------------------------------
+    # Prevent changing completed review
+    # -------------------------------------------------
+
     if existing_review.status == "Completed":
         raise HTTPException(
             status_code=400,
             detail="This review has already been completed"
         )
 
-    # Update review
+    # -------------------------------------------------
+    # Update Review
+    # -------------------------------------------------
+
     existing_review.review_feedback = review_data.review_feedback
     existing_review.decision = review_data.decision
     existing_review.status = "Completed"
 
     db.commit()
+
     db.refresh(existing_review)
 
     return existing_review
@@ -393,6 +457,7 @@ def delete_review(
             detail="Only Institution Admin or System Admin can delete reviews"
         )
 
+    # Find review
     existing_review = db.query(Review).filter(
         Review.review_id == review_id
     ).first()
@@ -403,7 +468,9 @@ def delete_review(
             detail="Review not found"
         )
 
+    # Delete review
     db.delete(existing_review)
+
     db.commit()
 
     return {

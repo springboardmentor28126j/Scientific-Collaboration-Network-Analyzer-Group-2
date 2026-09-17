@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from review import router as review_router
+from citation import router as citation_router
+from notification import router as notification_router
 
 
 import models
@@ -8,7 +10,7 @@ from database import engine
 from auth import router as auth_router
 from researchers import router as researchers_router
 from files import router as files_router
-from file_router import router as file_router
+
 from publication import router as publication_router
 from collaboration import router as collaboration_router
 from analytics import router as analytics_router
@@ -40,13 +42,14 @@ models.Base.metadata.create_all(bind=engine)
 app.include_router(auth_router)
 app.include_router(researchers_router)
 app.include_router(files_router)
-app.include_router(file_router)
 app.include_router(publication_router)
 app.include_router(collaboration_router)
 app.include_router(analytics_router)
 app.include_router(conference_router)
 app.include_router(report_router)
 app.include_router(review_router)
+app.include_router(citation_router)
+app.include_router(notification_router)
 # Home API
 @app.get("/")
 def home():

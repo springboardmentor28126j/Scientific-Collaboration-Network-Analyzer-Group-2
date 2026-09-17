@@ -9,14 +9,38 @@ from database import Base
 class Researcher(Base):
     __tablename__ = "researchers"
 
-    researcher_id = Column(Integer, primary_key=True, index=True)
-    full_name = Column(String(100), nullable=False)
-    email = Column(String(100), unique=True, nullable=False)
-    institution = Column(String(150))
-    department = Column(String(100))
-    country = Column(String(100))
-    user_id = Column(Integer)
-    user_id = Column(Integer)
+    researcher_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    full_name = Column(
+        String(100),
+        nullable=False
+    )
+
+    email = Column(
+        String(100),
+        unique=True,
+        nullable=False
+    )
+
+    institution = Column(
+        String(150)
+    )
+
+    department = Column(
+        String(100)
+    )
+
+    country = Column(
+        String(100)
+    )
+
+    user_id = Column(
+        Integer
+    )
 
 
 # =====================================================
@@ -26,12 +50,28 @@ class Researcher(Base):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(100), nullable=False)
-    email = Column(String(100), unique=True, nullable=False)
-    password = Column(String(255), nullable=False)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
-    # User Role
+    username = Column(
+        String(100),
+        nullable=False
+    )
+
+    email = Column(
+        String(100),
+        unique=True,
+        nullable=False
+    )
+
+    password = Column(
+        String(255),
+        nullable=False
+    )
+
     role = Column(
         String(50),
         nullable=False,
@@ -46,11 +86,28 @@ class User(Base):
 class File(Base):
     __tablename__ = "files"
 
-    file_id = Column(Integer, primary_key=True, index=True)
-    researcher_id = Column(Integer)
-    file_name = Column(String(255), nullable=False)
-    file_path = Column(String(255))
-    uploaded_set = Column(String(100))
+    file_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    researcher_id = Column(
+        Integer
+    )
+
+    file_name = Column(
+        String(255),
+        nullable=False
+    )
+
+    file_path = Column(
+        String(255)
+    )
+
+    uploaded_set = Column(
+        String(100)
+    )
 
 
 # =====================================================
@@ -60,21 +117,54 @@ class File(Base):
 class Publication(Base):
     __tablename__ = "publications"
 
-    publication_id = Column(Integer, primary_key=True, index=True)
+    publication_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
-    title = Column(String(200), nullable=False)
+    title = Column(
+        String(200),
+        nullable=False
+    )
+
     publication_type = Column(
         String(50),
         nullable=False,
         default="Journal Paper"
     )
-    abstract = Column(String(1000))
-    keywords = Column(String(300))
-    author = Column(String(150), nullable=False)
-    journal = Column(String(200), nullable=False)
-    year = Column(Integer, nullable=False)
-    status = Column(String(50), default="Draft")
-    pdf_file = Column(String(255))
+
+    abstract = Column(
+        String(1000)
+    )
+
+    keywords = Column(
+        String(300)
+    )
+
+    author = Column(
+        String(150),
+        nullable=False
+    )
+
+    journal = Column(
+        String(200),
+        nullable=False
+    )
+
+    year = Column(
+        Integer,
+        nullable=False
+    )
+
+    status = Column(
+        String(50),
+        default="Draft"
+    )
+
+    pdf_file = Column(
+        String(255)
+    )
 
     researcher_id = Column(
         Integer,
@@ -138,7 +228,11 @@ class Collaboration(Base):
 class Conference(Base):
     __tablename__ = "conferences"
 
-    conference_id = Column(Integer, primary_key=True, index=True)
+    conference_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
     conference_name = Column(
         String(200),
@@ -160,7 +254,9 @@ class Conference(Base):
         ForeignKey("publications.publication_id"),
         nullable=False
     )
-    # =====================================================
+
+
+# =====================================================
 # Review Model
 # =====================================================
 
@@ -197,4 +293,69 @@ class Review(Base):
     status = Column(
         String(50),
         default="Pending"
+    )
+
+
+# =====================================================
+# Citation Model
+# =====================================================
+
+class Citation(Base):
+    __tablename__ = "citations"
+
+    citation_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    publication_id = Column(
+        Integer,
+        ForeignKey("publications.publication_id"),
+        nullable=False
+    )
+
+    cited_publication_id = Column(
+        Integer,
+        ForeignKey("publications.publication_id"),
+        nullable=False
+    )
+
+    doi = Column(
+        String(200)
+    )
+
+
+# =====================================================
+# Notification Model
+# =====================================================
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    notification_id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    message = Column(
+        String(500),
+        nullable=False
+    )
+
+    notification_type = Column(
+        String(100),
+        default="General"
+    )
+
+    is_read = Column(
+        Integer,
+        default=0
     )

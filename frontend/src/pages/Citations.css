@@ -1,0 +1,111 @@
+.citations-page {
+  padding: 30px;
+  background: #f5f8fc;
+  min-height: 100vh;
+}
+
+.citations-header {
+  margin-bottom: 25px;
+}
+
+.citations-header h1 {
+  color: #123b63;
+  margin-bottom: 8px;
+}
+
+.citations-header p {
+  color: #666;
+}
+
+.citation-form-card,
+.citations-table-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.citation-form-card h2,
+.citations-table-card h2 {
+  color: #123b63;
+  margin-bottom: 20px;
+}
+
+.citation-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.citation-form-grid label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.citation-form-grid input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d5dce5;
+  border-radius: 7px;
+  box-sizing: border-box;
+}
+
+.add-citation-btn {
+  margin-top: 20px;
+  padding: 12px 22px;
+  background: #123b63;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.add-citation-btn:hover {
+  background: #0d2d4b;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.citations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.citations-table th {
+  background: #123b63;
+  color: white;
+  padding: 14px;
+  text-align: left;
+}
+
+.citations-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.delete-citation-btn {
+  padding: 8px 14px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.no-citations {
+  color: #777;
+}
+
+@media (max-width: 768px) {
+  .citation-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .citations-page {
+    padding: 15px;
+  }
+}

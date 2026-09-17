@@ -16,22 +16,7 @@ function Researchers() {
     country: ""
   });
 
-  useEffect(() => {
-    const getResearchers = async () => {
-      try {
-        const response = await axios.get(
-          "http://127.0.0.1:8000/researchers/"
-        );
-
-        setResearchers(response.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    getResearchers();
-  }, []);
-
+  /* Fetch Researchers */
   const fetchResearchers = async () => {
     try {
       const response = await axios.get(
@@ -44,6 +29,24 @@ function Researchers() {
     }
   };
 
+  /* Load Researchers */
+/* Load Researchers */
+useEffect(() => {
+  const loadResearchers = async () => {
+    try {
+      const response = await axios.get(
+        "http://127.0.0.1:8000/researchers/"
+      );
+
+      setResearchers(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  loadResearchers();
+}, []);
+  /* Handle Form Input */
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -51,6 +54,7 @@ function Researchers() {
     });
   };
 
+  /* Save Researcher */
   const saveResearcher = async () => {
     try {
       await axios.post(
@@ -77,6 +81,7 @@ function Researchers() {
     }
   };
 
+  /* Delete Researcher */
   const deleteResearcher = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this researcher?"
@@ -100,6 +105,7 @@ function Researchers() {
     }
   };
 
+  /* Search */
   const filteredResearchers = researchers.filter((researcher) => {
     const search = searchTerm.toLowerCase();
 
@@ -125,6 +131,7 @@ function Researchers() {
   return (
     <div className="researchers-page">
 
+      {/* Header */}
       <div className="researchers-header">
 
         <h1>Researchers</h1>
@@ -149,6 +156,8 @@ function Researchers() {
 
       </div>
 
+
+      {/* Add Researcher Form */}
       {showForm && (
         <div className="form-box">
 
@@ -215,6 +224,8 @@ function Researchers() {
         </div>
       )}
 
+
+      {/* Researchers Table */}
       <table className="researchers-table">
 
         <thead>

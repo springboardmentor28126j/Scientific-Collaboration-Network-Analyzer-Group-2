@@ -13,9 +13,181 @@ function Dashboard() {
     localStorage.removeItem("username");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("access_token");
 
     navigate("/");
   };
+
+  const menuItems = [
+    {
+      label: "Dashboard",
+      icon: "⌂",
+      path: "/dashboard",
+      roles: [
+        "Researcher",
+        "Institution Admin",
+        "Reviewer",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Researchers",
+      icon: "♙",
+      path: "/researchers",
+      roles: [
+        "Researcher",
+        "Institution Admin",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Publications",
+      icon: "▤",
+      path: "/publications",
+      roles: [
+        "Researcher",
+        "Institution Admin",
+        "Reviewer",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Collaborations",
+      icon: "⇄",
+      path: "/collaborations",
+      roles: [
+        "Researcher",
+        "Institution Admin",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Conferences",
+      icon: "▣",
+      path: "/conferences",
+      roles: [
+        "Researcher",
+        "Institution Admin",
+        "Reviewer",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Reviews",
+      icon: "✓",
+      path: "/reviews",
+      roles: [
+        "Institution Admin",
+        "Reviewer",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Analytics",
+      icon: "◫",
+      path: "/analytics",
+      roles: [
+        "Institution Admin",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Reports",
+      icon: "▥",
+      path: "/reports",
+      roles: [
+        "Institution Admin",
+        "Reviewer",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Citations",
+      icon: "❖",
+      path: "/citations",
+      roles: [
+        "Researcher",
+        "Institution Admin",
+        "Reviewer",
+        "System Admin",
+      ],
+    },
+    {
+      label: "Profile",
+      icon: "◉",
+      path: "/profile",
+      roles: [
+        "Researcher",
+        "Institution Admin",
+        "Reviewer",
+        "System Admin",
+      ],
+    },
+  ];
+
+  const visibleMenu = menuItems.filter((item) =>
+    item.roles.includes(role)
+  );
+
+  const roleInfo = {
+    "System Admin": {
+      title: "System Administration",
+      text: "Manage the complete research collaboration platform and monitor overall system activity.",
+      badge: "Full System Access",
+    },
+
+    "Institution Admin": {
+      title: "Institution Management",
+      text: "Manage researchers, publications, collaborations, conferences and institutional analytics.",
+      badge: "Institution Access",
+    },
+
+    Researcher: {
+      title: "Research Workspace",
+      text: "Manage your research profile, publications, collaborations and conference activities.",
+      badge: "Researcher Access",
+    },
+
+    Reviewer: {
+      title: "Review Workspace",
+      text: "Review assigned publications and monitor review queues and publication information.",
+      badge: "Reviewer Access",
+    },
+  };
+
+  const currentRole = roleInfo[role] || {
+    title: "Research Workspace",
+    text: "Manage your research activities from one place.",
+    badge: "User Access",
+  };
+
+  const stats = [
+    {
+      value: "150",
+      label: "Researchers",
+      icon: "♙",
+      tone: "blue",
+    },
+    {
+      value: "540",
+      label: "Publications",
+      icon: "▤",
+      tone: "violet",
+    },
+    {
+      value: "95",
+      label: "Collaborations",
+      icon: "⇄",
+      tone: "green",
+    },
+    {
+      value: "28",
+      label: "Conferences",
+      icon: "▣",
+      tone: "orange",
+    },
+  ];
 
   return (
     <div className="dashboard-container">
@@ -24,53 +196,59 @@ function Dashboard() {
 
       <header className="topbar">
 
-        <div className="logo">
-          <span className="logo-icon">🔬</span>
-          <span className="logo-text">SciCollab</span>
+        <div className="brand">
+          <div className="brand-mark">S</div>
+
+          <div>
+            <div className="brand-name">
+              SciCollab
+            </div>
+
+            <div className="brand-subtitle">
+              Scientific Collaboration Network
+            </div>
+          </div>
         </div>
 
-        <div className="top-links">
+        <div className="topbar-right">
 
-          <Link to="/dashboard">
-            Dashboard
-          </Link>
+          {/* User Profile */}
 
-          {/* Researchers */}
-          {(role === "Researcher" ||
-            role === "Institution Admin" ||
-            role === "System Admin") && (
-            <Link to="/researchers">
-              Researchers
-            </Link>
-          )}
+          <div className="user-mini">
 
-          {/* Publications */}
-          {(role === "Researcher" ||
-            role === "Institution Admin" ||
-            role === "Reviewer" ||
-            role === "System Admin") && (
-            <Link to="/publications">
-              Publications
-            </Link>
-          )}
+            <div className="user-avatar">
+              {(username || "U").charAt(0).toUpperCase()}
+            </div>
 
-          {/* Collaborations */}
-          {(role === "Researcher" ||
-            role === "Institution Admin" ||
-            role === "System Admin") && (
-            <Link to="/collaborations">
-              Collaborations
-            </Link>
-          )}
+            <div className="user-mini-info">
+              <strong>
+                {username || "User"}
+              </strong>
 
-          {/* Profile */}
-          <Link to="/profile">
-            Profile
+              <span>
+                {role || "User"}
+              </span>
+            </div>
+
+          </div>
+
+          {/* ================= NOTIFICATIONS ================= */}
+
+          <Link
+            to="/notifications"
+            className="notification-bell"
+            title="Notifications"
+            aria-label="Notifications"
+          >
+            <span className="notification-bell-icon">
+              🔔
+            </span>
           </Link>
 
           {/* Logout */}
+
           <button
-            className="logout-btn"
+            className="top-logout"
             onClick={handleLogout}
           >
             Logout
@@ -80,377 +258,471 @@ function Dashboard() {
 
       </header>
 
-
       {/* ================= DASHBOARD BODY ================= */}
 
       <div className="dashboard-body">
-
 
         {/* ================= SIDEBAR ================= */}
 
         <aside className="sidebar">
 
-          <h3>Menu</h3>
+          <div className="sidebar-heading">
+            <span>WORKSPACE</span>
+          </div>
 
-          <ul>
+          <nav className="sidebar-nav">
 
-            {/* Dashboard */}
-            <li>
-              <Link to="/dashboard">
-                🏠 Dashboard
+            {visibleMenu.map((item) => (
+
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`sidebar-link ${
+                  item.path === "/dashboard"
+                    ? "active"
+                    : ""
+                }`}
+              >
+
+                <span className="sidebar-icon">
+                  {item.icon}
+                </span>
+
+                <span>
+                  {item.label}
+                </span>
+
               </Link>
-            </li>
 
+            ))}
 
-            {/* Researchers */}
+          </nav>
 
-            {(role === "Researcher" ||
-              role === "Institution Admin" ||
-              role === "System Admin") && (
-              <li>
-                <Link to="/researchers">
-                  👨‍🔬 Researchers
-                </Link>
-              </li>
-            )}
+          <div className="sidebar-footer">
 
+            <div className="secure-dot"></div>
 
-            {/* Publications */}
+            <div>
+              <strong>
+                Secure Workspace
+              </strong>
 
-            {(role === "Researcher" ||
-              role === "Institution Admin" ||
-              role === "Reviewer" ||
-              role === "System Admin") && (
-              <li>
-                <Link to="/publications">
-                  📄 Publications
-                </Link>
-              </li>
-            )}
+              <span>
+                Role-based access enabled
+              </span>
+            </div>
 
-
-            {/* Collaborations */}
-
-            {(role === "Researcher" ||
-              role === "Institution Admin" ||
-              role === "System Admin") && (
-              <li>
-                <Link to="/collaborations">
-                  🤝 Collaborations
-                </Link>
-              </li>
-            )}
-
-
-            {/* Conferences */}
-
-            {(role === "Researcher" ||
-              role === "Institution Admin" ||
-              role === "Reviewer" ||
-              role === "System Admin") && (
-              <li>
-                <Link to="/conferences">
-                  📅 Conferences
-                </Link>
-              </li>
-            )}
-
-
-            {/* Analytics */}
-
-            {(role === "Institution Admin" ||
-              role === "System Admin") && (
-              <li>
-                <Link to="/analytics">
-                  📊 Analytics
-                </Link>
-              </li>
-            )}
-
-
-            {/* Reports */}
-
-            {(role === "Institution Admin" ||
-              role === "Reviewer" ||
-              role === "System Admin") && (
-              <li>
-                <Link to="/reports">
-                  📋 Reports
-                </Link>
-              </li>
-            )}
-            {/* Reviews */}
-
-            {(role === "Institution Admin" ||
-  role === "Reviewer" ||
-            role === "System Admin") && (
-            <li>
-            <Link to="/reviews">
-            📝 Reviews
-             </Link>
-              </li>
-            )}
-
-            {/* Profile */}
-
-            <li>
-              <Link to="/profile">
-                👤 Profile
-              </Link>
-            </li>
-
-          </ul>
+          </div>
 
         </aside>
-
 
         {/* ================= MAIN CONTENT ================= */}
 
         <main className="content">
 
-
           {/* Welcome */}
 
-          <h1>
-            Welcome Back {username ? username : ""} 👋
-          </h1>
+          <section className="welcome-section">
 
-          <p>
-            Monitor your publications, collaborations,
-            researchers, and conferences from one place.
-          </p>
+            <div>
 
+              <span className="eyebrow">
+                SCIENTIFIC COLLABORATION NETWORK
+              </span>
 
-          {/* ================= ROLE ================= */}
-
-          <div
-            style={{
-              marginBottom: "25px",
-              padding: "12px 20px",
-              backgroundColor: "#e8f2ff",
-              borderRadius: "8px",
-              fontWeight: "bold",
-              fontSize: "18px",
-              textAlign: "center"
-            }}
-          >
-            Logged in as: {role || "User"}
-          </div>
-
-
-          {/* ================= SYSTEM ADMIN ================= */}
-
-          {role === "System Admin" && (
-            <div
-              style={{
-                marginBottom: "25px",
-                padding: "20px",
-                backgroundColor: "#f1f7ff",
-                border: "1px solid #c8ddf5",
-                borderRadius: "10px",
-                textAlign: "center"
-              }}
-            >
-
-              <h2>
-                ⚙️ System Admin Dashboard
-              </h2>
+              <h1>
+                Welcome back,{" "}
+                {username || "Researcher"}.
+              </h1>
 
               <p>
-                You have full access to the Scientific
-                Collaboration Network Analyzer system.
+                Monitor research, publications,
+                collaborations and conferences
+                from one professional workspace.
               </p>
 
             </div>
-          )}
 
+            <div className="date-chip">
 
-          {/* ================= INSTITUTION ADMIN ================= */}
+              <span className="date-dot"></span>
 
-          {role === "Institution Admin" && (
-            <div
-              style={{
-                marginBottom: "25px",
-                padding: "20px",
-                backgroundColor: "#f1f7ff",
-                border: "1px solid #c8ddf5",
-                borderRadius: "10px",
-                textAlign: "center"
-              }}
-            >
+              {currentRole.badge}
+
+            </div>
+
+          </section>
+
+          {/* Workspace */}
+
+          <section className="role-banner">
+
+            <div className="role-banner-icon">
+
+              {role === "System Admin"
+                ? "⚙"
+                : role === "Institution Admin"
+                ? "⌂"
+                : role === "Reviewer"
+                ? "✓"
+                : "♙"}
+
+            </div>
+
+            <div className="role-banner-content">
+
+              <span className="section-label">
+                CURRENT WORKSPACE
+              </span>
 
               <h2>
-                🏛️ Institution Admin Dashboard
+                {currentRole.title}
               </h2>
 
               <p>
-                You can manage institution-related research,
-                publications, collaborations, conferences,
-                and analytics.
+                {currentRole.text}
               </p>
 
             </div>
-          )}
 
+          </section>
 
-          {/* ================= RESEARCHER ================= */}
+          {/* Statistics */}
 
-          {role === "Researcher" && (
-            <div
-              style={{
-                marginBottom: "25px",
-                padding: "20px",
-                backgroundColor: "#f1f7ff",
-                border: "1px solid #c8ddf5",
-                borderRadius: "10px",
-                textAlign: "center"
-              }}
-            >
+          <section className="stats-grid">
 
-              <h2>
-                👨‍🔬 Researcher Dashboard
-              </h2>
+            {stats.map((stat) => (
 
-              <p>
-                Manage your researcher profile,
-                publications, collaborations, and conferences.
-              </p>
+              <div
+                className={`stat-card ${stat.tone}`}
+                key={stat.label}
+              >
+
+                <div className="stat-top">
+
+                  <div className="stat-icon">
+                    {stat.icon}
+                  </div>
+
+                  <span className="stat-indicator">
+                    Overview
+                  </span>
+
+                </div>
+
+                <strong>
+                  {stat.value}
+                </strong>
+
+                <span>
+                  {stat.label}
+                </span>
+
+              </div>
+
+            ))}
+
+          </section>
+
+          {/* ================= DASHBOARD GRID ================= */}
+
+          <section className="dashboard-grid">
+
+            {/* Recent Publications */}
+
+            <div className="panel publications-panel">
+
+              <div className="panel-header">
+
+                <div>
+
+                  <span className="section-label">
+                    RESEARCH OUTPUT
+                  </span>
+
+                  <h2>
+                    Recent Publications
+                  </h2>
+
+                </div>
+
+                <Link
+                  to="/publications"
+                  className="view-link"
+                >
+                  View all →
+                </Link>
+
+              </div>
+
+              <div className="publication-list">
+
+                <div className="publication-row">
+
+                  <div className="publication-number">
+                    01
+                  </div>
+
+                  <div className="publication-info">
+
+                    <strong>
+                      AI in Healthcare
+                    </strong>
+
+                    <span>
+                      Jhansi Padala · 2026
+                    </span>
+
+                  </div>
+
+                  <span className="status-pill published">
+                    Published
+                  </span>
+
+                </div>
+
+                <div className="publication-row">
+
+                  <div className="publication-number">
+                    02
+                  </div>
+
+                  <div className="publication-info">
+
+                    <strong>
+                      Machine Learning
+                    </strong>
+
+                    <span>
+                      Rahul Kumar · 2025
+                    </span>
+
+                  </div>
+
+                  <span className="status-pill review">
+                    Under Review
+                  </span>
+
+                </div>
+
+                <div className="publication-row">
+
+                  <div className="publication-number">
+                    03
+                  </div>
+
+                  <div className="publication-info">
+
+                    <strong>
+                      Natural Language Processing
+                    </strong>
+
+                    <span>
+                      Priya Sharma · 2026
+                    </span>
+
+                  </div>
+
+                  <span className="status-pill published">
+                    Published
+                  </span>
+
+                </div>
+
+              </div>
 
             </div>
-          )}
 
+            {/* Recent Activity */}
 
-          {/* ================= REVIEWER ================= */}
+            <div className="panel activity-panel">
 
-          {role === "Reviewer" && (
-            <div
-              style={{
-                marginBottom: "25px",
-                padding: "20px",
-                backgroundColor: "#f1f7ff",
-                border: "1px solid #c8ddf5",
-                borderRadius: "10px",
-                textAlign: "center"
-              }}
-            >
+              <div className="panel-header">
 
-              <h2>
-                📝 Reviewer Dashboard
-              </h2>
+                <div>
 
-              <p>
-                Access publications, conferences,
-                and review-related reports.
-              </p>
+                  <span className="section-label">
+                    SYSTEM ACTIVITY
+                  </span>
+
+                  <h2>
+                    Recent Activity
+                  </h2>
+
+                </div>
+
+              </div>
+
+              <div className="activity-list">
+
+                <div className="activity-item">
+
+                  <div className="activity-icon success">
+                    ✓
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      New publication added
+                    </strong>
+
+                    <span>
+                      Research repository updated
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <div className="activity-item">
+
+                  <div className="activity-icon collaboration">
+                    ⇄
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      Collaboration activity
+                    </strong>
+
+                    <span>
+                      Research collaboration updated
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <div className="activity-item">
+
+                  <div className="activity-icon conference">
+                    ▣
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      Conference activity
+                    </strong>
+
+                    <span>
+                      Conference information updated
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <div className="activity-item">
+
+                  <div className="activity-icon profile">
+                    ◉
+                  </div>
+
+                  <div>
+
+                    <strong>
+                      Research profile updated
+                    </strong>
+
+                    <span>
+                      Profile information saved
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
 
             </div>
-          )}
 
+          </section>
 
-          {/* ================= DASHBOARD CARDS ================= */}
+          {/* ================= QUICK NAVIGATION ================= */}
 
-          <div className="cards">
+          <section className="quick-section">
 
-            <div className="card">
-              <h2>150</h2>
-              <p>Researchers</p>
+            <div className="panel-header">
+
+              <div>
+
+                <span className="section-label">
+                  QUICK NAVIGATION
+                </span>
+
+                <h2>
+                  Research Workspace
+                </h2>
+
+              </div>
+
             </div>
 
-            <div className="card">
-              <h2>540</h2>
-              <p>Publications</p>
+            <div className="quick-grid">
+
+              {visibleMenu
+                .filter(
+                  (item) =>
+                    item.path !== "/dashboard" &&
+                    item.path !== "/profile"
+                )
+                .slice(0, 6)
+                .map((item) => (
+
+                  <Link
+                    to={item.path}
+                    className="quick-card"
+                    key={item.path}
+                  >
+
+                    <span className="quick-icon">
+                      {item.icon}
+                    </span>
+
+                    <span>
+
+                      <strong>
+                        {item.label}
+                      </strong>
+
+                      <small>
+                        Open workspace
+                      </small>
+
+                    </span>
+
+                    <b>
+                      →
+                    </b>
+
+                  </Link>
+
+                ))}
+
             </div>
 
-            <div className="card">
-              <h2>95</h2>
-              <p>Collaborations</p>
-            </div>
+          </section>
 
-            <div className="card">
-              <h2>28</h2>
-              <p>Conferences</p>
-            </div>
+          {/* Footer */}
 
-          </div>
+          <footer className="dashboard-footer">
 
+            <span>
+              © 2026 SciCollab
+            </span>
 
-          {/* ================= RECENT PUBLICATIONS ================= */}
+            <span>
+              Scientific Collaboration Network Analyzer
+            </span>
 
-          <div className="table-box">
+            <span>
+              Secure role-based platform
+            </span>
 
-            <h2>Recent Publications</h2>
-
-            <table>
-
-              <thead>
-
-                <tr>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Year</th>
-                  <th>Status</th>
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                <tr>
-                  <td>AI in Healthcare</td>
-                  <td>Jhansi Padala</td>
-                  <td>2026</td>
-                  <td>Published</td>
-                </tr>
-
-                <tr>
-                  <td>Machine Learning</td>
-                  <td>Rahul Kumar</td>
-                  <td>2025</td>
-                  <td>Under Review</td>
-                </tr>
-
-                <tr>
-                  <td>Natural Language Processing</td>
-                  <td>Priya Sharma</td>
-                  <td>2026</td>
-                  <td>Published</td>
-                </tr>
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-
-          {/* ================= RECENT ACTIVITIES ================= */}
-
-          <div className="activity">
-
-            <h2>Recent Activities</h2>
-
-            <ul>
-
-              <li>
-                ✅ New publication added
-              </li>
-
-              <li>
-                🤝 Collaboration request received
-              </li>
-
-              <li>
-                📅 Conference registration completed
-              </li>
-
-              <li>
-                👨‍🔬 Research profile updated
-              </li>
-
-            </ul>
-
-          </div>
-
+          </footer>
 
         </main>
 

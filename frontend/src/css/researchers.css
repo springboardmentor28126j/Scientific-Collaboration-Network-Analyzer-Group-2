@@ -1,227 +1,412 @@
-/* ===========================
-   Page Background
-=========================== */
+/* =========================================================
+   SCICOLLAB - RESEARCHERS PAGE
+   VISUAL DESIGN ONLY
+   ========================================================= */
+
 .researchers-page {
-    padding: 30px;
-    background: #f5f7fb;
-    min-height: 100vh;
-    font-family: Arial, Helvetica, sans-serif;
+  width: 100%;
+  min-height: 100vh;
+  padding: 42px 40px 60px;
+  background: #f5f7fb;
+  color: #17233c;
 }
 
-/* ===========================
-   Header
-=========================== */
+
+/* ================= PAGE HEADER ================= */
+
 .researchers-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    gap: 15px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 30px;
 }
 
 .researchers-header h1 {
-    color: #1e3a8a;
-    font-size: 34px;
-    font-weight: bold;
+  margin: 0;
+  color: #17233c;
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.7px;
 }
 
-/* ===========================
-   Search + Add Button
-=========================== */
+
+/* ================= SEARCH AREA ================= */
+
 .header-buttons {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .header-buttons input {
-    width: 280px;
-    padding: 12px 15px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    outline: none;
-    font-size: 15px;
+  width: 360px;
+  height: 50px;
+
+  padding: 0 18px;
+
+  border: 1px solid #d9e1ec;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #17233c;
+  font-size: 15px;
+
+  outline: none;
+
+  box-shadow: 0 2px 8px rgba(30, 55, 90, 0.03);
+
+  transition: all 0.2s ease;
+}
+
+.header-buttons input::placeholder {
+  color: #8492a6;
 }
 
 .header-buttons input:focus {
-    border-color: #2563eb;
+  border-color: #356ae6;
+  box-shadow: 0 0 0 4px rgba(53, 106, 230, 0.08);
 }
 
+
+/* ================= ADD BUTTON ================= */
+
 .add-btn {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 12px 22px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: bold;
+  height: 50px;
+
+  padding: 0 22px;
+
+  border: none;
+  border-radius: 12px;
+
+  background: #2864df;
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
 }
 
 .add-btn:hover {
-    background: #1d4ed8;
+  background: #1f56c7;
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(40, 100, 223, 0.18);
 }
 
-/* ===========================
-   Form
-=========================== */
+
+/* ================= ADD FORM ================= */
+
 .form-box {
-    background: white;
-    padding: 25px;
-    margin-bottom: 30px;
-    border-radius: 10px;
-    box-shadow: 0 5px 12px rgba(0,0,0,.1);
+  width: 100%;
+  margin-bottom: 28px;
+  padding: 28px;
+
+  background: #ffffff;
+
+  border: 1px solid #e0e6ef;
+  border-radius: 16px;
+
+  box-shadow: 0 8px 25px rgba(30, 55, 90, 0.06);
 }
 
 .form-box h2 {
-    color: #1e3a8a;
-    margin-bottom: 20px;
+  margin: 0 0 22px;
+
+  color: #17233c;
+
+  font-size: 22px;
+  font-weight: 700;
 }
 
-.form-box input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    box-sizing: border-box;
+
+/* ================= FORM INPUTS ================= */
+
+.form-box > input {
+  width: calc(50% - 8px);
+  height: 46px;
+
+  margin-right: 12px;
+  margin-bottom: 14px;
+
+  padding: 0 15px;
+
+  border: 1px solid #d9e1ec;
+  border-radius: 9px;
+
+  background: #f9fbfe;
+
+  color: #17233c;
+
+  font-size: 14px;
+
+  outline: none;
 }
+
+.form-box > input:nth-of-type(even) {
+  margin-right: 0;
+}
+
+.form-box > input:focus {
+  background: #ffffff;
+  border-color: #356ae6;
+  box-shadow: 0 0 0 3px rgba(53, 106, 230, 0.08);
+}
+
+
+/* ================= FORM BUTTONS ================= */
 
 .form-buttons {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.save-btn,
+.cancel-btn {
+  height: 40px;
+  padding: 0 20px;
+
+  border-radius: 9px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
 }
 
 .save-btn {
-    background: #16a34a;
-    color: white;
-    border: none;
-    padding: 10px 22px;
-    border-radius: 8px;
-    cursor: pointer;
+  border: none;
+  background: #2864df;
+  color: #ffffff;
 }
 
 .save-btn:hover {
-    background: #15803d;
+  background: #1f56c7;
 }
 
 .cancel-btn {
-    background: #ef4444;
-    color: white;
-    border: none;
-    padding: 10px 22px;
-    border-radius: 8px;
-    cursor: pointer;
+  border: 1px solid #d9e1ec;
+  background: #ffffff;
+  color: #526176;
 }
 
 .cancel-btn:hover {
-    background: #dc2626;
+  background: #f5f7fb;
 }
 
-/* ===========================
-   Table
-=========================== */
+
+/* ================= TABLE CARD ================= */
+
 .researchers-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,.1);
+  width: 100%;
+
+  border-collapse: separate;
+  border-spacing: 0;
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e0e6ef;
+  border-radius: 16px;
+
+  box-shadow: 0 8px 25px rgba(30, 55, 90, 0.06);
+}
+
+
+/* ================= TABLE HEADER ================= */
+
+.researchers-table thead {
+  background: #2864df;
 }
 
 .researchers-table th {
-    background: #2563eb;
-    color: white;
-    padding: 16px;
-    text-align: center;
+  height: 58px;
+
+  padding: 0 18px;
+
+  color: #ffffff;
+
+  text-align: left;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  white-space: nowrap;
 }
+
+
+/* ================= TABLE BODY ================= */
 
 .researchers-table td {
-    padding: 16px;
-    text-align: center;
-    border-bottom: 1px solid #e5e7eb;
-    vertical-align: middle;
+  height: 58px;
+
+  padding: 0 18px;
+
+  color: #526176;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #edf1f6;
+
+  font-size: 14px;
 }
 
-.researchers-table tr:hover {
-    background: #f8fafc;
+.researchers-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
-/* Wider Action column */
-.researchers-table th:last-child,
-.researchers-table td:last-child {
-    width: 230px;
+.researchers-table tbody tr:hover td {
+  background: #f8faff;
 }
 
-/* ===========================
-   Action Buttons
-=========================== */
+
+/* ================= EMPTY STATE ================= */
+
+.researchers-table td[colspan="6"] {
+  height: 120px;
+
+  text-align: center;
+
+  color: #7d8ca1;
+
+  font-size: 15px;
+
+  background: #ffffff;
+}
+
+
+/* ================= ACTION BUTTONS ================= */
+
 .action-buttons {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+
+/* VIEW */
 
 .view-btn {
-    display: inline-block;
-    background: #16a34a;
-    color: white;
-    text-decoration: none;
-    padding: 8px 18px;
-    border-radius: 6px;
-    font-weight: bold;
-    min-width: 80px;
-    text-align: center;
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 58px;
+  height: 34px;
+
+  padding: 0 13px;
+
+  border: 1px solid #cfdcf8;
+  border-radius: 8px;
+
+  background: #f2f6ff;
+
+  color: #2864df;
+
+  text-decoration: none;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  transition: 0.2s ease;
 }
 
 .view-btn:hover {
-    background: #15803d;
+  background: #e6eeff;
 }
 
+
+/* DELETE */
+
 .delete-btn {
-    display: inline-block;
-    background: #dc3545;
-    color: white;
-    border: none;
-    padding: 8px 18px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    min-width: 80px;
+  min-width: 65px;
+  height: 34px;
+
+  padding: 0 13px;
+
+  border: 1px solid #f0cfd2;
+  border-radius: 8px;
+
+  background: #fff7f7;
+
+  color: #d64545;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
 }
 
 .delete-btn:hover {
-    background: #b91c1c;
+  background: #ffecec;
 }
 
-/* ===========================
-   Responsive
-=========================== */
-@media (max-width:768px){
 
-    .researchers-header{
-        flex-direction:column;
-        align-items:flex-start;
-    }
+/* ================= RESPONSIVE ================= */
 
-    .header-buttons{
-        width:100%;
-        flex-direction:column;
-    }
+@media (max-width: 1000px) {
 
-    .header-buttons input,
-    .add-btn{
-        width:100%;
-    }
+  .researchers-page {
+    padding: 32px 25px 50px;
+  }
 
-    /* Keep buttons side by side */
-    .action-buttons{
-        justify-content:center;
-        flex-wrap:wrap;
-    }
+  .researchers-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 
+  .header-buttons {
+    width: 100%;
+  }
+
+  .header-buttons input {
+    flex: 1;
+    width: auto;
+  }
+
+  .researchers-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+
+@media (max-width: 650px) {
+
+  .researchers-page {
+    padding: 25px 16px 40px;
+  }
+
+  .researchers-header h1 {
+    font-size: 30px;
+  }
+
+  .header-buttons {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-buttons input,
+  .add-btn {
+    width: 100%;
+  }
+
+  .form-box > input {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .researchers-table {
+    min-width: 850px;
+  }
 }

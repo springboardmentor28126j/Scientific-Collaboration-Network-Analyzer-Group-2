@@ -1,146 +1,470 @@
+/* =========================================
+   CONFERENCES PAGE
+========================================= */
+
 .conferences-page {
-  padding: 30px;
-  background-color: #f5f7fb;
   min-height: 100vh;
+  width: 100%;
+
   box-sizing: border-box;
+
+  background: #f5f7fb;
+
+  padding: 35px 35px 60px;
 }
+
+
+/* =========================================
+   HEADER
+========================================= */
 
 .conferences-header {
   display: flex;
+
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+
+  margin-bottom: 28px;
 }
 
 .conferences-header h1 {
   margin: 0;
-  font-size: 30px;
-  color: #1e3a8a;
+
+  color: #173f73;
+
+  font-size: 34px;
+  font-weight: 700;
 }
 
+
+/* =========================================
+   ADD CONFERENCE BUTTON
+========================================= */
+
 .add-conference-btn {
-  background-color: #2563eb;
-  color: white;
+  height: 46px;
+
+  padding: 0 22px;
+
   border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
+
+  border-radius: 8px;
+
+  background: #2872ad;
+
+  color: white;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
   cursor: pointer;
-  font-size: 15px;
+
+  transition: all 0.2s ease;
 }
 
 .add-conference-btn:hover {
-  background-color: #1d4ed8;
+  background: #205b96;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 12px rgba(40, 114, 173, 0.20);
 }
+
+
+/* =========================================
+   CONFERENCE FORM
+========================================= */
 
 .conference-form {
-  background-color: white;
-  padding: 25px;
-  border-radius: 10px;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+
+  max-width: 850px;
+
+  margin: 0 auto 30px;
+
+  padding: 30px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 5px 20px rgba(15, 23, 42, 0.07);
 }
 
+
+/* Form heading */
+
 .conference-form h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #1e3a8a;
+  margin: 0 0 25px;
+
+  padding-bottom: 15px;
+
+  border-bottom: 1px solid #e5eaf1;
+
+  color: #173f73;
+
+  font-size: 22px;
 }
+
+
+/* =========================================
+   FORM INPUTS
+========================================= */
 
 .conference-form input,
 .conference-form select {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+
+  height: 46px;
+
   box-sizing: border-box;
-  color: #111827;
-  background-color: white;
+
+  padding: 0 14px;
+
+  margin-bottom: 16px;
+
+  border: 1px solid #d3dce8;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #1e293b;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: 0.2s;
 }
+
+
+/* Focus */
 
 .conference-form input:focus,
 .conference-form select:focus {
-  outline: none;
-  border-color: #2563eb;
+  border-color: #2872ad;
+
+  box-shadow:
+    0 0 0 3px rgba(40, 114, 173, 0.09);
 }
+
+
+/* Placeholder */
+
+.conference-form input::placeholder {
+  color: #94a3b8;
+}
+
+
+/* =========================================
+   FORM BUTTONS
+========================================= */
 
 .conference-form-buttons {
   display: flex;
+
   gap: 10px;
-  margin-top: 10px;
+
+  margin-top: 8px;
 }
 
 .save-conference-btn,
 .cancel-conference-btn {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  height: 44px;
+
+  padding: 0 21px;
+
+  border-radius: 8px;
+
   font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
 }
 
+
+/* Save */
+
 .save-conference-btn {
-  background-color: #16a34a;
+  border: none;
+
+  background: #2872ad;
+
   color: white;
 }
 
 .save-conference-btn:hover {
-  background-color: #15803d;
+  background: #205b96;
+
+  transform: translateY(-1px);
 }
 
+
+/* Cancel */
+
 .cancel-conference-btn {
-  background-color: #dc2626;
-  color: white;
+  border: 1px solid #cbd5e1;
+
+  background: #ffffff;
+
+  color: #475569;
 }
 
 .cancel-conference-btn:hover {
-  background-color: #b91c1c;
+  background: #f1f5f9;
+
+  color: #1e293b;
 }
+
+
+/* =========================================
+   TABLE
+========================================= */
 
 .conferences-table {
   width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  border-collapse: separate;
+
+  border-spacing: 0;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 5px 20px rgba(15, 23, 42, 0.06);
+
+  font-size: 14px;
 }
 
-.conferences-table th {
-  padding: 13px 12px;
-  border: 1px solid #1d4ed8;
+
+/* =========================================
+   TABLE HEADER
+========================================= */
+
+.conferences-table thead th {
+  padding: 16px 15px;
+
+  background: #1f5f9f;
+
+  color: #ffffff;
+
   text-align: left;
-  background-color: #2563eb;
-  color: white;
-  font-weight: bold;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  border-bottom: 1px solid #174b80;
 }
 
-.conferences-table td {
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  text-align: left;
-  background-color: white;
-  color: #111827;
+
+/* Rounded corners */
+
+.conferences-table thead th:first-child {
+  border-top-left-radius: 13px;
 }
 
-.conferences-table tr:hover td {
-  background-color: #f8fafc;
+.conferences-table thead th:last-child {
+  border-top-right-radius: 13px;
 }
+
+
+/* =========================================
+   TABLE BODY
+========================================= */
+
+.conferences-table tbody td {
+  padding: 17px 15px;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  border-bottom: 1px solid #e8edf3;
+
+  vertical-align: middle;
+
+  line-height: 1.4;
+}
+
+
+/* Alternate row */
+
+.conferences-table tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+
+/* Hover */
+
+.conferences-table tbody tr:hover td {
+  background: #f0f6fc;
+}
+
+
+/* Last row */
+
+.conferences-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================================
+   COLUMN WIDTHS
+========================================= */
+
+.conferences-table th:nth-child(1),
+.conferences-table td:nth-child(1) {
+  width: 60px;
+
+  text-align: center;
+}
+
+.conferences-table th:nth-child(2),
+.conferences-table td:nth-child(2) {
+  min-width: 280px;
+}
+
+.conferences-table th:nth-child(3),
+.conferences-table td:nth-child(3) {
+  min-width: 170px;
+}
+
+.conferences-table th:nth-child(4),
+.conferences-table td:nth-child(4) {
+  min-width: 140px;
+}
+
+.conferences-table th:nth-child(5),
+.conferences-table td:nth-child(5) {
+  min-width: 150px;
+
+  text-align: center;
+}
+
+.conferences-table th:nth-child(6),
+.conferences-table td:nth-child(6) {
+  min-width: 110px;
+
+  text-align: center;
+}
+
+
+/* =========================================
+   DELETE BUTTON
+========================================= */
 
 .delete-conference-btn {
-  background-color: #dc2626;
-  color: white;
-  border: none;
-  padding: 7px 12px;
-  border-radius: 5px;
+  padding: 8px 15px;
+
+  border: 1px solid #efb8b8;
+
+  border-radius: 7px;
+
+  background: #fff1f1;
+
+  color: #c0392b;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
   cursor: pointer;
+
+  transition: 0.2s;
 }
 
 .delete-conference-btn:hover {
-  background-color: #b91c1c;
+  background: #ffe1e1;
+
+  border-color: #e99b9b;
 }
 
+
+/* =========================================
+   EMPTY MESSAGE
+========================================= */
+
 .no-conferences {
+  padding: 40px !important;
+
   text-align: center;
-  padding: 20px;
-  color: #666;
-  background-color: white;
+
+  color: #64748b !important;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .conferences-page {
+    padding: 25px 15px 45px;
+
+    overflow-x: auto;
+  }
+
+  .conferences-table {
+    min-width: 850px;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  .conferences-page {
+    padding: 20px 10px 35px;
+  }
+
+  .conferences-header {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 15px;
+  }
+
+  .conferences-header h1 {
+    font-size: 29px;
+  }
+
+  .add-conference-btn {
+    width: 100%;
+  }
+
+  .conference-form {
+    padding: 20px;
+  }
+
+  .conference-form-buttons {
+    flex-direction: column;
+  }
+
+  .save-conference-btn,
+  .cancel-conference-btn {
+    width: 100%;
+  }
 }

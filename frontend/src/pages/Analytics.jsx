@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "../css/analytics.css";
 
 function Analytics() {
   const [analytics, setAnalytics] = useState({
